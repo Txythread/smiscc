@@ -1,0 +1,37 @@
+use std::*;
+
+// This is a simple code adding to integers
+
+var a: u32 = 10;
+let b: u32 = 5;
+
+
+
+a += b;
+
+
+// The following code allocates data on the stack.
+// This assumes an implementation of slibc (memory allocator)
+
+let c: &u32 = new 15;
+
+let d: &[u16] = new [50, 14, 67, 81];
+
+
+
+if a > b {
+	let e = faktorielle(a)
+}
+
+
+
+halt();
+
+
+func faktorielle(x: u32) -> u32 {
+	if x == 1{
+		return 1;
+	}
+
+	return faktorielle(x - 1) * x;
+}
