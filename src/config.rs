@@ -1,0 +1,56 @@
+// == Code Tokenization ===
+
+/// Defines how code gets split into tokens and how those tokens are then classified.
+pub mod tokenization_options {
+    /// ### Characters that split tokens but are not themselves supposed to appear in the result
+    ///
+    /// For example:
+    /// `hello world` => `["hello", "world"]` when " " is an ignored split character, but
+    /// `hello world` => ``["hello", " ", "world"]` when " " is an unignored split character.
+    ///
+    /// **Note**: When the character is in ignored split characters, no empty string will
+    /// appear even if the character is passed multiple times
+    /// (`hello        world` will still get processed into `["hello", "world"]`).
+    ///
+    /// This is used in the splitter.
+    pub const IGNORED_SPLIT_CHARACTERS: [&str; 2] = [" ", "\t"];
+
+
+    /// ### Characters that split tokens and are supposed to appear as a separate token
+    ///
+    /// For example:
+    /// `hello world` => `["hello", "world"]` when " " is an **ignored split character**, but
+    /// `hello world` => ``["hello", " ", "world"]` when " " is an **unignored split character**.
+    ///
+    /// **Note**: When the character occurs multiple times in a row, the character will be treated as a new token every time.
+    /// appear even if the character is passed multiple times
+    /// (`hello+++world` will still get processed into `["hello", "+", "+", "+", "world"]`).
+    ///
+    /// This is used in the splitter.
+    pub const UNIGNORED_SPLIT_CHARACTERS: [&str; 20] = ["{", "}", "(", ")", "[", "]", "<", ">", "?", "!", ".", ",", "\"", "\'", "=", "+", "-", "*", "/", "#"];
+
+
+    /// ### Characters that prevent split characters from creating new tokens until their counterpart is met.
+    ///
+    /// This can be, for example, used for strings and characters.
+    /// *So far, this is the only use coming to my mind, but more use cases might appear in the future.*
+    ///
+    /// **For Example:**
+    /// `hello "world, what's up"` => `["hello", "\"", "world, what's up", "\""]` *when this list **does** include " as a such character*
+    /// `hello "world, what's up"` => `["hello", "\"", "world", ",", "what", "\'", "s", "up", "\""]` **when this list **does not** include " as a such character*
+    ///
+    /// The list contains tuples (start_character, end_character).
+    /// When .0 is found, the mode described above should be entered, when .1 is found, it should exit it when it is in that mode.
+    ///
+    /// This is used in the splitter
+    pub const ESCAPE_PREVENTING_CHARACTERS: [(char, char); 2] = [('\"', '\"'), ('\'', '\'')];
+
+
+    /// ### Characters that will trigger a new logical line
+    ///
+    /// **Note**: Do not add newlines here. Those get handled separately and will always cause a new logical line.
+    /// If you wish to change that behaviour, please take a look at (splitter.rs)[compiler/splitter.rs] and figure that out yourself.
+    ///
+    /// **Note**: Characters listed here won't be part of the splitter's result in either of the lines (except if defined otherwise by other config constants, though you should not add the same character to the ignored splitting characters.).
+    pub const NEW_LOGICAL_LINE_CHARACTERS: [&str; 3] = [";", "{", "}"];
+}
