@@ -52,6 +52,12 @@ impl LineMap{
 }
 
 
+/// ### Contains information about an error/warning.
+///
+/// This information does not include whether it's an error or warning itself as that is determined
+/// by the line map's functions (display error/warning).
+/// 
+/// Multiple display code infos can be stored to higlight multiple parts of the code.
 pub struct NotificationInfo {
     pub title: String,
     pub message: String,
@@ -66,6 +72,17 @@ impl NotificationInfo {
 }
 
 
+/// ### Contains information about the affected line.
+///
+/// #### This includes:
+/// 1. The number in the line map (the one from which the error is thrown)
+/// 2. The first affected token, that should be underlined
+/// 3. The last token that should be underlined (or -1 for all tokens afterward)
+/// 4. Annotations that get printed under the first affected token.
+/// 5. The kind of info (warning, error, additional information)
+///
+/// Multiple display code infos may be stored in a notification info.
+///
 #[derive(Clone)]
 pub struct DisplayCodeInfo{
     pub line_number_in_map: u32,
@@ -83,6 +100,8 @@ impl DisplayCodeInfo {
         DisplayCodeInfo { line_number_in_map, start_token, end_token, annotations, kind }
     }
 
+
+    /// Write the information to the screen given a line map (which contains the code).
     pub fn print(&mut self, line_map: LineMap){
         let line = line_map.lines[self.line_number_in_map as usize].clone();
         
@@ -176,6 +195,7 @@ impl DisplayCodeInfo {
 }
 
 
+/// Controls the formatting (just the color rn) of an display code info.
 #[derive(Clone)]
 pub enum DisplayCodeKind{
     InitialError,                    // The error the message is about
@@ -185,6 +205,8 @@ pub enum DisplayCodeKind{
 }
 
 
+/// Holds all relevant information about a line for displaying it in a notification (warning/error)
+/// later.
 #[derive(Clone, Debug)]
 pub struct Line{
     pub trimmed_contents: String,

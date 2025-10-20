@@ -112,7 +112,6 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
 
                     current_token_text = String::new();
 
-                    // TODO: Clear line tokens
                     current_token = TokenPosition::new(i as u16 + 1, 0);
                     line_tokens = Vec::new();
                 }
