@@ -1,6 +1,8 @@
 // == Code Tokenization ===
 
-/// Defines how code gets split into tokens and how those tokens are then classified.
+/// ### Defines how code gets split into tokens and how those tokens are then classified.
+///
+/// These infos are used in both: [the splitter](crate::compiler::splitter::split) and [the tokenizer (/classifier)](crate::compiler::tokenizer::tokenize).
 pub mod tokenization_options {
     /// ### Characters that split tokens but are not themselves supposed to appear in the result
     ///
@@ -49,7 +51,7 @@ pub mod tokenization_options {
     /// ### Characters that will trigger a new logical line
     ///
     /// **Note**: Do not add newlines here. Those get handled separately and will always cause a new logical line.
-    /// If you wish to change that behaviour, please take a look at (splitter.rs)[compiler/splitter.rs] and figure that out yourself.
+    /// If you wish to change that behaviour, please take a look at [splitter.rs](crate::compiler::splitter::split) and figure that out yourself.
     ///
     /// **Note**: Characters listed here won't be part of the splitter's result in either of the lines (except if defined otherwise by other config constants, though you should not add the same character to the ignored splitting characters.).
     pub const NEW_LOGICAL_LINE_CHARACTERS: [&str; 3] = [";", "{", "}"];
