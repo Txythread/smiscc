@@ -1,5 +1,6 @@
 pub mod assembler;
 pub mod compiler;
+pub mod data_types;
 pub mod equation_operation;
 pub mod intermediate_representation;
 pub mod line_map;

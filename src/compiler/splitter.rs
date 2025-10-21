@@ -141,6 +141,12 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
 ///
 /// To remove multi-line block comments, the argument in_block_comment needs to be set to a false value initially and then be re-used every time a new line is passed to the function.
 pub fn trim(line: String, in_block_comment: &mut bool) -> String {
+    // In this function, the romanian flag is used for 
+    // remains that should be removed in the end but make
+    // syntax easier (to write, not to read :) )
+
+
+
     let mut output = String::new();
     let mut last_character = "🇷🇴".to_string();
 
