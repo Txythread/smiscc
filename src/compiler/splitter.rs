@@ -60,7 +60,7 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
         // The tokens for the logical line (see above)
         let mut line_tokens: Vec<TokenPosition> = Vec::new();
 
-        let mut current_token: TokenPosition = TokenPosition::new(0, 0);
+        let mut current_token_position: TokenPosition = TokenPosition::new(0, 0);
 
 
         let mut current_token_text: String = String::new();
@@ -72,15 +72,15 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
 
             /// Store the position (i) as the end position of the current token.
             let mut end_token = |line_tokens: &mut Vec<TokenPosition>, splitted_line: &mut Vec<String>| {
-                current_token.length = i as u16 - current_token.clone().start;
+                current_token_position.length = i as u16 - current_token_position.clone().start;
 
                 // Store the token if (and only if) it has a positive length
-                if current_token.length != 0 {
-                    line_tokens.push(current_token.clone());
+                if current_token_position.length != 0 {
+                    line_tokens.push(current_token_position.clone());
                     splitted_line.push(current_token_text.clone());
                 }
 
-                current_token = TokenPosition::new(i as u16 + 1, 0);
+                current_token_position = TokenPosition::new(i as u16 + 1, 0);
                 current_token_text = String::new();
             };
 
@@ -162,7 +162,7 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
 
                     current_token_text = String::new();
 
-                    current_token = TokenPosition::new(i as u16 + 1, 0);
+                    current_token_position = TokenPosition::new(i as u16 + 1, 0);
                     line_tokens = Vec::new();
                 }
             }
