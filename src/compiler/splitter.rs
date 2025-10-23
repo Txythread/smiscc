@@ -41,6 +41,12 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
         let line = x.1.to_string();
         let line_number = x.0 + 1;
 
+
+        // The character that, when between escape preventing characters, shows what character needs
+        // to be reached for the no-escape sequence to end. Look at ESCAPE_PREVENTING_CHARS in config
+        // for more information. None if in no such sequence.
+        let mut escape_preventing_char_end: Option<char> = None;
+
         // Remove the comments
         let mut trimmed_line = trim(line, &mut in_block_comment);
 
@@ -77,6 +83,50 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
                 current_token = TokenPosition::new(i as u16 + 1, 0);
                 current_token_text = String::new();
             };
+
+            // In case this is in an escaped sequence, look if it's the end character
+            if let Some(escape_end_char) = escape_preventing_char_end {
+                if character == escape_end_char {
+                    // Store anything within the sequence.
+                    end_token(&mut line_tokens, &mut splitted_line);
+
+                    // Store the current one, too
+                    let token = TokenPosition::new(i as u16, 1);
+                    line_tokens.push(token.clone());
+                    splitted_line.push(String::from(character));
+
+                    // End the sequence
+                    escape_preventing_char_end = None;
+                }else {
+                    // Add to the sequence
+                    current_token_text = current_token_text.clone() + &character.to_string();
+                }
+
+                // If it ended or not, continue. No other checks need to be performed.
+                continue;
+            }
+
+            if ESCAPE_PREVENTING_CHARACTERS.map(|x| x.0).contains(&character) {
+                // A character that should prevent the creation of new tokens until the
+                // corresponding end character has been found was found.
+
+                // Add the current token & store the current character
+                end_token(&mut line_tokens, &mut splitted_line);
+                let token = TokenPosition::new(i as u16, 1);
+                line_tokens.push(token.clone());
+                splitted_line.push(String::from(character));
+
+
+                // Get the end character
+                let pair = ESCAPE_PREVENTING_CHARACTERS.iter().find(|&&x| x.0 == character).unwrap(); // This being Some(_) is proven by the entering of this if statement
+                let end_character = pair.1;
+
+                // Store the end_character for searching it in later iterations
+                escape_preventing_char_end = Some(end_character);
+
+
+                continue;
+            }
 
             if IGNORED_SPLIT_CHARACTERS.contains(&character.to_string().as_str()) {
                 end_token(&mut line_tokens, &mut splitted_line);
@@ -236,12 +286,14 @@ mod tests {
             "And so is this!*/",
             "let a = 10; // This sets a to 10",
             "let b = a /* 10 */ + 3; b -= 1;",
+            "let c = \"Hello, world!\";",
         ];
 
         let expected = vec![
             vec!["let", "a", "=", "10"],
             vec!["let", "b", "=", "a", "+", "3"],
             vec!["b", "-", "=", "1"],
+            vec!["let", "c", "=", "\"", "Hello, world!", "\""],
         ];
 
         let actual = split(lines.join("\n"));

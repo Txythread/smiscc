@@ -63,27 +63,14 @@ pub mod tokenization_options {
 /// This includes options such as which integer numbers are allowed,
 /// which ones are standard, etc.
 pub mod target {
-    use crate::compiler::data_types::*;
+    use crate::compiler::data_types::IntegerType;
 
-    /// ### Allowed Integer Types
+    /// ### The integer type used for addresses
     ///
-    /// Those are structs implementing the [Integer trait](Integer),
-    /// which contains infos about what it is called, how many bytes
-    /// it is, etc.
+    /// This should usually be an unsigned number with the maximal
+    /// amount of bits the architecture allows.
     ///
-    /// The standard implementation allows for u32 only, but extending
-    /// it should be easy when the architecture of both the target
-    /// and the machine the compiler is running & compiled on support
-    /// the chosen amount of data.
-    ///
-    /// **Note:** Even if implemented here, using variables of this size
-    /// could still cause problems in case the architecture doesn't
-    /// implement ways to store such data.
-    pub const INTEGER_TYPES: [dyn Integer; 6] = [Unsigned8BitInteger, Signed8BitInteger, Unsigned16BitInteger, Signed16BitInteger, Unsigned32BitInteger, Signed32BitInteger];
-
-    /// ### The integer type used when no option is specified
-    ///
-    /// If there are no clues about what type of number should be used
-    /// in the code, this type is chosen.
-    pub const STANDARD_INTEGER_TYPE: dyn Integer = Unsigned32BitInteger;
+    /// **Note:** Don't use the address type here, as this will
+    /// lead to an infinite recursion.
+    pub const ADDRESS_INTEGER_TYPE: IntegerType = IntegerType::Unsigned32BitInteger;
 }
