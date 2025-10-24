@@ -39,7 +39,8 @@ pub mod tokenization_options {
     ///
     /// **For Example:**
     /// `hello "world, what's up"` => `["hello", "\"", "world, what's up", "\""]` *when this list **does** include " as a such character*
-    /// `hello "world, what's up"` => `["hello", "\"", "world", ",", "what", "\'", "s", "up", "\""]` **when this list **does not** include " as a such character*
+    /// `hello "world, what's up"` => `["hello", "\"", "world", ",", "what", "\'", "s", "up", "\""]`
+    /// **when this list **does not** include " as a such character*
     ///
     /// The list contains tuples (start_character, end_character).
     /// When .0 is found, the mode described above should be entered, when .1 is found, it should exit it when it is in that mode.
@@ -53,8 +54,21 @@ pub mod tokenization_options {
     /// **Note**: Do not add newlines here. Those get handled separately and will always cause a new logical line.
     /// If you wish to change that behaviour, please take a look at [splitter.rs](crate::compiler::splitter::split) and figure that out yourself.
     ///
-    /// **Note**: Characters listed here won't be part of the splitter's result in either of the lines (except if defined otherwise by other config constants, though you should not add the same character to the ignored splitting characters.).
+    /// **Note**: Characters listed here won't be part of the splitter's result
+    /// in either of the lines (except if defined otherwise by other config constants, though you should not add the same character to the ignored splitting characters.).
     pub const NEW_LOGICAL_LINE_CHARACTERS: [&str; 3] = [";", "{", "}"];
+}
+
+
+pub mod misc {
+    /// ### Characters That Will Be Ignored When Reading Integers
+    ///
+    /// For readability purposes, the user might want to insert underscores
+    /// or other characters when writing integers.
+    ///
+    /// All characters in this array will be ignored when trying to build
+    /// an integer via [this function](crate::util::math::convert_to_int)
+    pub const INTEGER_CONVERSION_IGNORED_CHARACTERS: [char; 1] = ['_'];
 }
 
 

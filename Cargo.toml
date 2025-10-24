@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 colorize = "0.1.0"
+uuid = { version = "1.18.1", features = [ "v4" ] }

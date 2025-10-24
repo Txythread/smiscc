@@ -12,6 +12,7 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) {
 /// **Note:** A token always includes the position from
 /// which it stems. This is important for producing debug
 /// information about the user's code.
+#[derive(Clone)]
 pub enum Token {
     /// A static/constant object that can be accessed instantly.
     Object(Object, TokenPosition),
@@ -28,4 +29,6 @@ pub enum Token {
     /// ### A block of tokens/code
     /// This might, for example, be a function body, a loop body or an if body.
     Block(Vec<Token>, TokenPosition),
+
+    UnspecifiedString(String, TokenPosition),
 }

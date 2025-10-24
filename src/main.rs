@@ -2,6 +2,7 @@ use crate::compiler::line_map::*;
 
 mod compiler;
 mod config;
+mod util;
 
 fn main() {
     let mut line_map = LineMap::new();

@@ -1,6 +1,8 @@
-use crate::compiler::object::{Object, ObjectType};
+use crate::compiler::object::{Object, ObjectType, Trait};
 use crate::compiler::tokenizer::Token;
 use crate::config::target::*;
+use crate::util::math::*;
+use uuid::Uuid;
 
 
 /// ### Generates data types via tokens.
@@ -60,14 +62,28 @@ pub struct BuildResult {
 }
 
 
+impl BuildResult {
+    pub fn new(result: Result<Object, ObjectBuildingError>, ambiguous: bool) -> Self {
+        BuildResult { result, ambiguous }
+    }
+}
+
+
 /// Contains information about an error that arose from trying
 /// to build an object via the [buildable trait](Buildable)
+#[derive(Debug)]
 pub struct ObjectBuildingError {
     /// The name of the object that should've been built.
     pub expected_object: String,
 
     /// The message displayed as an error
     pub message: String,
+}
+
+impl ObjectBuildingError {
+    pub fn new(expected_object: String, message: String) -> Self {
+        ObjectBuildingError { expected_object, message }
+    }
 }
 
 
@@ -176,5 +192,158 @@ impl IntegerType {
 
             IntegerType::Address => ADDRESS_INTEGER_TYPE.get_memory_size(),
         }
+    }
+}
+
+
+impl Buildable for IntegerType {
+    fn build(&self, tokens: Vec<Token>, parent_type: ObjectType) -> BuildResult {
+        // The type is ambiguous unless a marker is found later.
+        let mut ambiguous = true;
+
+        let standard_error = ObjectBuildingError::new(self.display_name(), format!("Couldn't infer an {} from this", self.display_name()));
+
+
+        if tokens.len() != 1 {
+            // Numbers always can be built from one token.
+            // As there are multiple tokens, no integer can be
+            // built from this => throw an error.
+
+            return BuildResult::new(Err(standard_error), ambiguous);
+        }
+
+        let token = tokens.iter().nth(0).unwrap();
+
+        match token {
+            Token::UnspecifiedString(token_content, _) => {
+                let mut token_content = token_content.clone();
+                if token_content.ends_with(self.get_code_name().as_str()){
+                    token_content = token_content.strip_suffix(self.get_code_name().as_str()).unwrap().parse().unwrap();
+                    ambiguous = false;
+                }
+
+                let value = convert_to_int(token_content);
+
+                if value.is_none() {
+                    // Failed to build integer from the value
+                    return BuildResult::new(Err(standard_error), ambiguous);
+                }
+
+                let value = value.unwrap();
+
+                if value > self.get_upper_bound() as i128 {
+                    let error = ObjectBuildingError::new(self.display_name(), format!("Couldn't infer an {} from this because the upper bound of {} was exceeded.", self.display_name(), self.get_upper_bound()));
+                    return BuildResult::new(Err(error), ambiguous);
+                }
+
+                if value < -(self.get_lower_bound() as i128) {
+                    let error = ObjectBuildingError::new(self.display_name(), format!("Couldn't infer an {} from this because the value was lower than the lower bound of {} .", self.display_name(), self.get_upper_bound()));
+                    return BuildResult::new(Err(error), ambiguous);
+                }
+
+                let object = Object::new(parent_type.type_uuid, self.get_code_name(), Some(value));
+
+                BuildResult::new(Ok(object), ambiguous)
+            }
+            _ => {
+                BuildResult::new(Err(standard_error), ambiguous)
+            }
+        }
+    }
+
+    fn build_type(&self) -> ObjectType {
+        let object_uuid = Uuid::new_v4();
+
+        let mut type_ = ObjectType::new(self.get_code_name(), object_uuid);
+
+        type_.add_trait(Trait::ARITHMETIC_COMPATIBLE);
+        type_.add_trait(Trait::VALUE_TYPE);
+        type_.add_complex_trait(Trait::SIZED, vec![self.get_memory_size().to_string()]);
+
+
+        type_
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::compiler::data_types::{Buildable, IntegerType};
+    use crate::compiler::line_map::TokenPosition;
+    use crate::compiler::tokenizer::Token;
+
+    #[test]
+    fn test_build_integer_type() {
+        let u32_ = IntegerType::Unsigned32BitInteger;
+
+        let u32_type = u32_.build_type();
+
+        let ambiguous_subjects = [
+            Token::UnspecifiedString("hello".to_string(), TokenPosition::test_value()),
+            Token::UnspecifiedString("36".to_string(), TokenPosition::test_value()),
+            Token::UnspecifiedString("2_5".to_string(), TokenPosition::test_value()),
+            Token::UnspecifiedString("0x10".to_string(), TokenPosition::test_value()),
+        ];
+
+        let ambiguous_answers = [
+            None,
+            Some(36_i128),
+            Some(25_i128),
+            Some(0x10_i128),
+        ];
+
+        assert_eq!(ambiguous_subjects.len(), ambiguous_answers.len(), "test case written incorrectly");
+
+        for i in 0..ambiguous_subjects.len() {
+            let subject = ambiguous_subjects[i].clone();
+            let expected_answer = ambiguous_answers[i].clone();
+
+            let result = u32_.build(vec![subject], u32_type.clone());
+
+            assert_eq!(result.ambiguous, true);
+
+            assert_eq!(result.result.is_ok(), expected_answer.is_some());
+
+            if result.result.is_ok() {
+                let result = result.result.unwrap().initial_content;
+
+                assert_eq!(result, expected_answer);
+            }
+        }
+
+
+        let unambiguous_subjects = [
+            Token::UnspecifiedString("hellou32".to_string(), TokenPosition::test_value()),
+            Token::UnspecifiedString("36u32".to_string(), TokenPosition::test_value()),
+            Token::UnspecifiedString("2_5u32".to_string(), TokenPosition::test_value()),
+            Token::UnspecifiedString("0x10_u32".to_string(), TokenPosition::test_value()),
+        ];
+
+        let unambiguous_answers = [
+            None,
+            Some(36_i128),
+            Some(25_i128),
+            Some(0x10_i128),
+        ];
+
+        assert_eq!(unambiguous_subjects.len(), unambiguous_answers.len(), "test case written incorrectly");
+
+        for i in 0..unambiguous_subjects.len() {
+            let subject = unambiguous_subjects[i].clone();
+            let expected_answer = unambiguous_answers[i].clone();
+
+            let result = u32_.build(vec![subject], u32_type.clone());
+
+            assert_eq!(result.ambiguous, false);
+
+            assert_eq!(result.result.is_ok(), expected_answer.is_some());
+
+            if result.result.is_ok() {
+                let result = result.result.unwrap().initial_content;
+
+                assert_eq!(result, expected_answer);
+            }
+        }
+
+
     }
 }

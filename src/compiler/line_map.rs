@@ -233,4 +233,10 @@ impl TokenPosition {
     pub fn new(start: u16, length: u16) -> Self {
         TokenPosition { start, length }
     }
+
+    /// Creates a token for when it doesn't really matter in test cases
+    #[cfg(test)]
+    pub fn test_value() -> Self {
+        Self::new(0, 0)
+    }
 }
