@@ -21,7 +21,7 @@ pub trait Buildable {
     /// user (i.g. `25u8`) or not (i.g. `25`). And generate an
     /// error if it fails regardless of it should've been built
     /// in the first place. The message should only be shown if
-    /// `ambiguous` (in the [result](BuildResult) is set to
+    /// `ambiguous` (in the [result](BuildResult)) is set to
     /// false.
     ///
     /// **Note:** The originally generated object type needs to
@@ -38,6 +38,7 @@ pub trait Buildable {
 
 
 /// The result after trying to generate a [buildable](Buildable) object.
+#[derive(Clone)]
 pub struct BuildResult {
     /// ### The Resulting object or an error
     ///
@@ -71,7 +72,7 @@ impl BuildResult {
 
 /// Contains information about an error that arose from trying
 /// to build an object via the [buildable trait](Buildable)
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ObjectBuildingError {
     /// The name of the object that should've been built.
     pub expected_object: String,
@@ -89,7 +90,8 @@ impl ObjectBuildingError {
 
 
 /// An enum that holds information about any basic integer type.
-pub enum IntegerType{
+#[derive(Debug)]
+pub enum IntegerType {
     Unsigned8BitInteger,
     Signed8BitInteger,
     Unsigned16BitInteger,
@@ -277,6 +279,8 @@ mod tests {
 
         let u32_type = u32_.build_type();
 
+        println!("{:?}", u32_type);
+
         let ambiguous_subjects = [
             Token::UnspecifiedString("hello".to_string(), TokenPosition::test_value()),
             Token::UnspecifiedString("36".to_string(), TokenPosition::test_value()),
@@ -338,7 +342,11 @@ mod tests {
             assert_eq!(result.result.is_ok(), expected_answer.is_some());
 
             if result.result.is_ok() {
+                println!("{:?}", result.clone().result.unwrap());
+
                 let result = result.result.unwrap().initial_content;
+
+
 
                 assert_eq!(result, expected_answer);
             }

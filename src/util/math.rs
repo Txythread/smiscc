@@ -39,6 +39,16 @@ pub fn convert_to_int(input: String) -> Option<i128> {
 }
 
 
+
+#[derive(Clone)]
+pub enum ArithmeticOperation {
+    Addition,
+    Subtraction,
+    Multiplication,
+    Division,
+}
+
+
 #[cfg(test)]
 mod tests {
     use crate::util::math::convert_to_int;

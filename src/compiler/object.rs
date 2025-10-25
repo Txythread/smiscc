@@ -23,7 +23,7 @@ impl Object {
 
 
 /// Contains relevant information for syntax checking an object
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ObjectType{
     /// The name of the object. For example "u32" or "ObjectType".
     pub name: String,

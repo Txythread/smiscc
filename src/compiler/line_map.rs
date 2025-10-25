@@ -195,7 +195,7 @@ impl DisplayCodeInfo {
 }
 
 
-/// Controls the formatting (just the color rn) of an display code info.
+/// Controls the formatting (just the color rn) of a display code info.
 #[derive(Clone)]
 pub enum DisplayCodeKind{
     InitialError,                    // The error the message is about
