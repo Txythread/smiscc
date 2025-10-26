@@ -4,6 +4,8 @@
 ///
 /// These infos are used in both: [the splitter](crate::compiler::splitter::split) and [the tokenizer (/classifier)](crate::compiler::tokenizer::tokenize).
 pub mod tokenization_options {
+    use crate::compiler::data_types::{Buildable, IntegerType};
+
     /// ### Characters that split tokens but are not themselves supposed to appear in the result
     ///
     /// For example:
@@ -84,6 +86,17 @@ pub mod tokenization_options {
     /// **Note:** Only pass things that will get parsed as a single token
     /// here. So no `let mut` statements are allowed here with normal parsing.
     pub const MODIFIABLE_OBJECT_DECLARATION_KEYWORD: &str = "var";
+/*
+    RESERVED FOR LATER PURPOSES
+
+    /// ### Default Datatypes
+    ///
+    /// Datatypes listed here will be preferred when no datatype explicitly
+    /// claims to be the one in question whilst generating the object.
+    ///
+    /// **Note:** Don't put any type in here that might conflict with another
+    /// one.
+    pub const DEFAULT_DATATYPES: [dyn Buildable; 1] = [];*/
 }
 
 

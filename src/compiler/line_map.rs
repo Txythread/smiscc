@@ -223,7 +223,7 @@ impl Line {
 }
 
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TokenPosition{
     pub start: u16,
     pub length: u16,

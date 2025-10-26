@@ -40,7 +40,7 @@ pub fn convert_to_int(input: String) -> Option<i128> {
 
 
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ArithmeticOperation {
     Addition,
     Subtraction,

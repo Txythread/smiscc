@@ -90,7 +90,7 @@ impl ObjectBuildingError {
 
 
 /// An enum that holds information about any basic integer type.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum IntegerType {
     Unsigned8BitInteger,
     Signed8BitInteger,
@@ -243,7 +243,7 @@ impl Buildable for IntegerType {
                     return BuildResult::new(Err(error), ambiguous);
                 }
 
-                let object = Object::new(parent_type.type_uuid, self.get_code_name(), Some(value));
+                let object = Object::new(parent_type.type_uuid, String::new(), Some(value));
 
                 BuildResult::new(Ok(object), ambiguous)
             }

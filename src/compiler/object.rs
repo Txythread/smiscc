@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
 /// about what can be done with it.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Object{
     /// The universal unique identifier of the [object type](ObjectType).
     pub type_uuid: Uuid,

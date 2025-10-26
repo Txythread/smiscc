@@ -70,7 +70,7 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
             let character = x.1.clone();
             let i = x.0;
 
-            /// Store the position (i) as the end position of the current token.
+            // Store the position (i) as the end position of the current token.
             let mut end_token = |line_tokens: &mut Vec<TokenPosition>, splitted_line: &mut Vec<String>| {
                 current_token_position.length = i as u16 - current_token_position.clone().start;
 

@@ -1,4 +1,3 @@
-use std::ops::Deref;
 use crate::compiler::data_types::{BuildResult, Buildable};
 use crate::compiler::line_map::{DisplayCodeInfo, LineMap, TokenPosition};
 use crate::compiler::object::{Object, ObjectType};
@@ -63,7 +62,9 @@ fn tokenize_arithmetic_expression_series(line: Vec<String>, mut constants: &Vec<
 /// one-time generated ObjectType. The tokens can usually be left
 /// unclassified for simple objects and the line map and the line
 /// number are required for producing token positions.
-fn generate_object<T: Buildable>(tokens: &mut Vec<Token>, object_types: Vec<(ObjectType, Box<T>)>, line_map: &mut LineMap, line_number: u32,  first_token_index: u32, last_token_index: u32) -> Option<Object> {
+///
+/// The resulting token will always contain an object.
+fn generate_object<T: Buildable + ?Sized>(tokens: &mut Vec<Token>, object_types: Vec<(ObjectType, Box<T>)>, line_map: &mut LineMap, line_number: u32,  first_token_index: u32, last_token_index: u32) -> Option<Token> {
     /// Where ambiguous results get stored for later.
     /// If there is more than one element in here in the end,
     /// that's an error that should be displayed (except when
@@ -91,7 +92,7 @@ fn generate_object<T: Buildable>(tokens: &mut Vec<Token>, object_types: Vec<(Obj
     for object_type in object_types.iter().clone() {
         let object_type = object_type.clone();
         let parent_type = object_type.0.clone();
-        let build_result = object_type.1.build(tokens, parent_type);
+        let build_result = object_type.1.build(tokens.clone(), parent_type);
 
         if build_result.ambiguous {
             if build_result.result.is_ok() {
@@ -106,7 +107,7 @@ fn generate_object<T: Buildable>(tokens: &mut Vec<Token>, object_types: Vec<(Obj
                 let error_info = DisplayCodeInfo::new(
                     line_number,
                     first_token_index,
-                    last_token_index,
+                    last_token_index as i32,
                     vec![
                         format!("**note:** this couldn't be parsed as a {}", build_result.result.clone().err().unwrap().expected_object)
                     ],
@@ -120,7 +121,6 @@ fn generate_object<T: Buildable>(tokens: &mut Vec<Token>, object_types: Vec<(Obj
                 );
 
                 line_map.display_error(error);
-                return None;
             }
         }
     }
@@ -135,17 +135,17 @@ fn generate_object<T: Buildable>(tokens: &mut Vec<Token>, object_types: Vec<(Obj
             let error_info = DisplayCodeInfo::new(
                 line_number,
                 first_token_index,
-                last_token_index,
+                last_token_index as i32,
                 vec![],
                 DisplayCodeKind::InitialError
             );
 
-            let mut message = "There are multiple ways to decode this object: ";
+            let mut message = String::from("There are multiple ways to decode this object: ");
 
-            for result in successful_explicit_results {
+            for result in successful_explicit_results.clone() {
                 let type_uuid = result.type_uuid;
-                let type_with_uuid = object_types.iter().filter(|&&x| x.0.type_uuid == type_uuid).collect::<Vec<(&ObjectType, Box<T>)>>().iter().nth(0).unwrap().0;
-                message += type_with_uuid.name.clone();
+                let type_with_uuid = object_types.iter().filter(|&x| x.0.type_uuid == type_uuid).collect::<Vec<&(ObjectType, Box<T>)>>().iter().nth(0).unwrap().0.clone();
+                message += type_with_uuid.name.clone().as_str();
                 message += "  ";
             }
 
@@ -156,6 +156,10 @@ fn generate_object<T: Buildable>(tokens: &mut Vec<Token>, object_types: Vec<(Obj
             );
 
             line_map.display_error(error);
+
+        } else {
+            let token = Token::Object(successful_explicit_results[0].clone(), result_position);
+            return Some(token);
         }
     }
 
@@ -169,17 +173,17 @@ fn generate_object<T: Buildable>(tokens: &mut Vec<Token>, object_types: Vec<(Obj
             let error_info = DisplayCodeInfo::new(
                 line_number,
                 first_token_index,
-                last_token_index,
+                last_token_index as i32,
                 vec![],
                 DisplayCodeKind::InitialError
             );
 
-            let mut message = "There are multiple ways to decode this object: ";
+            let mut message = String::from("There are multiple ways to decode this object: ");
 
             for result in successful_ambiguous_results {
                 let type_uuid = result.type_uuid;
-                let type_with_uuid = object_types.iter().filter(|&&x| x.0.type_uuid == type_uuid).collect::<Vec<(&ObjectType, Box<T>)>>().iter().nth(0).unwrap().0;
-                message += type_with_uuid.name.clone();
+                let type_with_uuid = object_types.iter().filter(|&x| x.0.type_uuid == type_uuid).collect::<Vec<&(ObjectType, Box<T>)>>().iter().nth(0).unwrap().0.clone();
+                message += type_with_uuid.name.clone().as_str();
                 message += "  ";
             }
 
@@ -190,9 +194,14 @@ fn generate_object<T: Buildable>(tokens: &mut Vec<Token>, object_types: Vec<(Obj
             );
 
             line_map.display_error(error);
+
+        } else {
+            let token = Token::Object(successful_ambiguous_results[0].clone(), result_position);
+            return Some(token)
         }
     }
 
+    None
 
 }
 
@@ -200,7 +209,7 @@ fn generate_object<T: Buildable>(tokens: &mut Vec<Token>, object_types: Vec<(Obj
 /// **Note:** A token always includes the position from
 /// which it stems. This is important for producing debug
 /// information about the user's code.
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     /// A static/constant object that can be accessed instantly.
     Object(Object, TokenPosition),
@@ -235,5 +244,31 @@ impl Token {
             Token::UnspecifiedString(_, pos) => { pos.clone() }
             Token::ArithmeticOperation(_, _, _, pos) => { pos.clone() }
         }
+    }
+}
+
+
+
+#[cfg(test)]
+mod tests {
+    use crate::compiler::data_types::{Buildable, IntegerType};
+    use crate::compiler::line_map::{LineMap, TokenPosition};
+    use crate::compiler::object::{Object, ObjectType};
+    use crate::compiler::tokenizer::{generate_object, Token};
+
+    #[test]
+    fn test_generate_object() {
+        let i32_type = IntegerType::Signed32BitInteger.build_type();
+        let object_types: Vec<(ObjectType, Box<dyn Buildable>)> = vec![
+            (i32_type.clone(), Box::new(IntegerType::Signed32BitInteger)),
+        ];
+
+        let token = Token::UnspecifiedString(String::from("10"), TokenPosition::new(0, 5));
+
+        let mut line_map = LineMap::new();
+
+        let result = generate_object(&mut vec![token], object_types, &mut line_map, 0, 0, 0);
+
+        assert_eq!(result, Some(Token::Object(Object::new(i32_type.type_uuid.clone(), String::new(), Some(10)), TokenPosition::new(0, 5))))
     }
 }
