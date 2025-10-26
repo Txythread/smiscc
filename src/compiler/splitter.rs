@@ -193,7 +193,7 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
 pub fn trim(line: String, in_block_comment: &mut bool) -> String {
     // In this function, the romanian flag is used for 
     // remains that should be removed in the end but make
-    // syntax easier (to write, not to read :) )
+    // the functions' syntax easier (to write, not to read :) )
 
 
 

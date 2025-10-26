@@ -97,6 +97,14 @@ pub mod tokenization_options {
     /// **Note:** Don't put any type in here that might conflict with another
     /// one.
     pub const DEFAULT_DATATYPES: [dyn Buildable; 1] = [];*/
+
+    /// ### Logical Parentheses
+    ///
+    /// The characters that will be treated like parentheses in the tokenizer.
+    ///
+    /// **Note:** Don't use the same character here twice as that would lead
+    /// to undefined & unpredictable behaviour.
+    pub const LOGICAL_PARENTHESES: [(char, char); 4] = [('{', '}'), ('(', ')'), ('[', ']'), ('<', '>')];
 }
 
 

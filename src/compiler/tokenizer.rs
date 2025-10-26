@@ -55,6 +55,18 @@ fn tokenize_arithmetic_expression_series(line: Vec<String>, mut constants: &Vec<
 
 }
 
+
+/// ### Generates Unclassified Tokens up to the Delimiter
+///
+/// [Tokens](Token) get generated from the original code (`from`)
+/// until the delimiter is found or the line ended (when the
+/// delimiter is not enforced, in which case an error would be
+/// thrown).
+///
+/// If the delimiting tokens appears to be a
+fn generate_unclassified_tokens(from: Vec<String>, delimiting_token: String, enforce_delimiter: bool, line_map: &mut LineMap) {
+}
+
 /// ### Generates objects if possible
 ///
 /// This is done using the ["Buildable" trait](Buildable), which
