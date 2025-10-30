@@ -4,7 +4,7 @@
 ///
 /// These infos are used in both: [the splitter](crate::compiler::splitter::split) and [the tokenizer (/classifier)](crate::compiler::tokenizer::tokenize).
 pub mod tokenization_options {
-    use crate::compiler::data_types::{Buildable, IntegerType};
+    use crate::util::math::Base;
 
     /// ### Characters that split tokens but are not themselves supposed to appear in the result
     ///
@@ -105,6 +105,18 @@ pub mod tokenization_options {
     /// **Note:** Don't use the same character here twice as that would lead
     /// to undefined & unpredictable behaviour.
     pub const LOGICAL_PARENTHESES: [(char, char); 4] = [('{', '}'), ('(', ')'), ('[', ']'), ('<', '>')];
+
+
+    /// ### Integer Bases
+    ///
+    /// Determines which [bases](Base) are known to the
+    /// [conversion function](crate::util::math::convert_to_int).
+    ///
+    /// **Note:** Bases should be defined in implementations of the
+    /// "Base" structure. Avoid defining bases here, as it clutters
+    /// the file. If a datatype has no necessary prefix (like decimal),
+    /// it has to be listed in the end of the list.
+    pub const BASES: [Base; 4] = [Base::BINARY, Base::OCTAL, Base::HEXADECIMAL, Base::DECIMAL];
 }
 
 

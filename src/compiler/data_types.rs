@@ -233,6 +233,16 @@ impl Buildable for IntegerType {
 
                 let value = value.unwrap();
 
+                if value.is_err() {
+                    let err = value.unwrap_err();
+
+                    let error = ObjectBuildingError::new(self.display_name(), err.message());
+
+                    return BuildResult::new(Err(error), ambiguous);
+                }
+
+                let value = value.ok().unwrap();
+
                 if value > self.get_upper_bound() as i128 {
                     let error = ObjectBuildingError::new(self.display_name(), format!("Couldn't infer an {} from this because the upper bound of {} was exceeded.", self.display_name(), self.get_upper_bound()));
                     return BuildResult::new(Err(error), ambiguous);
