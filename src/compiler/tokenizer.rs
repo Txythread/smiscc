@@ -1,4 +1,4 @@
-use crate::compiler::data_types::{BuildResult, Buildable};
+use crate::compiler::data_types::{BuildResult, Buildable, IntegerType};
 use crate::compiler::line_map::{DisplayCodeInfo, LineMap, TokenPosition};
 use crate::compiler::object::{Object, ObjectType};
 use crate::compiler::line_map::*;
@@ -51,10 +51,6 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) {
 }
 
 
-fn tokenize_arithmetic_expression_series(line: Vec<String>, mut constants: &Vec<Object>, mut variables: &Vec<Object>) {
-
-}
-
 
 /// ### Generates Unclassified Tokens up to the Delimiter
 ///
@@ -72,60 +68,34 @@ todo!()
 
 
 
-/*
-/// **Note:** A token always includes the position from
-/// which it stems. This is important for producing debug
-/// information about the user's code.
-#[derive(Clone, Debug, PartialEq)]
-pub enum Token {
-    /// A static/constant object that can be accessed instantly.
-    Object(Object, TokenPosition),
-
-    /// A variable that might be changed. It therefore can't be
-    /// optimized away.
-    Variable(Object, TokenPosition),
-
-    /// ### Equation operation
-    /// An equation operation that sets a variable to another token.
-    /// This token should be an object of the same type in the end.
-    Set(Object, Box<Token>, TokenPosition),
-
-    /// ### A block of tokens/code
-    /// This might, for example, be a function body, a loop body or an if body.
-    Block(Vec<Token>, TokenPosition),
-
-
-    /// A block that has yet to be classified
-    UnspecifiedString(String, TokenPosition),
-
-    ArithmeticOperation(Box<Token>, Box<Token>, ArithmeticOperation, TokenPosition),
-}
-
-impl Token {
-    pub fn get_position(&self) -> TokenPosition {
-        match self {
-            Token::Object(_, pos) => { pos.clone() }
-            Token::Variable(_, pos) => { pos.clone() }
-            Token::Set(_, _, pos) => { pos.clone() }
-            Token::Block(_, pos) => { pos.clone() }
-            Token::UnspecifiedString(_, pos) => { pos.clone() }
-            Token::ArithmeticOperation(_, _, _, pos) => { pos.clone() }
-        }
-    }
-}*/
-
-
-
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     /// A block that has yet to be classified
     UnspecifiedString(String, TokenPosition),
+
+    /// Something that has been classified as a string
+    StringLiteral(String, TokenPosition),
+
+    /// A text that could be classified (and converted to) an integer.
+    Integer(i128, IntegerType, TokenPosition),
+
+    /// A keyword changing the interpretation of the entire line (such
+    /// as "var", "let" or "if").
+    BehaviouralKeyword(String, TokenPosition),
+
+    /// A keyword changing minor parts about interpretation (such as
+    /// "as".
+    LogicalKeyword(String, TokenPosition),
 }
 
 impl Token {
     pub fn get_position(&self) -> TokenPosition {
         match self {
             Token::UnspecifiedString(_, pos) => { pos.clone() }
+            Token::StringLiteral(_, pos) => { pos.clone() }
+            Token::Integer(_, _, pos) => { pos.clone() }
+            Token::BehaviouralKeyword(_, pos) => { pos.clone() }
+            Token::LogicalKeyword(_, pos) => { pos.clone() }
         }
     }
 }

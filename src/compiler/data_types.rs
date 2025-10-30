@@ -90,7 +90,7 @@ impl ObjectBuildingError {
 
 
 /// An enum that holds information about any basic integer type.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum IntegerType {
     Unsigned8BitInteger,
     Signed8BitInteger,
