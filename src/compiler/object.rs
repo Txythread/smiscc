@@ -1,4 +1,7 @@
 use uuid::Uuid;
+use crate::compiler::data_types::Buildable;
+use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, LineMap, NotificationInfo, TokenPosition};
+use crate::compiler::tokenizer::Token;
 
 /// about what can be done with it.
 #[derive(Clone, Debug, PartialEq)]
@@ -19,6 +22,156 @@ impl Object {
     pub fn new(type_uuid: Uuid, name: String, initial_content: Option<i128>) -> Object {
         Object { name, type_uuid, initial_content }
     }
+}
+
+/// ### Generates objects if possible
+///
+/// This is done using the ["Buildable" trait](Buildable), which
+/// works by exposing both the struct implementing the trait and a
+/// one-time generated ObjectType. The tokens can usually be left
+/// unclassified for simple objects and the line map and the line
+/// number are required for producing token positions.
+///
+/// The resulting token will always contain an object.
+pub fn generate_object<T: Buildable + ?Sized>(tokens: &mut Vec<Token>, object_types: Vec<(ObjectType, Box<T>)>, line_map: &mut LineMap, line_number: u32,  first_token_index: u32, last_token_index: u32) -> Option<Object> {
+    /// Where ambiguous results get stored for later.
+    /// If there is more than one element in here in the end,
+    /// that's an error that should be displayed (except when
+    /// there's an explicit one in there, than that one should
+    /// be selected).
+    let mut successful_ambiguous_results: Vec<Object> = Vec::new();
+
+    /// Where explicit results get stored for later.
+    /// If there is more than one element in here in the end,
+    /// that's an error that should be displayed in the end.
+    /// If there are none, then successful_ambiguous_results
+    /// should be used instead.
+    let mut successful_explicit_results: Vec<Object> = Vec::new();
+
+    // Calculate the position of the resulting token
+    let result_start_pos = tokens[0].get_position().start;
+    let last_token_pos = tokens.last().unwrap().get_position();
+    let result_end_pos = last_token_pos.start + last_token_pos.length;
+    let result_length = result_end_pos - result_start_pos;
+    let result_position = TokenPosition::new(result_start_pos, result_length);
+
+
+    // Was geht ab in Rumänien?
+
+    for object_type in object_types.iter().clone() {
+        let object_type = object_type.clone();
+        let parent_type = object_type.0.clone();
+        let build_result = object_type.1.build(tokens.clone(), parent_type);
+
+        if build_result.ambiguous {
+            if build_result.result.is_ok() {
+                successful_ambiguous_results.push(build_result.result.unwrap());
+            }
+        } else {
+            if build_result.result.is_ok() {
+                successful_explicit_results.push(build_result.result.unwrap());
+            } else {
+                // The datatype was explicitly requested by the code but
+                // couldn't be built. Throw an error.
+                let error_info = DisplayCodeInfo::new(
+                    line_number,
+                    first_token_index,
+                    last_token_index as i32,
+                    vec![
+                        format!("**note:** this couldn't be parsed as a {}", build_result.result.clone().err().unwrap().expected_object)
+                    ],
+                    DisplayCodeKind::InitialError
+                );
+
+                let error = NotificationInfo::new(
+                    "Failed to Decode Object".to_string(),
+                    build_result.result.err().unwrap().message.clone(),
+                    vec![error_info],
+                );
+
+                line_map.display_error(error);
+            }
+        }
+    }
+
+    // All objects have had a chance to build their versions.
+    // Now, return whatever is available.
+    if successful_explicit_results.len() > 0 {
+        if successful_explicit_results.len() != 1 {
+            // There are too many results all claiming to be unambiguous.
+            // The datatype was explicitly requested by the code but
+            // couldn't be built. Throw an error.
+            let error_info = DisplayCodeInfo::new(
+                line_number,
+                first_token_index,
+                last_token_index as i32,
+                vec![],
+                DisplayCodeKind::InitialError
+            );
+
+            let mut message = String::from("There are multiple ways to decode this object: ");
+
+            for result in successful_explicit_results.clone() {
+                let type_uuid = result.type_uuid;
+                let type_with_uuid = object_types.iter().filter(|&x| x.0.type_uuid == type_uuid).collect::<Vec<&(ObjectType, Box<T>)>>().iter().nth(0).unwrap().0.clone();
+                message += type_with_uuid.name.clone().as_str();
+                message += "  ";
+            }
+
+            let error = NotificationInfo::new(
+                "Statement Ambiguous".to_string(),
+                message,
+                vec![error_info],
+            );
+
+            line_map.display_error(error);
+
+        } else {
+            //let token = Token::Object(successful_explicit_results[0].clone(), result_position);
+            return Some(successful_explicit_results[0].clone());
+        }
+    }
+
+    // All objects have had a chance to build their versions.
+    // Now, return whatever is available.
+    if successful_ambiguous_results.len() > 0 {
+        if successful_ambiguous_results.len() != 1 {
+            // There are too many results all claiming to be unambiguous.
+            // The datatype was explicitly requested by the code but
+            // couldn't be built. Throw an error.
+            let error_info = DisplayCodeInfo::new(
+                line_number,
+                first_token_index,
+                last_token_index as i32,
+                vec![],
+                DisplayCodeKind::InitialError
+            );
+
+            let mut message = String::from("There are multiple ways to decode this object: ");
+
+            for result in successful_ambiguous_results {
+                let type_uuid = result.type_uuid;
+                let type_with_uuid = object_types.iter().filter(|&x| x.0.type_uuid == type_uuid).collect::<Vec<&(ObjectType, Box<T>)>>().iter().nth(0).unwrap().0.clone();
+                message += type_with_uuid.name.clone().as_str();
+                message += "  ";
+            }
+
+            let error = NotificationInfo::new(
+                "Statement Ambiguous".to_string(),
+                message,
+                vec![error_info],
+            );
+
+            line_map.display_error(error);
+
+        } else {
+            //let token = Token::Object(successful_ambiguous_results[0].clone(), result_position);
+            //return Some(token)
+            return Some(successful_ambiguous_results[0].clone())
+        }
+    }
+
+    None
 }
 
 
