@@ -1,4 +1,5 @@
 use colorize::AnsiColor;
+use termimad;
 
 
 #[derive(Clone, Debug)]
@@ -231,7 +232,7 @@ impl DisplayCodeInfo {
         for annotation in self.annotations.clone() {
             print!("{}", leading_text);
 
-            println!("{} {}", "=".blue(), annotation);
+            println!("{} {}", "=".blue(), termimad::inline(annotation.as_str()));
         }
 
         println!("{}", separation_string);

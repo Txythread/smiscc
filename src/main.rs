@@ -27,8 +27,8 @@ fn main() {
         1,
         1,
         vec![
-            "note: This is an example note".to_string(),
-            "hint: Change this variable".to_string(),
+            "**note:** This is an example note".to_string(),
+            "*hint:* Change this variable".to_string(),
         ],
         DisplayCodeKind::InitialError
     );
