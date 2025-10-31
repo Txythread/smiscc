@@ -2,7 +2,7 @@ use colorize::AnsiColor;
 
 
 #[derive(Clone, Debug)]
-pub struct LineMap{
+pub struct LineMap {
     pub lines: Vec<Line>,
     pub warning_count: u32,
     pub error_count: u32,
@@ -15,7 +15,6 @@ impl LineMap{
     }
 
     pub fn display_warning(&mut self, info: NotificationInfo){
-
         self.warning_count += 1;
 
         println!("{} {}", "Warning:".bold().yellow(), info.title.yellow());
@@ -28,6 +27,15 @@ impl LineMap{
 
         println!("{}", info.message);
         println!()
+    }
+
+    pub fn copy_meta_data(&mut self) -> Self {
+        let mut line_map = LineMap::new();
+
+        line_map.error_count = self.error_count;
+        line_map.warning_count = self.warning_count;
+
+        line_map
     }
 
     pub fn display_error(&mut self, info: NotificationInfo){
@@ -48,6 +56,42 @@ impl LineMap{
 
     pub fn new() -> Self {
         LineMap{lines: Vec::new(), warning_count: 0, error_count: 0 }
+    }
+
+
+    /// Gets the position of tokens in a line given their indexes.
+    ///
+    /// If the end index is negative, this means everything in the
+    /// line after the start index.
+    pub fn get_position_of_tokens(&self, line: u32, start_pos: u16, end_pos: i16) -> TokenPosition{
+        let start_token_start = self.lines[line as usize].tokens_positions[start_pos as usize].start;
+
+        let mut end_pos = end_pos;
+        // If the end token is negative, this means the entire line should be underlined
+        if end_pos.is_negative(){
+            end_pos = (self.lines[line as usize].tokens_positions.len() - 1) as i16;
+        }
+
+        let end_token_position = self.lines[line as usize].tokens_positions[end_pos as usize].clone();
+        let end_token_end = end_token_position.start + end_token_position.length;
+        let total_length = end_token_end - start_token_start;
+
+        TokenPosition::new(start_pos, total_length)
+    }
+
+
+    /// Generates a line map with several lines that
+    /// with tokens that should be long enough for most
+    /// testing purposes.
+    #[cfg(test)]
+    pub fn test_map() -> Self {
+        let mut map = Self::new();
+
+        for _ in 0..100 {
+            map.add_line(Line::test_line());
+        }
+
+        map
     }
 }
 
@@ -220,6 +264,21 @@ impl Line {
     pub fn new(source_file_name: String, line_number: u32, tokens_positions: Vec<TokenPosition>, indent: u16, trimmed_contents: String) -> Self {
         Line { source_file_name, line_number, tokens_positions, indent, trimmed_contents }
     }
+
+    /// Generates a long line (100 tokens) for testing purposes
+    #[cfg(test)]
+    pub fn test_line() -> Self {
+        let mut tokens: Vec<TokenPosition> = Vec::new();
+
+        for _ in 0..100{
+            tokens.push(TokenPosition::new(0, 0));
+        }
+
+        let line = Self::new("n/a".to_string(), 0, tokens, 0, String::new());
+
+        line
+    }
+
 }
 
 

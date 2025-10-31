@@ -287,6 +287,7 @@ mod tests {
             "let a = 10; // This sets a to 10",
             "let b = a /* 10 */ + 3; b -= 1;",
             "let c = \"Hello, world!\";",
+            "let d = \"\";"
         ];
 
         let expected = vec![
@@ -294,6 +295,7 @@ mod tests {
             vec!["let", "b", "=", "a", "+", "3"],
             vec!["b", "-", "=", "1"],
             vec!["let", "c", "=", "\"", "Hello, world!", "\""],
+            vec!["let", "d", "=", "\"", "\""],
         ];
 
         let actual = split(lines.join("\n"));

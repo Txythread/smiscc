@@ -51,7 +51,7 @@ pub mod tokenization_options {
     /// it should exit it when it is in that mode.
     ///
     /// This is used in the splitter
-    pub const ESCAPE_PREVENTING_CHARACTERS: [(char, char); 2] = [('\"', '\"'), ('\'', '\'')];
+    pub const ESCAPE_PREVENTING_CHARACTERS: [(char, char); 2] = [STRING_MARKERS, ('\'', '\'')];
 
 
     /// ### Characters that will trigger a new logical line
@@ -105,6 +105,13 @@ pub mod tokenization_options {
     /// **Note:** Don't use the same character here twice as that would lead
     /// to undefined & unpredictable behaviour.
     pub const LOGICAL_PARENTHESES: [(char, char); 4] = [('{', '}'), ('(', ')'), ('[', ']'), ('<', '>')];
+
+    /// ### String Markers
+    ///
+    /// The tokens below can start (0) or end (1) a string in the user's code.
+    ///
+    /// **Note:** Those can be the same.
+    pub const STRING_MARKERS: (char, char) = ('\"', '\"');
 
 
     /// ### Integer Bases
