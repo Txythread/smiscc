@@ -245,7 +245,7 @@ impl DisplayCodeInfo {
 pub enum DisplayCodeKind{
     InitialError,                    // The error the message is about
     InitialWarning,                 // The warning the message is about
-    AdditionalInfo,                 // Infos (for example function definitions when parameters are
+    AdditionalInfo,                 // Infos (for example function definitions when parameters are)
                                     // not called directly.
 }
 
