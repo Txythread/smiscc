@@ -77,7 +77,7 @@ impl LineMap{
         let end_token_end = end_token_position.start + end_token_position.length;
         let total_length = end_token_end - start_token_start;
 
-        TokenPosition::new(start_pos, total_length)
+        TokenPosition::new(start_token_start, total_length)
     }
 
 

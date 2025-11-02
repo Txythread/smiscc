@@ -2,9 +2,12 @@
 
 /// ### Defines how code gets split into tokens and how those tokens are then classified.
 ///
-/// These infos are used in both: [the splitter](crate::compiler::splitter::split) and [the tokenizer (/classifier)](crate::compiler::tokenizer::tokenize).
+/// These infos are used in both: [the splitter](crate::compiler::splitter::split) and
+/// [the tokenizer (/classifier)](crate::compiler::tokenizer::tokenize).
 pub mod tokenization_options {
     use crate::util::math::Base;
+    use strum_macros::{AsRefStr, EnumIter, EnumString};
+    use strum::IntoEnumIterator;
 
     /// ### Characters that split tokens but are not themselves supposed to appear in the result
     ///
@@ -86,17 +89,6 @@ pub mod tokenization_options {
     /// **Note:** Only pass things that will get parsed as a single token
     /// here. So no `let mut` statements are allowed here with normal parsing.
     pub const MODIFIABLE_OBJECT_DECLARATION_KEYWORD: &str = "var";
-/*
-    RESERVED FOR LATER PURPOSES
-
-    /// ### Default Datatypes
-    ///
-    /// Datatypes listed here will be preferred when no datatype explicitly
-    /// claims to be the one in question whilst generating the object.
-    ///
-    /// **Note:** Don't put any type in here that might conflict with another
-    /// one.
-    pub const DEFAULT_DATATYPES: [dyn Buildable; 1] = [];*/
 
     /// ### Logical Parentheses
     ///
@@ -124,6 +116,32 @@ pub mod tokenization_options {
     /// the file. If a datatype has no necessary prefix (like decimal),
     /// it has to be listed in the end of the list.
     pub const BASES: [Base; 4] = [Base::BINARY, Base::OCTAL, Base::HEXADECIMAL, Base::DECIMAL];
+
+
+    /// Holds all keywords that, when split by the
+    /// [splitter](crate::compiler::splitter::split) as a single string,
+    /// should be classified separately.
+    /// #[derive(EnumString, AsRefStr, Debug)]
+    #[derive(AsRefStr, Clone, Debug, EnumString, EnumIter, PartialEq)]
+    pub enum Keyword {
+        /// ### Creates an Unmodifiable "Variable"
+        ///
+        /// This is similar to Swift's "let"-statement & Rust's "let"
+        /// without mod. The action allocates data on the heap and can
+        /// only be performed inside a function.
+        #[strum(serialize = "let")]
+        Let,
+
+        /// ### Creates a Modifiable Variable
+        ///
+        /// This is similar to Swift's "var"-statement & Rust's "let mut".
+        /// The action allocates data on the heap and can only be performed
+        /// inside a function.
+        #[strum(serialize = "var")]
+        Var,
+
+
+    }
 }
 
 

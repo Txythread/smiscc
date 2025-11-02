@@ -1,10 +1,9 @@
-use std::collections::HashMap;
-use crate::compiler::data_types::{BuildResult, Buildable, IntegerType};
-use crate::compiler::line_map::{DisplayCodeInfo, LineMap, TokenPosition};
-use crate::compiler::object::{Object, ObjectType};
+use crate::compiler::data_types::{Buildable, IntegerType};
+use crate::compiler::line_map::{ LineMap, TokenPosition};
 use crate::compiler::line_map::*;
 use crate::config::tokenization_options::*;
-use crate::util::math::ArithmeticOperation;
+use crate::config::tokenization_options::Keyword;
+use strum::IntoEnumIterator;
 
 /// Turn the split string into tokens ("classify" them)
 ///
@@ -32,9 +31,11 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
 
         let mut line_tokens: Vec<Token> = Vec::new();
 
-        for y in line.iter().enumerate() {
+        'token_loop: for y in line.iter().enumerate() {
             let token = y.1.clone();
             let token_number = y.0.clone();
+            let current_token_pos = line_map.get_position_of_tokens(line_number as u32, token_number as u16, token_number as i16);
+
 
             // Append to string if necessary or close it.
             if let Some(string) = current_string.clone() {
@@ -62,6 +63,20 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
 
                 continue;
             }
+
+
+            // Look if it's a keyword
+            for keyword in Keyword::iter() {
+                let keyword: Keyword = keyword;
+
+                if keyword.as_ref() == token {
+                    let token = Token::KeywordType(keyword, current_token_pos.clone());
+
+                    line_tokens.push(token);
+                    continue 'token_loop;
+                }
+
+            }
         }
 
         lines.push(line_tokens);
@@ -72,40 +87,27 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
 
 
 
-/// ### Generates Unclassified Tokens up to the Delimiter
-///
-/// [Tokens](Token) get generated from the original code (`from`)
-/// until the delimiter is found or the line ended (when the
-/// delimiter is not enforced, in which case an error would be
-/// thrown).
-///
-/// If the delimiting tokens appears to be a parenthesis (defined
-/// [here](LOGICAL_PARENTHESES)), it will be ignored once if it was
-/// opened another time within the function.
-fn generate_unclassified_tokens(from: Vec<String>, delimiting_token: String, enforce_delimiter: bool, line_map: &mut LineMap) -> Option<Vec<Token>> {
-todo!()
-}
-
-
-
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     /// A block that has yet to be classified
+    /// This should only appear **inside** the tokenizer & **never
+    /// returned anywhere else**.
     UnspecifiedString(String, TokenPosition),
 
     /// Something that has been classified as a string
     StringLiteral(String, TokenPosition),
 
     /// A text that could be classified (and converted to) an integer.
-    Integer(i128, IntegerType, TokenPosition),
+    IntegerLiteral(i128, Option<IntegerType>, TokenPosition),
 
-    /// A keyword changing the interpretation of the entire line (such
-    /// as "var", "let" or "if").
-    BehaviouralKeyword(String, TokenPosition),
+    /// A text that could be classified as being either true or false.
+    BoolLiteral(bool, TokenPosition),
 
-    /// A keyword changing minor parts about interpretation (such as
-    /// "as".
-    LogicalKeyword(String, TokenPosition),
+    /// A keyword (such "var", "let" or "if").
+    KeywordType(Keyword, TokenPosition),
+
+    /// Texts Identifying Variables, constants, ...
+    Identifier(String, TokenPosition),
 }
 
 impl Token {
@@ -113,9 +115,10 @@ impl Token {
         match self {
             Token::UnspecifiedString(_, pos) => { pos.clone() }
             Token::StringLiteral(_, pos) => { pos.clone() }
-            Token::Integer(_, _, pos) => { pos.clone() }
-            Token::BehaviouralKeyword(_, pos) => { pos.clone() }
-            Token::LogicalKeyword(_, pos) => { pos.clone() }
+            Token::IntegerLiteral(_, _, pos) => { pos.clone() }
+            Token::BoolLiteral(_, pos) => { pos.clone() }
+            Token::KeywordType(_, pos) => { pos.clone() }
+            Token::Identifier(_, pos) => { pos.clone() }
         }
     }
 }
@@ -128,6 +131,8 @@ mod tests {
     use crate::compiler::object::{Object, ObjectType};
     use crate::compiler::tokenizer::{tokenize, Token};
     use crate::compiler::object::generate_object;
+    use crate::compiler::tokenizer::Token::KeywordType;
+    use crate::config::tokenization_options::Keyword;
 
     #[test]
     fn test_generate_object() {
@@ -151,12 +156,14 @@ mod tests {
             vec!["\"".to_string(), "Was geht ab...".to_string(), "\"".to_string()],
             vec!["\"".to_string(), "".to_string(), "\"".to_string()],
             vec!["\"".to_string(), "... in Rumänien?".to_string(), "\"".to_string()],
+            vec!["let".to_string(), "Was geht".to_string(), "var".to_string()]
         ];
 
         let expected_output = vec![
             vec![Token::StringLiteral("Was geht ab...".to_string(), TokenPosition::new(0, 0 /*ends with 0 now because the tokens don't match the input*/))],
             vec![Token::StringLiteral("".to_string(), TokenPosition::new(0, 0))],
             vec![Token::StringLiteral("... in Rumänien?".to_string(), TokenPosition::new(0, 0))],
+            vec![Token::KeywordType(Keyword::Let, TokenPosition::new(0, 0)), Token::KeywordType(Keyword::Var, TokenPosition::new(0, 0))],
         ];
 
         let actual_output = tokenize(input_tokens, &mut LineMap::test_map());
