@@ -107,7 +107,7 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
             // Check if it's an integer literal
             {
                 let integer_value = generate_integer(
-                    Token::UnspecifiedString(token, current_token_pos.clone()),
+                    Token::UnspecifiedString(token.clone(), current_token_pos.clone()),
                     integer_types.clone(),
                     line_number as u32,
                     token_number as u32,
@@ -119,6 +119,10 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
                     continue 'token_loop;
                 }
             }
+
+            // As it's no other option, it can only be an identifier.
+            let identifier = Token::Identifier(token.clone(), current_token_pos.clone());
+            line_tokens.push(identifier);
         }
 
         lines.push(line_tokens);
@@ -282,7 +286,6 @@ mod tests {
     use crate::compiler::object::{Object, ObjectType};
     use crate::compiler::tokenizer::{build_integer_types, generate_integer, tokenize, Token};
     use crate::compiler::object::generate_object;
-    use crate::compiler::tokenizer::Token::KeywordType;
     use crate::config::tokenization_options::Keyword;
 
     #[test]
@@ -298,29 +301,29 @@ mod tests {
 
         let result = generate_object(&mut vec![token], object_types, &mut line_map, 0, 0, 0);
 
-        assert_eq!(result, /*Some(Token::Object(*/Some(Object::new(i32_type.type_uuid.clone(), String::new(), Some(10))/*, TokenPosition::new(0, 5)))*/))
+        assert_eq!(result, Some(Object::new(i32_type.type_uuid.clone(), String::new(), Some(10))/*, TokenPosition::new(0, 5)))*/))
     }
 
     #[test]
     fn test_tokenization() {
         let input_tokens = vec![
-            vec!["\"".to_string(), "Was geht ab...".to_string(), "\"".to_string()],
-            vec!["\"".to_string(), "".to_string(), "\"".to_string()],
-            vec!["\"".to_string(), "... in Rumänien?".to_string(), "\"".to_string()],
-            vec!["let".to_string(), "Was geht".to_string(), "var".to_string()],
-            vec!["var".to_string(), "true".to_string()],
-            vec!["var".to_string(), "10".to_string()],
-            vec!["var".to_string(), "10u32".to_string()],
+            /*0*/vec!["\"".to_string(), "Was geht ab...".to_string(), "\"".to_string()],
+            /*1*/vec!["\"".to_string(), "".to_string(), "\"".to_string()],
+            /*2*/vec!["\"".to_string(), "... in Rumänien?".to_string(), "\"".to_string()],
+            /*3*/vec!["let".to_string(), "Was geht".to_string(), "var".to_string()],
+            /*4*/vec!["var".to_string(), "true".to_string()],
+            /*5*/vec!["var".to_string(), "10".to_string()],
+            /*6*/vec!["var".to_string(), "10u32".to_string()],
         ];
 
         let expected_output = vec![
-            vec![Token::StringLiteral("Was geht ab...".to_string(), TokenPosition::new(0, 0 /*ends with 0 now because the tokens don't match the input*/))],
-            vec![Token::StringLiteral("".to_string(), TokenPosition::new(0, 0))],
-            vec![Token::StringLiteral("... in Rumänien?".to_string(), TokenPosition::new(0, 0))],
-            vec![Token::KeywordType(Keyword::Let, TokenPosition::new(0, 0)), Token::KeywordType(Keyword::Var, TokenPosition::new(0, 0))],
-            vec![Token::KeywordType(Keyword::Var, TokenPosition::new(0, 0)), Token::BoolLiteral(true, TokenPosition::new(0, 0))],
-            vec![Token::KeywordType(Keyword::Var, TokenPosition::new(0, 0)), Token::IntegerLiteral(10, None, TokenPosition::new(0, 0))],
-            vec![Token::KeywordType(Keyword::Var, TokenPosition::new(0, 0)), Token::IntegerLiteral(10, Some(IntegerType::Unsigned32BitInteger), TokenPosition::new(0, 0))],
+            /*0*/vec![Token::StringLiteral("Was geht ab...".to_string(), TokenPosition::new(0, 0 /*ends with 0 now because the tokens don't match the input*/))],
+            /*1*/vec![Token::StringLiteral("".to_string(), TokenPosition::test_value())],
+            /*2*/vec![Token::StringLiteral("... in Rumänien?".to_string(), TokenPosition::test_value())],
+            /*3*/vec![Token::KeywordType(Keyword::Let, TokenPosition::test_value()), Token::Identifier("Was geht".to_string(), TokenPosition::test_value()), Token::KeywordType(Keyword::Var, TokenPosition::test_value())],
+            /*4*/vec![Token::KeywordType(Keyword::Var, TokenPosition::test_value()), Token::BoolLiteral(true, TokenPosition::test_value())],
+            /*5*/vec![Token::KeywordType(Keyword::Var, TokenPosition::test_value()), Token::IntegerLiteral(10, None, TokenPosition::test_value())],
+            /*6*/vec![Token::KeywordType(Keyword::Var, TokenPosition::test_value()), Token::IntegerLiteral(10, Some(IntegerType::Unsigned32BitInteger), TokenPosition::test_value())],
         ];
 
         let actual_output = tokenize(input_tokens, &mut LineMap::test_map());
@@ -344,7 +347,7 @@ mod tests {
 
         for case in test_cases.iter().enumerate() {
             let result = generate_integer(
-                Token::UnspecifiedString(case.1.to_string(), TokenPosition::new(0, 0)),
+                Token::UnspecifiedString(case.1.to_string(), TokenPosition::test_value()),
                 integer_types.clone(),
                 0,
                 0,
