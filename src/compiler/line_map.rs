@@ -150,7 +150,7 @@ impl DisplayCodeInfo {
     pub fn print(&mut self, line_map: LineMap){
         let line = line_map.lines[self.line_number_in_map as usize].clone();
         
-        let mut line_number_string = format!("{} |", line.line_number);
+        let line_number_string = format!("{} |", line.line_number);
 
 
         // Print the file name

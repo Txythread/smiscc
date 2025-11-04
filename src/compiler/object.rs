@@ -59,7 +59,7 @@ pub fn generate_object<T: Buildable + ?Sized>(tokens: &mut Vec<Token>, object_ty
     // Was geht ab in Rumänien?
 
     for object_type in object_types.iter().clone() {
-        let object_type = object_type.clone();
+        let object_type = object_type;
         let parent_type = object_type.0.clone();
         let build_result = object_type.1.build(tokens.clone(), parent_type);
 

@@ -22,7 +22,7 @@ fn main() {
     ));
 
 
-    let mut info = DisplayCodeInfo::new(
+    let info = DisplayCodeInfo::new(
         0,
         1,
         1,

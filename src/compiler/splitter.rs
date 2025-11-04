@@ -48,7 +48,7 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
         let mut escape_preventing_char_end: Option<char> = None;
 
         // Remove the comments
-        let mut trimmed_line = trim(line, &mut in_block_comment);
+        let trimmed_line = trim(line, &mut in_block_comment);
 
         // Skip ahead in case the trimmed line contains nothing.
         if trimmed_line.is_empty() { continue; }

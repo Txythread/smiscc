@@ -163,7 +163,7 @@ fn build_integer_types() -> Vec<(IntegerType, ObjectType)> {
 /// a zero with an unspecified type will be returned. Error displaying is
 /// handled automatically.
 fn generate_integer(text: Token, types: Vec<(IntegerType, ObjectType)>, line_number: u32, token_number: u32, line_map: &mut LineMap) -> Option<(i128, Option<IntegerType>)> {
-    let mut unambiguous_result: Option<(i128, IntegerType)> = None;
+    let unambiguous_result: Option<(i128, IntegerType)> = None;
 
     for kind in types.iter().enumerate() {
         let result = kind.1.0.build(vec![text.clone()], types[kind.0].1.clone());
