@@ -122,6 +122,8 @@ pub mod tokenization_options {
     /// [splitter](crate::compiler::splitter::split) as a single string,
     /// should be classified separately.
     /// #[derive(EnumString, AsRefStr, Debug)]
+    ///
+    /// **Note:** This is **not** a place for values such as booleans, numbers, etc.
     #[derive(AsRefStr, Clone, Debug, EnumString, EnumIter, PartialEq)]
     pub enum Keyword {
         /// ### Creates an Unmodifiable "Variable"
@@ -139,9 +141,16 @@ pub mod tokenization_options {
         /// inside a function.
         #[strum(serialize = "var")]
         Var,
-
-
     }
+
+    /// ### Names of the Boolean States
+    ///
+    /// Those are usually "true" & "false" or "yes" & "no".
+    /// The first state maps to a physical "1", the second to a "0".
+    ///
+    /// **Note to future self:** Add "maybe" state like in
+    /// [DreamBerd/Gulf of Mexico](https://github.com/TodePond/GulfOfMexico).
+    pub const BOOL_STATE_NAMES: (&str, &str) = ("true", "false");
 }
 
 

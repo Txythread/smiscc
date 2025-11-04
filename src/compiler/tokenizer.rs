@@ -75,7 +75,24 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
                     line_tokens.push(token);
                     continue 'token_loop;
                 }
+            }
+            
+            // Maybe it's a boolean value?
+            let true_keyword = BOOL_STATE_NAMES.0;
+            let false_keyword = BOOL_STATE_NAMES.1;
+            
+            if token == true_keyword {
+                let token = Token::BoolLiteral(true, current_token_pos.clone());
 
+                line_tokens.push(token);
+                continue 'token_loop;
+            }
+
+            if token == true_keyword {
+                let token = Token::BoolLiteral(true, current_token_pos.clone());
+
+                line_tokens.push(token);
+                continue 'token_loop;
             }
         }
 
@@ -156,7 +173,8 @@ mod tests {
             vec!["\"".to_string(), "Was geht ab...".to_string(), "\"".to_string()],
             vec!["\"".to_string(), "".to_string(), "\"".to_string()],
             vec!["\"".to_string(), "... in Rumänien?".to_string(), "\"".to_string()],
-            vec!["let".to_string(), "Was geht".to_string(), "var".to_string()]
+            vec!["let".to_string(), "Was geht".to_string(), "var".to_string()],
+            vec!["var".to_string(), "true".to_string()],
         ];
 
         let expected_output = vec![
@@ -164,6 +182,7 @@ mod tests {
             vec![Token::StringLiteral("".to_string(), TokenPosition::new(0, 0))],
             vec![Token::StringLiteral("... in Rumänien?".to_string(), TokenPosition::new(0, 0))],
             vec![Token::KeywordType(Keyword::Let, TokenPosition::new(0, 0)), Token::KeywordType(Keyword::Var, TokenPosition::new(0, 0))],
+            vec![Token::KeywordType(Keyword::Var, TokenPosition::new(0, 0)), Token::BoolLiteral(true, TokenPosition::new(0, 0))],
         ];
 
         let actual_output = tokenize(input_tokens, &mut LineMap::test_map());
