@@ -151,6 +151,16 @@ pub mod tokenization_options {
     /// **Note to future self:** Add "maybe" state like in
     /// [DreamBerd/Gulf of Mexico](https://github.com/TodePond/GulfOfMexico).
     pub const BOOL_STATE_NAMES: (&str, &str) = ("true", "false");
+
+
+    ////////////////////////////////////////////////
+    ///////////////     Operators    ///////////////
+    ////////////////////////////////////////////////
+    //
+    // Note that operators are defined in
+    // crate::util::operator under src/util/operator.rs.
+    // There, the symbol for addition, subtraction,
+    // multiplication, ..., can be changed.
 }
 
 
