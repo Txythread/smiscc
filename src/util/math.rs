@@ -79,6 +79,7 @@ impl Base {
 /// Potential result from trying to generate integers from strings
 /// using [bases](Base).
 #[derive(Debug, PartialEq)]
+#[derive(Clone)]
 pub enum ConversionError {
     /// There were characters that had no meaning in the base.
     UnknownCharacters(Base),
