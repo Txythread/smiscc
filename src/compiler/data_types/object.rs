@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use crate::compiler::data_types::Buildable;
+use crate::compiler::data_types::data_types::Buildable;
 use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, LineMap, NotificationInfo, TokenPosition};
 use crate::compiler::tokenizer::Token;
 

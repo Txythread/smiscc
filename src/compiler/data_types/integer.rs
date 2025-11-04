@@ -1,93 +1,108 @@
-use crate::compiler::object::{Object, ObjectType, Trait};
-use crate::compiler::tokenizer::Token;
-use crate::config::target::*;
-use crate::util::math::*;
 use uuid::Uuid;
+use crate::compiler::data_types::data_types::{BuildResult, Buildable, ObjectBuildingError};
+use crate::compiler::data_types::object::{Object, ObjectType, Trait};
+use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, LineMap, NotificationInfo};
+use crate::compiler::tokenizer::Token;
+use crate::config::target::ADDRESS_INTEGER_TYPE;
+use crate::util::math::convert_to_int;
 
+/// Builds all integer subtypes and returns them with their corresponding
+/// types
+pub fn build_integer_types() -> Vec<(IntegerType, ObjectType)> {
+    let types = vec![
+        IntegerType::Unsigned32BitInteger,
+        IntegerType::Signed32BitInteger,
+        IntegerType::Unsigned16BitInteger,
+        IntegerType::Signed16BitInteger,
+        IntegerType::Unsigned8BitInteger,
+        IntegerType::Signed8BitInteger,
+    ];
 
-/// ### Generates data types via tokens.
-/// A struct that makes a data type able to generate
-/// instances of itself from code in the form of an
-/// [object](Object).
-/// This also means that it has to be able to build
-/// an [object type](ObjectType) that describes what
-/// it can do and is referenced by all its children
-/// (the objects) by its uuid.
-pub trait Buildable {
-    /// ### Create an object with tokens
-    ///
-    /// Try to create an [object](Object) given some tokens,
-    /// look if this data type was explicitly requested by the
-    /// user (i.g. `25u8`) or not (i.g. `25`). And generate an
-    /// error if it fails regardless of it should've been built
-    /// in the first place. The message should only be shown if
-    /// `ambiguous` (in the [result](BuildResult)) is set to
-    /// false.
-    ///
-    /// **Note:** The originally generated object type needs to
-    /// be re-supplied as the uuid is required again. Don't
-    /// re-generate it for this purpose, as the uuid might differ.
-    fn build(&self, tokens: Vec<Token>, parent_type: ObjectType) -> BuildResult;
+    let mut types_and_built_object_types : Vec<(IntegerType, ObjectType)> = Vec::new();
 
-    /// ### Create an object type
-    ///
-    /// Create an [object type](ObjectType), which is necessary
-    /// for building instances of the type.
-    fn build_type(&self) -> ObjectType;
-}
-
-
-/// The result after trying to generate a [buildable](Buildable) object.
-#[derive(Clone)]
-pub struct BuildResult {
-    /// ### The Resulting object or an error
-    ///
-    /// An error is not necessarily negative.
-    /// If the result is ambiguous, an error might not
-    /// be displayed at all.
-    pub result: Result<Object, ObjectBuildingError>,
-
-
-    /// ### If it is this data type for sure.
-    ///
-    /// If there is no other way to way of building an object,
-    /// it's clear from the code that that's the correct
-    /// interpretation, it's unambiguous, so to say, this is
-    /// set to false. If building that object from that builder
-    /// is possible, but not clearly specified, this is true.
-    ///
-    /// This might be set to unambiguous although no result
-    /// exists when it should be that data type for sure,
-    /// but is malformed.
-    pub ambiguous: bool,
-}
-
-
-impl BuildResult {
-    pub fn new(result: Result<Object, ObjectBuildingError>, ambiguous: bool) -> Self {
-        BuildResult { result, ambiguous }
+    for kind in types {
+        let object_type = kind.build_type();
+        types_and_built_object_types.push((kind, object_type));
     }
+
+    types_and_built_object_types
 }
 
 
-/// Contains information about an error that arose from trying
-/// to build an object via the [buildable trait](Buildable)
-#[derive(Debug, Clone)]
-pub struct ObjectBuildingError {
-    /// The name of the object that should've been built.
-    pub expected_object: String,
+/// Try building an integer using the provided types. If none of these
+/// can generate an explicit/unambiguous result, no type info will be
+/// provided ("None" in that field) in case an integer can still be
+/// generated.
+/// If no value could be generated, but it's clear that one should've been,
+/// a zero with an unspecified type will be returned. Error displaying is
+/// handled automatically.
+pub fn generate_integer(text: Token, types: Vec<(IntegerType, ObjectType)>, line_number: u32, token_number: u32, line_map: &mut LineMap) -> Option<(i128, Option<IntegerType>)> {
+    let unambiguous_result: Option<(i128, IntegerType)> = None;
 
-    /// The message displayed as an error
-    pub message: String,
-}
+    for kind in types.iter().enumerate() {
+        let result = kind.1.0.build(vec![text.clone()], types[kind.0].1.clone());
 
-impl ObjectBuildingError {
-    pub fn new(expected_object: String, message: String) -> Self {
-        ObjectBuildingError { expected_object, message }
+        if result.ambiguous { continue; }
+
+        if result.result.is_err() {
+            let error = result.result.unwrap_err();
+
+            let display_info = DisplayCodeInfo::new(
+                line_number,
+                token_number,
+                token_number as i32,
+                vec![],
+                DisplayCodeKind::InitialError,
+            );
+
+            let notification = NotificationInfo::new(
+                "Integer Couldn't Be Built".to_string(),
+                error.message,
+                vec![display_info],
+            );
+
+            line_map.display_error(notification);
+
+            break;
+        }
+
+        // This was a success
+        if let Some(integer_value) = result.result.unwrap().initial_content {
+            return Some((integer_value, Some(kind.1.0.clone())))
+        }
     }
+
+    // Generate a value with no specified type
+    if let Some(integer_value) = convert_to_int(text.get_raw_text().unwrap()) {
+        if let Some(error) = integer_value.clone().err() {
+            let display_info = DisplayCodeInfo::new(
+                line_number,
+                token_number,
+                token_number as i32,
+                vec![],
+                DisplayCodeKind::InitialError,
+            );
+
+            let notification = NotificationInfo::new(
+                "Unspecified Integer Couldn't Be Built".to_string(),
+                error.message(),
+                vec![display_info],
+            );
+
+            line_map.display_error(notification);
+
+            // Return 0 as the value should be an integer value,
+            // but it couldn't be decoded. This prevents unwanted
+            // errors.
+            return Some((0, None));
+        }
+
+        let integer_value = integer_value.unwrap();
+        return Some((integer_value, None));
+    }
+
+    None
 }
-
-
 
 /// An enum that holds information about any basic integer type.
 #[derive(Clone, Debug, PartialEq)]
@@ -279,7 +294,8 @@ impl Buildable for IntegerType {
 
 #[cfg(test)]
 mod tests {
-    use crate::compiler::data_types::{Buildable, IntegerType};
+    use crate::compiler::data_types::data_types::{Buildable};
+    use crate::compiler::data_types::integer::*;
     use crate::compiler::line_map::TokenPosition;
     use crate::compiler::tokenizer::Token;
 

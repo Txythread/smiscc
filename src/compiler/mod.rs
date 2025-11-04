@@ -4,7 +4,6 @@ pub mod data_types;
 pub mod equation_operation;
 pub mod intermediate_representation;
 pub mod line_map;
-pub mod object;
 pub mod operation_solver;
 pub mod splitter;
 pub mod tokenizer;

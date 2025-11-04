@@ -1,10 +1,12 @@
-use crate::compiler::data_types::{Buildable, IntegerType};
+use crate::compiler::data_types::data_types::Buildable;
+use crate::compiler::data_types::integer::*;
 use crate::compiler::line_map::{ LineMap, TokenPosition};
 use crate::compiler::line_map::*;
 use crate::config::tokenization_options::*;
 use crate::config::tokenization_options::Keyword;
+use crate::compiler::data_types::integer::*;
 use strum::IntoEnumIterator;
-use crate::compiler::object::ObjectType;
+use crate::compiler::data_types::object::ObjectType;
 use crate::util::math::convert_to_int;
 
 /// Turn the split string into tokens ("classify" them)
@@ -132,103 +134,7 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
 }
 
 
-/// Builds all integer subtypes and returns them with their corresponding
-/// types
-fn build_integer_types() -> Vec<(IntegerType, ObjectType)> {
-    let types = vec![
-        IntegerType::Unsigned32BitInteger,
-        IntegerType::Signed32BitInteger,
-        IntegerType::Unsigned16BitInteger,
-        IntegerType::Signed16BitInteger,
-        IntegerType::Unsigned8BitInteger,
-        IntegerType::Signed8BitInteger,
-    ];
 
-    let mut types_and_built_object_types : Vec<(IntegerType, ObjectType)> = Vec::new();
-
-    for kind in types {
-        let object_type = kind.build_type();
-        types_and_built_object_types.push((kind, object_type));
-    }
-
-    types_and_built_object_types
-}
-
-
-/// Try building an integer using the provided types. If none of these
-/// can generate an explicit/unambiguous result, no type info will be
-/// provided ("None" in that field) in case an integer can still be
-/// generated.
-/// If no value could be generated, but it's clear that one should've been,
-/// a zero with an unspecified type will be returned. Error displaying is
-/// handled automatically.
-fn generate_integer(text: Token, types: Vec<(IntegerType, ObjectType)>, line_number: u32, token_number: u32, line_map: &mut LineMap) -> Option<(i128, Option<IntegerType>)> {
-    let unambiguous_result: Option<(i128, IntegerType)> = None;
-
-    for kind in types.iter().enumerate() {
-        let result = kind.1.0.build(vec![text.clone()], types[kind.0].1.clone());
-
-        if result.ambiguous { continue; }
-
-        if result.result.is_err() {
-            let error = result.result.unwrap_err();
-
-            let display_info = DisplayCodeInfo::new(
-                line_number,
-                token_number,
-                token_number as i32,
-                vec![],
-                DisplayCodeKind::InitialError,
-            );
-
-            let notification = NotificationInfo::new(
-                "Integer Couldn't Be Built".to_string(),
-                error.message,
-                vec![display_info],
-            );
-
-            line_map.display_error(notification);
-
-            break;
-        }
-
-        // This was a success
-        if let Some(integer_value) = result.result.unwrap().initial_content {
-            return Some((integer_value, Some(kind.1.0.clone())))
-        }
-    }
-
-    // Generate a value with no specified type
-    if let Some(integer_value) = convert_to_int(text.get_raw_text().unwrap()) {
-        if let Some(error) = integer_value.clone().err() {
-            let display_info = DisplayCodeInfo::new(
-                line_number,
-                token_number,
-                token_number as i32,
-                vec![],
-                DisplayCodeKind::InitialError,
-            );
-
-            let notification = NotificationInfo::new(
-                "Unspecified Integer Couldn't Be Built".to_string(),
-                error.message(),
-                vec![display_info],
-            );
-
-            line_map.display_error(notification);
-
-            // Return 0 as the value should be an integer value,
-            // but it couldn't be decoded. This prevents unwanted
-            // errors.
-            return Some((0, None));
-        }
-
-        let integer_value = integer_value.unwrap();
-        return Some((integer_value, None));
-    }
-
-    None
-}
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
@@ -281,11 +187,12 @@ impl Token {
 
 #[cfg(test)]
 mod tests {
-    use crate::compiler::data_types::{Buildable, IntegerType};
+    use crate::compiler::data_types::data_types::{Buildable};
+    use crate::compiler::data_types::integer::IntegerType;
     use crate::compiler::line_map::{LineMap, TokenPosition};
-    use crate::compiler::object::{Object, ObjectType};
+    use crate::compiler::data_types::object::{Object, ObjectType};
     use crate::compiler::tokenizer::{build_integer_types, generate_integer, tokenize, Token};
-    use crate::compiler::object::generate_object;
+    use crate::compiler::data_types::object::generate_object;
     use crate::config::tokenization_options::Keyword;
 
     #[test]

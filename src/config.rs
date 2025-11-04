@@ -181,7 +181,7 @@ pub mod misc {
 /// This includes options such as which integer numbers are allowed,
 /// which ones are standard, etc.
 pub mod target {
-    use crate::compiler::data_types::IntegerType;
+    use crate::compiler::data_types::integer::IntegerType;
 
     /// ### The integer type used for addresses
     ///
