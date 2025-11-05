@@ -164,7 +164,7 @@ impl IntegerType {
     /// ### The name used for errors & warnings.
     ///
     /// This should usually correlate with
-    /// [get_code_name](Integer::get_code_name)
+    /// [get_code_name](IntegerType::get_code_name)
     pub fn display_name(&self) -> String {
         // In this language, this is just the same as the code name.
         self.get_code_name()
@@ -173,7 +173,7 @@ impl IntegerType {
     /// ### The name that refers to the type in the user's code
     ///
     /// **Note:** This should correlate with
-    /// [get_display_name](Integer::get_display_name)
+    /// [display_name](IntegerType::display_name)
     /// in most cases.
     pub fn get_code_name(&self) -> String {
         match self {
