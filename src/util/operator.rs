@@ -1,4 +1,4 @@
-use strum_macros::{EnumString, EnumIter};
+use strum_macros::{EnumString, EnumIter, AsRefStr};
 use strum::IntoEnumIterator;
 
 // This file contains methods & definitions for arithmetic operators.
@@ -10,8 +10,8 @@ use strum::IntoEnumIterator;
 ///
 /// The operator can be used for both: Basic operations (e.g. adding two integers)
 /// and complex ones (e.g. adding two strings)
-#[derive(EnumString, EnumIter)]
-pub enum Operator {
+#[derive(EnumString, EnumIter, Clone, Debug, PartialEq, AsRefStr)]
+pub enum Operation {
     /// Either add numbers if basic arithmetic is supported by the variable or use
     /// the software-defined overwrite for that.
     #[strum(to_string = "+")]

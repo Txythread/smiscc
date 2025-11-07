@@ -8,3 +8,5 @@ pub mod operation_solver;
 pub mod splitter;
 pub mod tokenizer;
 mod syntax_tree;
+mod token;
+mod tokenization_tests;

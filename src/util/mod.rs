@@ -1,2 +1,2 @@
 pub mod math;
-mod operator;
+pub mod operator;

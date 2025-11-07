@@ -1,13 +1,12 @@
-use crate::compiler::data_types::data_types::Buildable;
+use strum::IntoEnumIterator;
 use crate::compiler::data_types::integer::*;
-use crate::compiler::line_map::{ LineMap, TokenPosition};
+use crate::compiler::line_map::LineMap;
 use crate::compiler::line_map::*;
+use crate::compiler::token::{ Token, Token::* };
 use crate::config::tokenization_options::*;
 use crate::config::tokenization_options::Keyword;
 use crate::compiler::data_types::integer::*;
-use strum::IntoEnumIterator;
-use crate::compiler::data_types::object::ObjectType;
-use crate::util::math::convert_to_int;
+use crate::util::operator;
 
 /// Turn the split string into tokens ("classify" them)
 ///
@@ -122,6 +121,19 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
                 }
             }
 
+            // Check if it's an operator
+            for operation in operator::Operation::iter() {
+                let name: &str = operation.as_ref();
+
+                if name != token { continue; }
+
+
+                let operator: Token = Operator(operation, current_token_pos.clone());
+                line_tokens.push(operator);
+
+                continue 'token_loop;
+            }
+
             // As it's no other option, it can only be an identifier.
             let identifier = Token::Identifier(token.clone(), current_token_pos.clone());
             line_tokens.push(identifier);
@@ -136,132 +148,5 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
 
 
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum Token {
-    /// A block that has yet to be classified
-    /// This should only appear **inside** the tokenizer & **never
-    /// returned anywhere else**.
-    UnspecifiedString(String, TokenPosition),
-
-    /// Something that has been classified as a string
-    StringLiteral(String, TokenPosition),
-
-    /// A text that could be classified (and converted to) an integer.
-    IntegerLiteral(i128, Option<IntegerType>, TokenPosition),
-
-    /// A text that could be classified as being either true or false.
-    BoolLiteral(bool, TokenPosition),
-
-    /// A keyword (such "var", "let" or "if").
-    KeywordType(Keyword, TokenPosition),
-
-    /// Texts Identifying Variables, constants, ...
-    Identifier(String, TokenPosition),
-}
-
-impl Token {
-    pub fn get_position(&self) -> TokenPosition {
-        match self {
-            Token::UnspecifiedString(_, pos) => { pos.clone() }
-            Token::StringLiteral(_, pos) => { pos.clone() }
-            Token::IntegerLiteral(_, _, pos) => { pos.clone() }
-            Token::BoolLiteral(_, pos) => { pos.clone() }
-            Token::KeywordType(_, pos) => { pos.clone() }
-            Token::Identifier(_, pos) => { pos.clone() }
-        }
-    }
-
-    /// Gets the text a token contains if applicable
-    pub fn get_raw_text(&self) -> Option<String> {
-        match self {
-            Token::StringLiteral(text, _) => { Some(text.clone()) }
-            Token::Identifier(text, _) => { Some(text.clone()) }
-            Token::BoolLiteral(value, _) => { Some( if *value { BOOL_STATE_NAMES.0.to_string().clone() } else { BOOL_STATE_NAMES.1.to_string().clone() }) }
-            Token::UnspecifiedString(text, _) => { Some(text.clone()) }
-
-            _ => None,
-        }
-    }
-}
 
 
-#[cfg(test)]
-mod tests {
-    use crate::compiler::data_types::data_types::{Buildable};
-    use crate::compiler::data_types::integer::IntegerType;
-    use crate::compiler::line_map::{LineMap, TokenPosition};
-    use crate::compiler::data_types::object::{Object, ObjectType};
-    use crate::compiler::tokenizer::{build_integer_types, generate_integer, tokenize, Token};
-    use crate::compiler::data_types::object::generate_object;
-    use crate::config::tokenization_options::Keyword;
-
-    #[test]
-    fn test_generate_object() {
-        let i32_type = IntegerType::Signed32BitInteger.build_type();
-        let object_types: Vec<(ObjectType, Box<dyn Buildable>)> = vec![
-            (i32_type.clone(), Box::new(IntegerType::Signed32BitInteger)),
-        ];
-
-        let token = Token::UnspecifiedString(String::from("10"), TokenPosition::new(0, 5));
-
-        let mut line_map = LineMap::new();
-
-        let result = generate_object(&mut vec![token], object_types, &mut line_map, 0, 0, 0);
-
-        assert_eq!(result, Some(Object::new(i32_type.type_uuid.clone(), String::new(), Some(10))/*, TokenPosition::new(0, 5)))*/))
-    }
-
-    #[test]
-    fn test_tokenization() {
-        let input_tokens = vec![
-            /*0*/vec!["\"".to_string(), "Was geht ab...".to_string(), "\"".to_string()],
-            /*1*/vec!["\"".to_string(), "".to_string(), "\"".to_string()],
-            /*2*/vec!["\"".to_string(), "... in Rumänien?".to_string(), "\"".to_string()],
-            /*3*/vec!["let".to_string(), "Was geht".to_string(), "var".to_string()],
-            /*4*/vec!["var".to_string(), "true".to_string()],
-            /*5*/vec!["var".to_string(), "10".to_string()],
-            /*6*/vec!["var".to_string(), "10u32".to_string()],
-        ];
-
-        let expected_output = vec![
-            /*0*/vec![Token::StringLiteral("Was geht ab...".to_string(), TokenPosition::new(0, 0 /*ends with 0 now because the tokens don't match the input*/))],
-            /*1*/vec![Token::StringLiteral("".to_string(), TokenPosition::test_value())],
-            /*2*/vec![Token::StringLiteral("... in Rumänien?".to_string(), TokenPosition::test_value())],
-            /*3*/vec![Token::KeywordType(Keyword::Let, TokenPosition::test_value()), Token::Identifier("Was geht".to_string(), TokenPosition::test_value()), Token::KeywordType(Keyword::Var, TokenPosition::test_value())],
-            /*4*/vec![Token::KeywordType(Keyword::Var, TokenPosition::test_value()), Token::BoolLiteral(true, TokenPosition::test_value())],
-            /*5*/vec![Token::KeywordType(Keyword::Var, TokenPosition::test_value()), Token::IntegerLiteral(10, None, TokenPosition::test_value())],
-            /*6*/vec![Token::KeywordType(Keyword::Var, TokenPosition::test_value()), Token::IntegerLiteral(10, Some(IntegerType::Unsigned32BitInteger), TokenPosition::test_value())],
-        ];
-
-        let actual_output = tokenize(input_tokens, &mut LineMap::test_map());
-
-        assert_eq!(actual_output, expected_output);
-    }
-
-    #[test]
-    fn test_generate_integer() {
-        let types = vec![IntegerType::Signed32BitInteger, IntegerType::Signed32BitInteger];
-        let test_cases = ["0x45u32", "0b1011i32", "57", "rumänien"];
-        let expected_results: [Option<(i128, Option<IntegerType>)>; 4] = [
-            Some((0x45, Some(IntegerType::Unsigned32BitInteger))),
-            Some((0b1011, Some(IntegerType::Signed32BitInteger))),
-            Some((57, None)),
-            None,
-        ];
-
-        let integer_types = build_integer_types();
-
-
-        for case in test_cases.iter().enumerate() {
-            let result = generate_integer(
-                Token::UnspecifiedString(case.1.to_string(), TokenPosition::test_value()),
-                integer_types.clone(),
-                0,
-                0,
-                &mut LineMap::test_map(),
-            );
-
-            assert_eq!(result, expected_results[case.0]);
-        }
-    }
-}

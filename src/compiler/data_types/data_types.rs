@@ -1,8 +1,5 @@
-use crate::compiler::data_types::object::{Object, ObjectType, Trait};
-use crate::compiler::tokenizer::Token;
-use crate::config::target::*;
-use crate::util::math::*;
-use uuid::Uuid;
+use crate::compiler::data_types::object::{Object, ObjectType};
+use crate::compiler::token::Token;
 
 
 /// ### Generates data types via tokens.

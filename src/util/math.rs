@@ -96,14 +96,6 @@ impl ConversionError {
 }
 
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum ArithmeticOperation {
-    Addition,
-    Subtraction,
-    Multiplication,
-    Division,
-}
-
 
 #[cfg(test)]
 mod tests {
