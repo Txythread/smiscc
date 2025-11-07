@@ -1,6 +1,6 @@
 use crate::compiler::data_types::integer::IntegerType;
 use crate::compiler::line_map::TokenPosition;
-use crate::config::tokenization_options::{Keyword, BOOL_STATE_NAMES};
+use crate::config::tokenization_options::{Keyword, BOOL_STATE_NAMES, ASSIGNMENT_OPERATION};
 use crate::util::operator;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -28,6 +28,11 @@ pub enum Token {
     /// A mathematical operator (such as +)
     /// *Note:* This does not include assignment operations (e.g. "=", "+=")
     Operator(operator::Operation, TokenPosition),
+    
+    
+    /// An operation that sets the left side to the right side
+    /// This is like "=" in basically every (non-esoteric) programming language.
+    Assignment(TokenPosition),
 }
 
 impl Token {
@@ -40,6 +45,7 @@ impl Token {
             Token::KeywordType(_, pos) => { pos.clone() }
             Token::Identifier(_, pos) => { pos.clone() }
             Token::Operator(_, pos) => { pos.clone() }
+            Token::Assignment(pos) => { pos.clone() }
         }
     }
 
@@ -51,6 +57,7 @@ impl Token {
             Token::BoolLiteral(value, _) => { Some( if *value { BOOL_STATE_NAMES.0.to_string().clone() } else { BOOL_STATE_NAMES.1.to_string().clone() }) }
             Token::UnspecifiedString(text, _) => { Some(text.clone()) }
             Token::Operator(op, _) => { Some(op.clone().as_ref().to_string()) }
+            Token::Assignment(_) => { Some(ASSIGNMENT_OPERATION.to_string()) }
 
             _ => None,
         }

@@ -86,23 +86,38 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
                 }
             }
 
-            // Maybe it's a boolean value?
-            let true_keyword = BOOL_STATE_NAMES.0;
-            let false_keyword = BOOL_STATE_NAMES.1;
+            // Check for boolean literals, assignments,
+            const TRUE_KEYWORD: &str = BOOL_STATE_NAMES.0;
+            const FALSE_KEYWORD: &str = BOOL_STATE_NAMES.1;
+            match token.as_str() {
+                // Look if it's true
+                 TRUE_KEYWORD=> {
+                    let token = BoolLiteral(true, current_token_pos.clone());
 
-            if token == true_keyword {
-                let token = Token::BoolLiteral(true, current_token_pos.clone());
+                    line_tokens.push(token);
+                    continue 'token_loop;
+                }
 
-                line_tokens.push(token);
-                continue 'token_loop;
+                // Look if it's false
+                FALSE_KEYWORD => {
+                    let token = BoolLiteral(false, current_token_pos.clone());
+
+                    line_tokens.push(token);
+                    continue 'token_loop;
+                }
+
+
+                // Check if it's an assigment
+                ASSIGNMENT_OPERATION => {
+                    let token = Token::Assignment(current_token_pos.clone());
+
+                    line_tokens.push(token);
+                    continue 'token_loop;
+                }
+
+                _ => {}
             }
 
-            if token == true_keyword {
-                let token = Token::BoolLiteral(true, current_token_pos.clone());
-
-                line_tokens.push(token);
-                continue 'token_loop;
-            }
 
 
             // Check if it's an integer literal

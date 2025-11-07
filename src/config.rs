@@ -142,6 +142,12 @@ pub mod tokenization_options {
         #[strum(serialize = "var")]
         Var,
     }
+    
+    
+    /// ### Assignment Operator ("=")
+    /// 
+    /// This is equivalent to a single "=" in basically every programming language.
+    pub const ASSIGNMENT_OPERATION: &str = "=";
 
     /// ### Names of the Boolean States
     ///
