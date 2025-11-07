@@ -2,7 +2,7 @@ use uuid::Uuid;
 use crate::compiler::data_types::data_types::{BuildResult, Buildable, ObjectBuildingError};
 use crate::compiler::data_types::object::{Object, ObjectType, Trait};
 use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, LineMap, NotificationInfo};
-use crate::compiler::token::Token;
+use crate::compiler::tokenization::token::Token;
 use crate::config::target::ADDRESS_INTEGER_TYPE;
 use crate::util::math::convert_to_int;
 
@@ -297,7 +297,7 @@ mod tests {
     use crate::compiler::data_types::data_types::{Buildable};
     use crate::compiler::data_types::integer::*;
     use crate::compiler::line_map::TokenPosition;
-    use crate::compiler::token::Token;
+    use crate::compiler::tokenization::token::Token;
 
     #[test]
     fn test_build_integer_type() {

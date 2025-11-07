@@ -4,8 +4,8 @@ mod tests {
     use crate::compiler::data_types::integer::IntegerType;
     use crate::compiler::line_map::{LineMap, TokenPosition};
     use crate::compiler::data_types::object::{Object, ObjectType};
-    use crate::compiler::tokenizer::tokenize;
-    use crate::compiler::token::Token;
+    use crate::compiler::tokenization::tokenizer::tokenize;
+    use crate::compiler::tokenization::token::Token;
     use crate::compiler::data_types::integer::{build_integer_types, generate_integer};
     use crate::compiler::data_types::object::generate_object;
     use crate::config::tokenization_options::Keyword;

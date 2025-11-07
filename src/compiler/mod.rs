@@ -1,12 +1,7 @@
 pub mod assembler;
 pub mod compiler;
 pub mod data_types;
-pub mod equation_operation;
-pub mod intermediate_representation;
 pub mod line_map;
-pub mod operation_solver;
 pub mod splitter;
-pub mod tokenizer;
-mod syntax_tree;
-mod token;
-mod tokenization_tests;
+pub mod tokenization;
+pub mod parser;

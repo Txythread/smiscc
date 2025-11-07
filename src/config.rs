@@ -3,7 +3,7 @@
 /// ### Defines how code gets split into tokens and how those tokens are then classified.
 ///
 /// These infos are used in both: [the splitter](crate::compiler::splitter::split) and
-/// [the tokenizer (/classifier)](crate::compiler::tokenizer::tokenize).
+/// [the tokenizer (/classifier)](crate::compiler::tokenization::tokenizer::tokenize).
 pub mod tokenization_options {
     use crate::util::math::Base;
     use strum_macros::{AsRefStr, EnumIter, EnumString};

@@ -1,5 +1,5 @@
 use crate::compiler::data_types::object::{Object, ObjectType};
-use crate::compiler::token::Token;
+use crate::compiler::tokenization::token::Token;
 
 
 /// ### Generates data types via tokens.

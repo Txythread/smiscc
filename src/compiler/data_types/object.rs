@@ -1,7 +1,7 @@
 use uuid::Uuid;
 use crate::compiler::data_types::data_types::Buildable;
 use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, LineMap, NotificationInfo, TokenPosition};
-use crate::compiler::token::Token;
+use crate::compiler::tokenization::token::Token;
 
 /// about what can be done with it.
 #[derive(Clone, Debug, PartialEq)]
