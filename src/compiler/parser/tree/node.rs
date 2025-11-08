@@ -26,6 +26,18 @@ trait Node {
     /// to problems if it's not clear which datatype is expected.
     /// If there is no return type, None will be returned here.
     fn get_datatypes(&self, all_types: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>>;
+
+
+    /// ### Unpacks Shells Recursively
+    ///
+    /// If the node is a shell (a node that contains only one subnode and
+    /// no data that is not contained in its core as well, e.g. how
+    /// [ValueNode](ValueNode) is to [ArithmeticNode](ArithmeticNode) and
+    /// [LiteralValueNode](LiteralValueNode)).
+    ///
+    /// Shell nodes get unpacked by unpacking their contents and returning that.
+    /// Non-Shell nodes don't unpack themselves. They return themselves.
+    fn unpack(&self) -> Box<dyn Node>;
 }
 
 /// Any node that has a type that can be resolved to a value.
@@ -33,6 +45,7 @@ trait Node {
 /// expressions as arguments into statements.
 pub enum ValueNode {
     Arithmetic(ArithmeticNode),
+    Literal(LiteralValueNode)
 }
 
 impl ValueNode {
@@ -40,6 +53,7 @@ impl ValueNode {
     fn get_sub_node(&self) -> Box<dyn Node> {
         match self {
             ValueNode::Arithmetic(node) => Box::new(node.clone()),
+            ValueNode::Literal(node) => Box::new(node.clone()),
         }
     }
 }
@@ -60,13 +74,86 @@ impl Node for ValueNode {
     fn get_datatypes(&self, all_types: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>> {
         self.get_sub_node().get_datatypes(all_types)
     }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        self.get_sub_node().unpack()
+    }
 }
 
-
+#[derive(Clone)]
 pub enum LiteralValueNode {
-    Integer(IntegerLiteralNode)
+    Integer(IntegerLiteralNode),
+    Boolean(BoolLiteralNode)
 }
 
+impl LiteralValueNode {
+    fn get_sub_node(&self) -> Box<dyn Node> {
+        match self {
+            LiteralValueNode::Integer(node) => Box::new(node.clone()),
+            LiteralValueNode::Boolean(node) => Box::new(node.clone()),
+        }
+    }
+}
+
+impl Node for LiteralValueNode {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.get_sub_node().get_position()
+    }
+
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        self.get_sub_node().get_future(current)
+    }
+
+
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        self.get_sub_node().get_sub_nodes()
+    }
+
+    fn get_datatypes(&self, all_types: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>> {
+        self.get_sub_node().get_datatypes(all_types)
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        self.get_sub_node().unpack()
+    }
+}
+
+#[derive(Clone)]
+pub struct BoolLiteralNode {
+    content: bool,
+    position: (usize, TokenPosition),
+}
+
+impl Node for BoolLiteralNode {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        current
+    }
+
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        Vec::new()
+    }
+
+    fn get_datatypes(&self, all_types: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>> {
+        for type_ in all_types.iter().clone() {
+            // Integer?
+            if type_.0.has_trait(Trait::BOOLEAN_COMPATIBLE) {
+                return Some(vec![type_.0.clone()]);
+            }
+        }
+
+        panic!("Can't Find Boolean Data Type");
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        Box::new(self.clone())
+    }
+}
+
+#[derive(Clone)]
 pub struct IntegerLiteralNode {
     content: i128,
     kind: Option<IntegerType>,
@@ -107,6 +194,10 @@ impl Node for IntegerLiteralNode {
         }
 
         Some(compatible_types)
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        Box::new(self.clone())
     }
 }
 
@@ -154,5 +245,9 @@ impl Node for ArithmeticNode {
 
         // It should just be the data type of the first and second argument, which should be equivalent
         self.argument_a.get_datatypes(all_types)
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        Box::new(self.clone())
     }
 }
