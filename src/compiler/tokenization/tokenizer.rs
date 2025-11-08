@@ -8,11 +8,22 @@ use crate::config::tokenization_options::Keyword;
 use crate::compiler::data_types::integer::*;
 use crate::util::operator;
 
-/// Turn the split string into tokens ("classify" them)
+/// ### Turn the split strings into tokens ("classify" them)
 ///
-/// A simple `"10"` would be turned into an object with the parent
-/// of an object type describing an u32 or whatever the default
-/// number system is set to.
+/// `["let", "a", "=", "b"]`
+/// which is produced by the [splitter](crate::compiler::splitter::split),
+/// would be turned into the following [tokens](Token)
+/// ```
+/// [
+///     KeywordType(Let, TokenPosition { start: 0, length: 3 }),
+///     Identifier("a", TokenPosition { start: 4, length: 1 }),
+///     Assignment(TokenPosition { start: 6, length: 1 }),
+///     Identifier("b", TokenPosition { start: 8, length: 1 })
+/// ]
+/// ```
+///
+/// This can then be used by the [parser](crate::compiler::parser::parse::parse)
+/// to perform the next step.
 pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<Token>> {
     let mut lines: Vec<Vec<Token>> = Vec::new();
 
@@ -89,6 +100,8 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
             // Check for boolean literals, assignments,
             const TRUE_KEYWORD: &str = BOOL_STATE_NAMES.0;
             const FALSE_KEYWORD: &str = BOOL_STATE_NAMES.1;
+            const ARITHMETIC_PARENTHESIS_OPEN: &str = ARITHMETIC_PARENTHESES.0;
+            const ARITHMETIC_PARENTHESIS_CLOSE: &str = ARITHMETIC_PARENTHESES.1;
             match token.as_str() {
                 // Look if it's true
                  TRUE_KEYWORD=> {
@@ -101,6 +114,20 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
                 // Look if it's false
                 FALSE_KEYWORD => {
                     let token = BoolLiteral(false, current_token_pos.clone());
+
+                    line_tokens.push(token);
+                    continue 'token_loop;
+                }
+
+                ARITHMETIC_PARENTHESIS_OPEN => {
+                    let token = ArithmeticParenthesisOpen(current_token_pos.clone());
+
+                    line_tokens.push(token);
+                    continue 'token_loop;
+                }
+
+                ARITHMETIC_PARENTHESIS_CLOSE => {
+                    let token = ArithmeticParenthesisClose(current_token_pos.clone());
 
                     line_tokens.push(token);
                     continue 'token_loop;

@@ -28,11 +28,21 @@ pub enum Token {
     /// A mathematical operator (such as +)
     /// *Note:* This does not include assignment operations (e.g. "=", "+=")
     Operator(operator::Operation, TokenPosition),
-    
-    
+
     /// An operation that sets the left side to the right side
     /// This is like "=" in basically every (non-esoteric) programming language.
     Assignment(TokenPosition),
+
+    //////////////////////////////////////////
+    ////////////// PARENTHESES ///////////////
+    //////////////////////////////////////////
+
+    /// The arithmetic/default parenthesis ("(")
+    ArithmeticParenthesisOpen(TokenPosition),
+    
+    /// The closing part of the arithmetic/default parenthesis (")")
+    ArithmeticParenthesisClose(TokenPosition),
+
 }
 
 impl Token {
@@ -45,7 +55,9 @@ impl Token {
             Token::KeywordType(_, pos) => { pos.clone() }
             Token::Identifier(_, pos) => { pos.clone() }
             Token::Operator(_, pos) => { pos.clone() }
+            Token::ArithmeticParenthesisOpen(pos) => { pos.clone() }
             Token::Assignment(pos) => { pos.clone() }
+            Token::ArithmeticParenthesisClose(pos) => { pos.clone() }
         }
     }
 

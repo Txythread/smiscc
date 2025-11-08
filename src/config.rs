@@ -75,33 +75,33 @@ pub mod tokenization_options {
     ///
     /// **Note:** Don't use the same character here twice as that would lead
     /// to undefined & unpredictable behaviour.
-    pub const LOGICAL_PARENTHESES: [(char, char); 4] = [CODE_BLOCK_PARENTHESES, ARITHMETIC_PARENTHESES, ARRAY_PARENTHESES, TEMPLATE_PARENTHESES];
+    pub const LOGICAL_PARENTHESES: [(&str, &str); 4] = [CODE_BLOCK_PARENTHESES, ARITHMETIC_PARENTHESES, ARRAY_PARENTHESES, TEMPLATE_PARENTHESES];
 
 
     /// ### Code Block Parentheses
     ///
     /// ... are parentheses defining the start (.0) and end (.1) of a code block.
     /// In most languages, this correlates with "{" and "}".
-    pub const CODE_BLOCK_PARENTHESES: (char, char) = ('{', '}');
+    pub const CODE_BLOCK_PARENTHESES: (&str, &str) = ("{", "}");
 
     /// ### Array Parentheses
     ///
     /// Those parentheses do everything related with arrays. Whether that be defining
     /// one, indexing one, etc.
     /// In most languages, this correlates with "\[" and "\]"
-    pub const ARRAY_PARENTHESES: (char, char) = ('[', ']');
+    pub const ARRAY_PARENTHESES: (&str, &str) = ("[", "]");
 
     /// ### Arithmetic Parentheses
     ///
     /// Those parentheses are used for **arithmetic** and **everything that doesn't have an
     /// own type of parentheses**.
     /// In most languages, this correlates with "(" and ")".
-    pub const ARITHMETIC_PARENTHESES: (char, char) = ('(', ')');
+    pub const ARITHMETIC_PARENTHESES: (&str, &str) = ("(", ")");
 
     /// ### Template Parentheses
     ///
     /// ... do exactly what their name suggests. Correlates to "<" & ">" in most languages.
-    pub const TEMPLATE_PARENTHESES: (char, char) = ('<', '>');
+    pub const TEMPLATE_PARENTHESES: (&str, &str) = ("<", ">");
 
     /// ### String Markers
     ///
@@ -164,14 +164,16 @@ pub mod tokenization_options {
     pub const BOOL_STATE_NAMES: (&str, &str) = ("true", "false");
 
 
-    ////////////////////////////////////////////////
-    ///////////////     Operators    ///////////////
-    ////////////////////////////////////////////////
-    //
-    // Note that operators are defined in
-    // crate::util::operator under src/util/operator.rs.
-    // There, the symbol for addition, subtraction,
-    // multiplication, ..., can be changed.
+    ////////////////////////////////////////////////////////
+    ///////////////////     Operators    ///////////////////
+    ////////////////////////////////////////////////////////
+    //                                                    //
+    // Note that operators are defined in                 //
+    // crate::util::operator under src/util/operator.rs.  //
+    // There, the symbol for addition, subtraction,       //
+    // multiplication, ..., can be changed.               //
+    //                                                    //
+    ////////////////////////////////////////////////////////
 }
 
 
