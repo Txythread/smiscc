@@ -282,6 +282,11 @@ impl Line {
 
 }
 
+pub struct Position {
+    pub start: (usize, u16),
+    pub end: (usize, u16),
+}
+
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct TokenPosition{

@@ -69,27 +69,6 @@ pub mod tokenization_options {
     pub const NEW_LOGICAL_LINE_CHARACTERS: [&str; 3] = [";", "{", "}"];
 
 
-    /// ### Keyword creating an unmodifiable "variable"
-    ///
-    /// The word below marks an **unmodifiable** "variable"/"constant"
-    /// **within a function** in the language.
-    /// This is equivalent to Rust's `let` without `mut` or Swift's `let`
-    /// statement.
-    ///
-    /// The keyword for creating a modifiable variable in the language
-    /// is defined [here](MODIFIABLE_OBJECT_DECLARATION_KEYWORD).
-    pub const UNMODIFIABLE_OBJECT_DECLARATION_KEYWORD: &str = "let";
-
-
-    /// ### Keyword creating a modifiable variable
-    ///
-    /// The word below marks an **modifiable** variable **within the code**
-    /// This is equivalent to Rust's `let mut` or Swift's `let` statement.
-    ///
-    /// **Note:** Only pass things that will get parsed as a single token
-    /// here. So no `let mut` statements are allowed here with normal parsing.
-    pub const MODIFIABLE_OBJECT_DECLARATION_KEYWORD: &str = "var";
-
     /// ### Logical Parentheses
     ///
     /// The characters that will be treated like parentheses in the tokenizer.

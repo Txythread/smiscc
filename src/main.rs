@@ -1,3 +1,4 @@
+use crate::compiler::compiler::compile;
 use crate::compiler::line_map::*;
 
 mod compiler;
@@ -34,6 +35,8 @@ fn main() {
     );
 
     let notification = NotificationInfo::new(String::from("Test"), String::from("This is a test notification."), vec![info.clone()]);
+
+    compile("let a = b; let c = k - 5;".to_string());
 
     line_map.display_error(notification);
 }
