@@ -31,6 +31,12 @@ pub trait Buildable {
     /// Create an [object type](ObjectType), which is necessary
     /// for building instances of the type.
     fn build_type(&self) -> ObjectType;
+    
+    /// ### Gets the Full Name
+    /// 
+    /// If the datatype is not a basic one, this returns the entire 
+    /// path. If it is a basic one, this can be something like "u32".
+    fn get_name(&self) -> String;
 }
 
 

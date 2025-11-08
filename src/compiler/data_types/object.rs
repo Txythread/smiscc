@@ -34,18 +34,18 @@ impl Object {
 ///
 /// The resulting token will always contain an object.
 pub fn generate_object<T: Buildable + ?Sized>(tokens: &mut Vec<Token>, object_types: Vec<(ObjectType, Box<T>)>, line_map: &mut LineMap, line_number: u32,  first_token_index: u32, last_token_index: u32) -> Option<Object> {
-    /// Where ambiguous results get stored for later.
-    /// If there is more than one element in here in the end,
-    /// that's an error that should be displayed (except when
-    /// there's an explicit one in there, than that one should
-    /// be selected).
+    // Where ambiguous results get stored for later.
+    // If there is more than one element in here in the end,
+    // that's an error that should be displayed (except when
+    // there's an explicit one in there, than that one should
+    // be selected).
     let mut successful_ambiguous_results: Vec<Object> = Vec::new();
 
-    /// Where explicit results get stored for later.
-    /// If there is more than one element in here in the end,
-    /// that's an error that should be displayed in the end.
-    /// If there are none, then successful_ambiguous_results
-    /// should be used instead.
+    // Where explicit results get stored for later.
+    // If there is more than one element in here in the end,
+    // that's an error that should be displayed in the end.
+    // If there are none, then successful_ambiguous_results
+    // should be used instead.
     let mut successful_explicit_results: Vec<Object> = Vec::new();
 
     // Calculate the position of the resulting token
@@ -203,6 +203,23 @@ impl ObjectType {
     pub fn add_complex_trait(&mut self, trait_: &str, trait_args: Vec<String>){
         self.traits.push(Trait { name: trait_.to_string().clone() + trait_args.join(":").as_str()});
     }
+
+    /// Whether this ObjectType has a trait with the given name
+    /// and it's arguments if any.
+    pub fn get_trait(&self, trait_: &str) -> Option<Vec<String>> {
+        for test_trait in self.traits.iter() {
+            if let Some(arguments) = test_trait.name.strip_prefix(trait_) {
+                return Some(arguments.split(':').map(|x| x.to_string()).collect::<Vec<String>>())
+            }
+        }
+
+        None
+    }
+
+    /// Uses [get_trait](Self::get_trait) to check whether the given trait is present
+    pub fn has_trait(&self, trait_: &str) -> bool {
+        self.get_trait(trait_).is_some()
+    }
 }
 
 
@@ -223,6 +240,13 @@ impl Trait{
     /// Means that the object the trait belongs to is a direct value, not a reference.
     pub const VALUE_TYPE: &str = "direct_value";
 
+    /// Means that the type can be interpreted as containing a boolean value.
+    ///
+    /// Bool Comparison:
+    /// `X==0` => `false`
+    /// `X!=0 && X%2==1` => `true`
+    pub const BOOLEAN_COMPATIBLE: &str = "boolean";
+
     /// The object is a reference to an object of the uuid (reference:uuid)
     pub const REFERENCE_TYPE: &str = "reference:";
 
@@ -230,4 +254,8 @@ impl Trait{
     ///
     /// **Note:** Size in bytes.
     pub const SIZED: &str = "sized:";
+
+    /// Marks the type as being some kind of integer.
+    /// **Note:** This alone won't make the type accept arithmetic operations.
+    pub const INTEGER: &str = "integer";
 }

@@ -285,10 +285,15 @@ impl Buildable for IntegerType {
 
         type_.add_trait(Trait::ARITHMETIC_COMPATIBLE);
         type_.add_trait(Trait::VALUE_TYPE);
+        type_.add_trait(Trait::INTEGER);
         type_.add_complex_trait(Trait::SIZED, vec![self.get_memory_size().to_string()]);
 
 
         type_
+    }
+
+    fn get_name(&self) -> String {
+        self.get_code_name()
     }
 }
 
