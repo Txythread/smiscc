@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 colorize = "0.1.0"
+derive-new = "0.7.0"
 strum = "0.27.2"
 strum_macros = "0.27.2"
 termimad = "0.34.0"

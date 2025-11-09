@@ -1,4 +1,6 @@
+use std::fmt::Debug;
 use std::rc::Rc;
+use derive_new::*;
 use crate::compiler::data_types::data_types::Buildable;
 use crate::compiler::data_types::integer::IntegerType;
 use crate::compiler::data_types::object::{ObjectType, Trait};
@@ -8,7 +10,7 @@ use crate::util::operator::Operation;
 
 /// A trait requiring basic functionality for any node in an abstract
 /// syntax tree.
-trait Node {
+pub trait Node: Debug {
     /// Gets the position of the entire node in the line map.
     /// The first value (.0) refers to the line number. The second one
     /// is the absolute token position (in characters, start to end)
@@ -43,10 +45,12 @@ trait Node {
 /// Any node that has a type that can be resolved to a value.
 /// **Note**: This is used in the parser to group values and parse
 /// expressions as arguments into statements.
+#[derive(Debug)]
 pub enum ValueNode {
     Arithmetic(ArithmeticNode),
     Literal(LiteralValueNode)
 }
+
 
 impl ValueNode {
     /// Gets the node the value node contains
@@ -80,7 +84,7 @@ impl Node for ValueNode {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum LiteralValueNode {
     Integer(IntegerLiteralNode),
     Boolean(BoolLiteralNode)
@@ -118,7 +122,7 @@ impl Node for LiteralValueNode {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BoolLiteralNode {
     content: bool,
     position: (usize, TokenPosition),
@@ -153,11 +157,11 @@ impl Node for BoolLiteralNode {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, new, PartialEq)]
 pub struct IntegerLiteralNode {
-    content: i128,
-    kind: Option<IntegerType>,
-    position: (usize, TokenPosition),
+    pub(crate) content: i128,
+    pub(crate) kind: Option<IntegerType>,
+    pub(crate) position: (usize, TokenPosition),
 }
 
 impl Node for IntegerLiteralNode {
@@ -206,7 +210,7 @@ impl Node for IntegerLiteralNode {
 ///
 /// This could represent calculations like `a + b` where a and b could be
 /// either basic or complex types.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ArithmeticNode {
     /// The [operation](Operation) this node should perform (e.g. a **-** b).
     operation: Operation,
