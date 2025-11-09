@@ -210,7 +210,7 @@ impl Node for IntegerLiteralNode {
 ///
 /// This could represent calculations like `a + b` where a and b could be
 /// either basic or complex types.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, new)]
 pub struct ArithmeticNode {
     /// The [operation](Operation) this node should perform (e.g. a **-** b).
     operation: Operation,

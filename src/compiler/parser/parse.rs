@@ -1,4 +1,5 @@
-use crate::compiler::line_map::LineMap;
+use std::rc::Rc;
+use crate::compiler::line_map::{LineMap, TokenPosition};
 use crate::compiler::tokenization::token::Token;
 use crate::compiler::parser::tree::node::*;
 use crate::util::operator::Operation;
@@ -7,7 +8,7 @@ pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap){
     
 }
 
-pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_map: LineMap) -> Option<Box<dyn Node>> {
+pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_map: LineMap) -> Option<Rc<dyn Node>> {
     // If there is only one token, the principle is quite simple
     if tokens.len() == 1 {
         if let Some(node) = parse_token(tokens[0].clone(), line_number, line_map.clone()) {
@@ -25,7 +26,7 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
     // should be created by using this function recursively.
     let mut parenthesis_depth = 0;
 
-    let mut calculated_nodes: Vec<Box<dyn Node>> = Vec::new();
+    let mut calculated_nodes: Vec<Rc<dyn Node>> = Vec::new();
 
     let mut current_operation: Option<Operation> = None;
 
@@ -40,6 +41,7 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
 
                 if parenthesis_depth == 0 {
                     let solved_parenthesis = parse_arithmetic_expression(tokens_in_parenthesis.clone(), line_number, line_map.clone());
+                    println!("solved {:?} as {:?}", tokens_in_parenthesis, solved_parenthesis);
                     if let Some(solved_parenthesis) = solved_parenthesis {
                         calculated_nodes.push(solved_parenthesis);
                     } else {
@@ -48,40 +50,70 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
                 }
             }
 
-            Token::Operator(operation, _) => {
+            Token::Operator(ref operation, _) => {
                 if parenthesis_depth == 0 {
                     if let Some(previous_operation) = current_operation.clone() {
                         if operation.get_operation_order() <= previous_operation.get_operation_order() {
                             // The previous operation needs to happen first
-                            
-                        }
+                            // Combine the previous two nodes using the previous operation
+                            let start_pos = calculated_nodes[0].get_position().1.start;
+                            let end_pos = calculated_nodes[1].get_position().1.start + calculated_nodes[1].get_position().1.length;
+                            let length = end_pos - start_pos;
+                            let resulting_node = ValueNode::Arithmetic(ArithmeticNode::new(previous_operation, Rc::from(calculated_nodes.remove(0)), Rc::from(calculated_nodes.remove(0)), (line_number as usize, TokenPosition::new(start_pos, length))));
+                            calculated_nodes = vec![Rc::new(resulting_node)];
 
+                            current_operation = Some(operation.clone());
+                            continue;
+                        }
+                        todo!()
                     }
+
+                    current_operation = Some(operation.clone());
+
+
+                }else {
+                    tokens_in_parenthesis.push(token.clone());
                 }
             }
 
             _ => {
                 if parenthesis_depth > 0 {
                     tokens_in_parenthesis.push(token);
+                } else {
+                    calculated_nodes.push(parse_token(token, line_number, line_map.clone())?)
                 }
             }
         }
     }
 
-    return None;
+    if let Some(current_operation) = current_operation {
+        println!("Still has to resolve {:?}", current_operation);
+        // Combine the previous two nodes using the previous operation
+        let start_pos = calculated_nodes[0].get_position().1.start;
+        let end_pos = calculated_nodes[1].get_position().1.start + calculated_nodes[1].get_position().1.length;
+        let length = end_pos - start_pos;
+        let resulting_node = ValueNode::Arithmetic(ArithmeticNode::new(current_operation, Rc::from(calculated_nodes.remove(0)), Rc::from(calculated_nodes.remove(0)), (line_number as usize, TokenPosition::new(start_pos, length))));
+        calculated_nodes = vec![Rc::new(resulting_node)];
+    }
+
+    if calculated_nodes.len() == 1 {
+        Some(calculated_nodes[0].clone())
+    } else {
+        None
+    }
 }
 
-pub fn parse_token(token: Token, line_number: u32, line_map: LineMap) -> Option<Box<dyn Node>>{
+pub fn parse_token(token: Token, line_number: u32, line_map: LineMap) -> Option<Rc<dyn Node>>{
     match token {
         Token::UnspecifiedString(_, _) => {}
         Token::StringLiteral(_, _) => {}
         Token::IntegerLiteral(int, kind, pos) => {
             let integer_literal: IntegerLiteralNode = IntegerLiteralNode::new(int, kind, (line_number as usize, pos));
-            return Some(Box::new(ValueNode::Literal(LiteralValueNode::Integer(integer_literal))));
+            return Some(Rc::new(ValueNode::Literal(LiteralValueNode::Integer(integer_literal))));
         }
         Token::BoolLiteral(boolean, pos) => {
             let boolean_literal: BoolLiteralNode = BoolLiteralNode::new(boolean, (line_number as usize, pos));
-            return Some(Box::new(ValueNode::Literal(LiteralValueNode::Boolean(boolean_literal))));
+            return Some(Rc::new(ValueNode::Literal(LiteralValueNode::Boolean(boolean_literal))));
         }
         Token::KeywordType(_, _) => {}
         Token::Identifier(_, _) => {}
@@ -98,9 +130,10 @@ pub fn parse_token(token: Token, line_number: u32, line_map: LineMap) -> Option<
 mod tests {
     use crate::compiler::data_types::integer::IntegerType;
     use crate::compiler::line_map::{LineMap, TokenPosition};
-    use crate::compiler::parser::parse::parse_token;
+    use crate::compiler::parser::parse::{parse_arithmetic_expression, parse_token};
     use crate::compiler::tokenization::token::Token;
     use crate::compiler::parser::tree::node::*;
+    use crate::util::operator::Operation;
 
     #[test]
     fn test_parse_token() {
@@ -108,5 +141,26 @@ mod tests {
         let expected = Some(ValueNode::Literal(LiteralValueNode::Integer(IntegerLiteralNode { content: 10, kind: Some(IntegerType::Unsigned32BitInteger), position: (0, TokenPosition { start: 0, length: 0 }) })));
 
         assert_eq!(format!("{node:?}"), format!("{expected:?}"));
+    }
+
+    #[test]
+    fn test_parse_arithmetic() {
+        let node = parse_arithmetic_expression(
+            vec![
+                Token::ArithmeticParenthesisOpen(TokenPosition::test_value()),                                      // (
+                Token::IntegerLiteral(10, Some(IntegerType::Unsigned32BitInteger), TokenPosition::test_value()),    // 10u32
+                Token::Operator(Operation::Addition, TokenPosition::test_value()),                                  // +
+                Token::IntegerLiteral(5, Some(IntegerType::Unsigned32BitInteger), TokenPosition::test_value()),     // 5u32
+                Token::ArithmeticParenthesisClose(TokenPosition::test_value()),                                     // )
+                Token::Operator(Operation::Subtraction, TokenPosition::test_value()),                               // -
+                Token::IntegerLiteral(3, Some(IntegerType::Unsigned32BitInteger), TokenPosition::test_value()),     // 3u32
+                ], 0, LineMap::new(),
+        );
+
+        println!("{:#?}", node);
+
+        //let expected = Some(ValueNode::Literal(LiteralValueNode::Integer(IntegerLiteralNode { content: 10, kind: Some(IntegerType::Unsigned32BitInteger), position: (0, TokenPosition { start: 0, length: 0 }) })));
+
+        //assert_eq!(format!("{node:?}"), format!("{expected:?}"));
     }
 }
