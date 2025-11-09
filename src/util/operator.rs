@@ -43,4 +43,17 @@ impl Operation {
             _ => false,
         }
     }
+
+    /// A value determining the importance of the operation (like PEMDAS).
+    /// A higher value indicates higher significance.
+    pub fn get_operation_order(&self) -> u8 {
+        match self {
+            Operation::Addition => 1,
+            Operation::Subtraction => 1,
+            Operation::Multiplication => 2,
+            Operation::Division => 2,
+            Operation::Modulo => 2,
+            Operation::Equals => 3,
+        }
+    }
 }

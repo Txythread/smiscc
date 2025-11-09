@@ -122,7 +122,7 @@ impl Node for LiteralValueNode {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, new, PartialEq)]
 pub struct BoolLiteralNode {
     content: bool,
     position: (usize, TokenPosition),
