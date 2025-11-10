@@ -136,10 +136,12 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
             }
 
             if UNIGNORED_SPLIT_CHARACTERS.contains(&character.to_string().as_str()) {
+                println!("Found unignored split character: {:?}", character);
                 end_token(&mut line_tokens, &mut splitted_line);
                 let token = TokenPosition::new(i as u16, 1);
                 line_tokens.push(token.clone());
                 splitted_line.push(String::from(character));
+                continue;
             }
 
             if NEW_LOGICAL_LINE_CHARACTERS.contains(&character.to_string().as_str()) {
@@ -287,7 +289,8 @@ mod tests {
             "let a = 10; // This sets a to 10",
             "let b = a /* 10 */ + 3; b -= 1;",
             "let c = \"Hello, world!\";",
-            "let d = \"\";"
+            "let d = \"\";",
+            "(was geht);",
         ];
 
         let expected = vec![
@@ -296,6 +299,7 @@ mod tests {
             vec!["b", "-", "=", "1"],
             vec!["let", "c", "=", "\"", "Hello, world!", "\""],
             vec!["let", "d", "=", "\"", "\""],
+            vec!["(", "was", "geht", ")"],
         ];
 
         let actual = split(lines.join("\n"));

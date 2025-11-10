@@ -37,6 +37,8 @@ mod tests {
             /*4*/vec!["var".to_string(), "true".to_string()],
             /*5*/vec!["var".to_string(), "10".to_string()],
             /*6*/vec!["var".to_string(), "rumänien".to_string(), "=".to_string(), "(".to_string(), "10u32".to_string(), "+".to_string(), "0x67".to_string(), ")".to_string()],
+            /*7*/vec!["(".to_string(), "6".to_string(), "+".to_string(), "7".to_string(),
+            ")".to_string(), "*".to_string(), "67".to_string()],
         ];
 
         let expected_output = vec![
@@ -47,6 +49,7 @@ mod tests {
             /*4*/vec![Token::KeywordType(Keyword::Var, TokenPosition::test_value()), Token::BoolLiteral(true, TokenPosition::test_value())],
             /*5*/vec![Token::KeywordType(Keyword::Var, TokenPosition::test_value()), Token::IntegerLiteral(10, None, TokenPosition::test_value())],
             /*6*/vec![Token::KeywordType(Keyword::Var, TokenPosition::test_value()), Token::Identifier("rumänien".to_string(), TokenPosition::test_value()), Token::Assignment(TokenPosition::test_value()), Token::ArithmeticParenthesisOpen(TokenPosition::test_value()), Token::IntegerLiteral(10, Some(IntegerType::Unsigned32BitInteger), TokenPosition::test_value()), Token::Operator(Operation::Addition, TokenPosition::test_value()), Token::IntegerLiteral(0x67, None, TokenPosition::test_value()), Token::ArithmeticParenthesisClose(TokenPosition::test_value())],
+            /*7*/vec![Token::ArithmeticParenthesisOpen(TokenPosition::test_value()), Token::IntegerLiteral(6, None, TokenPosition::test_value()), Token::Operator(Operation::Addition, TokenPosition::test_value()), Token::IntegerLiteral(7, None, TokenPosition::test_value()), Token::ArithmeticParenthesisClose(TokenPosition::test_value()), Token::Operator(Operation::Multiplication, TokenPosition::test_value()), Token::IntegerLiteral(67, None, TokenPosition::test_value())],
         ];
 
         let actual_output = tokenize(input_tokens, &mut LineMap::test_map());

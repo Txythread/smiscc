@@ -4,8 +4,8 @@ use crate::compiler::tokenization::token::Token;
 use crate::compiler::parser::tree::node::*;
 use crate::util::operator::Operation;
 
-pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap){
-    
+pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>> {
+    parse_arithmetic_expression(tokens[0].clone(), 1, line_map.clone())
 }
 
 pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_map: LineMap) -> Option<Rc<dyn Node>> {
