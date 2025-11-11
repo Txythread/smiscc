@@ -156,6 +156,8 @@ mod tests {
     use crate::compiler::parser::parse::{parse_arithmetic_expression, parse_token};
     use crate::compiler::tokenization::token::Token;
     use crate::compiler::parser::tree::node::*;
+    use crate::compiler::splitter::split;
+    use crate::compiler::tokenization::tokenizer::tokenize;
     use crate::util::operator::Operation;
 
     #[test]
@@ -185,5 +187,19 @@ mod tests {
         //let expected = Some(ValueNode::Literal(LiteralValueNode::Integer(IntegerLiteralNode { content: 10, kind: Some(IntegerType::Unsigned32BitInteger), position: (0, TokenPosition { start: 0, length: 0 }) })));
 
         //assert_eq!(format!("{node:?}"), format!("{expected:?}"));
+    }
+
+    #[test]
+    fn test_parse_multiplication() {
+        let tokens1 = tokenize(split("6 + 7 * 67 - 420;".to_string()).0, &mut LineMap::test_map());
+        let tokens2 = tokenize(split("(6 + (7 * 67)) - 420;".to_string()).0, &mut LineMap::test_map());
+
+        let parsed1 = parse_arithmetic_expression(tokens1[0].clone(), 0, LineMap::test_map(), 0, &mut 0);
+        let parsed2 = parse_arithmetic_expression(tokens2[0].clone(), 0, LineMap::test_map(), 0, &mut 0);
+
+        println!("1: {:#?}", parsed1);
+        println!("2: {:#?}", parsed2);
+
+        assert_eq!(format!("{:#?}", parsed1), format!("{:#?}", parsed2));
     }
 }
