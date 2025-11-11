@@ -5,10 +5,10 @@ use crate::compiler::parser::tree::node::*;
 use crate::util::operator::Operation;
 
 pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>> {
-    parse_arithmetic_expression(tokens[0].clone(), 1, line_map.clone())
+    parse_arithmetic_expression(tokens[0].clone(), 1, line_map.clone(), 0, &mut 0)
 }
 
-pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_map: LineMap) -> Option<Rc<dyn Node>> {
+pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_map: LineMap, min_op_importance: u8, cursor: &mut u16) -> Option<Rc<dyn Node>> {
     // If there is only one token, the principle is quite simple
     if tokens.len() == 1 {
         if let Some(node) = parse_token(tokens[0].clone(), line_number, line_map.clone()) {
@@ -30,7 +30,17 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
 
     let mut current_operation: Option<Operation> = None;
 
-    for token in tokens {
+    for x in tokens.iter().enumerate() {
+        let token = x.1;
+        let token_number = x.0;
+
+        if token_number < *cursor as usize {
+             // The cursor is after this. Skip.
+            continue;
+        } else {
+            *cursor += 1;
+        }
+
         match token {
             Token::ArithmeticParenthesisOpen(_) => {
                 parenthesis_depth += 1;
@@ -40,7 +50,7 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
                 parenthesis_depth -= 1;
 
                 if parenthesis_depth == 0 {
-                    let solved_parenthesis = parse_arithmetic_expression(tokens_in_parenthesis.clone(), line_number, line_map.clone());
+                    let solved_parenthesis = parse_arithmetic_expression(tokens_in_parenthesis.clone(), line_number, line_map.clone(), 0, &mut 0);
                     println!("solved {:?} as {:?}", tokens_in_parenthesis, solved_parenthesis);
                     if let Some(solved_parenthesis) = solved_parenthesis {
                         calculated_nodes.push(solved_parenthesis);
@@ -50,8 +60,12 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
                 }
             }
 
-            Token::Operator(ref operation, _) => {
+            Token::Operator(operation, _) => {
                 if parenthesis_depth == 0 {
+                    if operation.get_operation_order() < min_op_importance {
+                        *cursor -= 1;
+                        break;
+                    }
                     if let Some(previous_operation) = current_operation.clone() {
                         if operation.get_operation_order() <= previous_operation.get_operation_order() {
                             // The previous operation needs to happen first
@@ -65,7 +79,16 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
                             current_operation = Some(operation.clone());
                             continue;
                         }
-                        todo!()
+
+                        let resulting_node = parse_arithmetic_expression(tokens.clone(), line_number, line_map.clone(), operation.get_operation_order() + 1, cursor).unwrap();
+                        let start_pos = calculated_nodes.last().unwrap().get_position().1.start;
+                        let end_pos = resulting_node.get_position().1.start + calculated_nodes[1].get_position().1.length;
+                        let length = end_pos - start_pos;
+                        let multiplication = ValueNode::Arithmetic(ArithmeticNode::new(operation.clone(), Rc::from(calculated_nodes.remove(calculated_nodes.len() - 1)), resulting_node, (line_number as usize, TokenPosition::new(start_pos, length))));
+
+                        calculated_nodes.push(Rc::new(multiplication));
+
+                        continue;
                     }
 
                     current_operation = Some(operation.clone());
@@ -78,9 +101,9 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
 
             _ => {
                 if parenthesis_depth > 0 {
-                    tokens_in_parenthesis.push(token);
+                    tokens_in_parenthesis.push(token.clone());
                 } else {
-                    calculated_nodes.push(parse_token(token, line_number, line_map.clone())?)
+                    calculated_nodes.push(parse_token(token.clone(), line_number, line_map.clone())?)
                 }
             }
         }
@@ -154,7 +177,7 @@ mod tests {
                 Token::ArithmeticParenthesisClose(TokenPosition::test_value()),                                     // )
                 Token::Operator(Operation::Subtraction, TokenPosition::test_value()),                               // -
                 Token::IntegerLiteral(3, Some(IntegerType::Unsigned32BitInteger), TokenPosition::test_value()),     // 3u32
-                ], 0, LineMap::new(),
+                ], 0, LineMap::new(), 0, &mut 0,
         );
 
         println!("{:#?}", node);
