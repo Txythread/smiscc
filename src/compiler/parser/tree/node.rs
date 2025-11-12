@@ -84,6 +84,47 @@ impl Node for ValueNode {
     }
 }
 
+/// A node that contains an identifier such as a variable or type name.  
+/// **Note:** Where this is stored might make it refer to different things
+/// (declarations are different from calls)
+#[derive(Clone, Debug, PartialEq)]
+pub struct IdentifierNode {
+    /// The literal identifier contained.  
+    /// This could be a shortened version.
+    identifier: String,
+    
+    /// The datatype (if determined already)
+    data_type: Option<ObjectType>,
+    
+    position: (usize, TokenPosition)
+}
+
+impl Node for IdentifierNode {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+    
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        current
+    }
+    
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        vec![]
+    }
+    
+    fn get_datatypes(&self, all_types: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>> {
+        if let Some(type_) = self.data_type.clone() {
+            return Some(vec![type_.clone()]);
+        }
+        
+        None
+    }
+    
+    fn unpack(&self) -> Box<dyn Node> {
+        Box::new(self.clone())
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum LiteralValueNode {
     Integer(IntegerLiteralNode),

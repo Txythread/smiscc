@@ -176,7 +176,7 @@ pub fn generate_object<T: Buildable + ?Sized>(tokens: &mut Vec<Token>, object_ty
 
 
 /// Contains relevant information for syntax checking an object
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ObjectType{
     /// The name of the object. For example "u32" or "ObjectType".
     pub name: String,
@@ -226,7 +226,7 @@ impl ObjectType {
 
 /// Something that might be applied to an [object](Object) to give
 /// it some properties (like arithmetic, etc.)
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Trait{
     name: String,
 }
