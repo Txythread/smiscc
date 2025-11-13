@@ -1,9 +1,30 @@
 use crate::compiler::compiler::compile;
 use crate::compiler::line_map::*;
+use clap::Parser;
 
 mod compiler;
 mod config;
 mod util;
+
+#[derive(Debug, PartialEq, Parser)]
+pub struct ArgumentList{
+    pub file: Option<String>,
+
+    #[clap(short, long)]
+    pub help: bool,                                 // -h or --help
+
+    #[clap(long)]
+    pub instruction_help: Option<Option<String>>,   // --instruction-help
+
+    #[clap(short, long)]
+    pub output_name: Option<Option<String>>,        // -o or --output
+
+    #[clap(short, long, num_args = 0..=1)]
+    pub get_micro_operation: Option<Option<String>>,// --get-micro-operation
+
+    #[clap(short, long)]
+    pub generate_instruction_table: bool,           // --generate-instructions-table
+}
 
 fn main() {
     let mut line_map = LineMap::new();
@@ -36,7 +57,13 @@ fn main() {
 
     let notification = NotificationInfo::new(String::from("Test"), String::from("This is a test notification."), vec![info.clone()]);
 
-    compile("6 + 7 * 67 - 6;".to_string());
+    let args = ArgumentList::parse();
+
+    if let Some(file_name) = args.file {
+        let file_contents = std::fs::read_to_string(file_name).unwrap();
+        compile(file_contents);
+    }
+
 
     line_map.display_error(notification);
 }

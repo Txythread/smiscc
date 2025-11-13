@@ -11,5 +11,5 @@ pub fn compile(code: String) {
 
     println!("Splitted: {:?}", splitted.clone().0.clone());
     println!("Tokens: {:?}", tokens);
-    println!("Parsed: {:?}", parsed);
+    println!("Parsed: {:#?}", parsed);
 }

@@ -188,9 +188,6 @@ mod tests {
 
         println!("{:#?}", node);
 
-        //let expected = Some(ValueNode::Literal(LiteralValueNode::Integer(IntegerLiteralNode { content: 10, kind: Some(IntegerType::Unsigned32BitInteger), position: (0, TokenPosition { start: 0, length: 0 }) })));
-
-        //assert_eq!(format!("{node:?}"), format!("{expected:?}"));
     }
 
     #[test]
