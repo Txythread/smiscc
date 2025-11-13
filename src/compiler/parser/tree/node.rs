@@ -48,7 +48,8 @@ pub trait Node: Debug {
 #[derive(Debug)]
 pub enum ValueNode {
     Arithmetic(ArithmeticNode),
-    Literal(LiteralValueNode)
+    Literal(LiteralValueNode),
+    Identifier(IdentifierNode),
 }
 
 
@@ -58,6 +59,7 @@ impl ValueNode {
         match self {
             ValueNode::Arithmetic(node) => Box::new(node.clone()),
             ValueNode::Literal(node) => Box::new(node.clone()),
+            ValueNode::Identifier(node) => Box::new(node.clone()),
         }
     }
 }
@@ -87,7 +89,7 @@ impl Node for ValueNode {
 /// A node that contains an identifier such as a variable or type name.  
 /// **Note:** Where this is stored might make it refer to different things
 /// (declarations are different from calls)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, new, PartialEq)]
 pub struct IdentifierNode {
     /// The literal identifier contained.  
     /// This could be a shortened version.

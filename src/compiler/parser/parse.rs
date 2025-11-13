@@ -139,7 +139,10 @@ pub fn parse_token(token: Token, line_number: u32, line_map: LineMap) -> Option<
             return Some(Rc::new(ValueNode::Literal(LiteralValueNode::Boolean(boolean_literal))));
         }
         Token::KeywordType(_, _) => {}
-        Token::Identifier(_, _) => {}
+        Token::Identifier(identifier, pos) => {
+            let identifier_node: IdentifierNode = IdentifierNode::new(identifier, None, (line_number as usize, pos));
+            return Some(Rc::new(ValueNode::Identifier(identifier_node)));
+        }
         Token::Operator(_, _) => {}
         Token::Assignment(_) => {}
         Token::ArithmeticParenthesisOpen(_) => {}
@@ -178,7 +181,8 @@ mod tests {
                 Token::IntegerLiteral(5, Some(IntegerType::Unsigned32BitInteger), TokenPosition::test_value()),     // 5u32
                 Token::ArithmeticParenthesisClose(TokenPosition::test_value()),                                     // )
                 Token::Operator(Operation::Subtraction, TokenPosition::test_value()),                               // -
-                Token::IntegerLiteral(3, Some(IntegerType::Unsigned32BitInteger), TokenPosition::test_value()),     // 3u32
+                Token::Identifier("rumänien".to_string(), TokenPosition::test_value()),                             // rumänien
+
                 ], 0, LineMap::new(), 0, &mut 0,
         );
 
