@@ -1,7 +1,11 @@
 use std::fmt::{Debug, Formatter};
+use std::ops::Deref;
 use std::rc::Rc;
 use derive_new::*;
 use downcast_rs::{Downcast, impl_downcast};
+use uuid::Uuid;
+use crate::compiler::backend::context::Context;
+use crate::compiler::backend::flattener::Instruction;
 use crate::compiler::data_types::data_types::Buildable;
 use crate::compiler::data_types::integer::IntegerType;
 use crate::compiler::data_types::object::{ObjectType, Trait};
@@ -28,7 +32,7 @@ pub trait Node: Debug + Downcast {
     /// Gets the data type if possible. Multiple data types will lead
     /// to problems if it's not clear which datatype is expected.
     /// If there is no return type, None will be returned here.
-    fn get_datatypes(&self, all_types: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>>;
+    fn get_datatypes(&self, all_types: Vec<ObjectType>) -> Option<Vec<ObjectType>>;
 
 
     /// ### Unpacks Shells Recursively
@@ -41,6 +45,10 @@ pub trait Node: Debug + Downcast {
     /// Shell nodes get unpacked by unpacking their contents and returning that.
     /// Non-Shell nodes don't unpack themselves. They return themselves.
     fn unpack(&self) -> Box<dyn Node>;
+
+    /// Turns the node into [instructions](Instruction) and potentially an Uuid for
+    /// the resulting value if applicable.
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>);
 }
 impl_downcast!(Node);
 
@@ -79,12 +87,16 @@ impl Node for ValueNode {
         self.get_sub_node().get_sub_nodes()
     }
 
-    fn get_datatypes(&self, all_types: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>) -> Option<Vec<ObjectType>> {
         self.get_sub_node().get_datatypes(all_types)
     }
 
     fn unpack(&self) -> Box<dyn Node> {
         self.get_sub_node().unpack()
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        self.unpack().generate_instructions(context)
     }
 }
 
@@ -116,7 +128,7 @@ impl Node for IdentifierNode {
         vec![]
     }
     
-    fn get_datatypes(&self, all_types: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>) -> Option<Vec<ObjectType>> {
         if let Some(type_) = self.data_type.clone() {
             return Some(vec![type_.clone()]);
         }
@@ -126,6 +138,10 @@ impl Node for IdentifierNode {
     
     fn unpack(&self) -> Box<dyn Node> {
         Box::new(self.clone())
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        todo!()
     }
 }
 
@@ -158,12 +174,16 @@ impl Node for LiteralValueNode {
         self.get_sub_node().get_sub_nodes()
     }
 
-    fn get_datatypes(&self, all_types: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>) -> Option<Vec<ObjectType>> {
         self.get_sub_node().get_datatypes(all_types)
     }
 
     fn unpack(&self) -> Box<dyn Node> {
         self.get_sub_node().unpack()
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        todo!()
     }
 }
 
@@ -186,11 +206,11 @@ impl Node for BoolLiteralNode {
         Vec::new()
     }
 
-    fn get_datatypes(&self, all_types: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>) -> Option<Vec<ObjectType>> {
         for type_ in all_types.iter().clone() {
             // Integer?
-            if type_.0.has_trait(Trait::BOOLEAN_COMPATIBLE) {
-                return Some(vec![type_.0.clone()]);
+            if type_.has_trait(Trait::BOOLEAN_COMPATIBLE) {
+                return Some(vec![type_.clone()]);
             }
         }
 
@@ -199,6 +219,10 @@ impl Node for BoolLiteralNode {
 
     fn unpack(&self) -> Box<dyn Node> {
         Box::new(self.clone())
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        todo!()
     }
 }
 
@@ -222,12 +246,12 @@ impl Node for IntegerLiteralNode {
         vec![]
     }
 
-    fn get_datatypes(&self, all_types: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>) -> Option<Vec<ObjectType>> {
 
         if let Some(kind) = self.kind.clone() {
             for type_ in all_types.iter().clone() {
-                if type_.1.get_name() == kind.get_name() {
-                    return Some(vec![type_.0.clone()]);
+                if type_.name == kind.get_name() {
+                    return Some(vec![type_.clone()]);
                 }
             }
         }
@@ -237,8 +261,8 @@ impl Node for IntegerLiteralNode {
 
         for type_ in all_types.iter().clone() {
             // Integer?
-            if type_.0.has_trait(Trait::INTEGER) {
-                compatible_types.push(type_.0.clone());
+            if type_.has_trait(Trait::INTEGER) {
+                compatible_types.push(type_.clone());
             }
         }
 
@@ -247,6 +271,18 @@ impl Node for IntegerLiteralNode {
 
     fn unpack(&self) -> Box<dyn Node> {
         Box::new(self.clone())
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        let uuid = Uuid::new_v4();
+
+        (
+            vec![
+                Instruction::MoveData(uuid, self.content as i64)
+            ]
+        ,
+            Some(uuid)
+        )
     }
 }
 
@@ -282,12 +318,12 @@ impl Node for ArithmeticNode {
         vec![self.argument_a.clone(), self.argument_b.clone()]
     }
 
-    fn get_datatypes(&self, all_types: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>) -> Option<Vec<ObjectType>> {
         if self.operation.is_boolean() {
             // Find the boolean type in the types
             for type_ in all_types.iter().clone() {
-                if type_.0.has_trait(Trait::BOOLEAN_COMPATIBLE){
-                    return Some(vec![type_.0.clone()]);
+                if type_.has_trait(Trait::BOOLEAN_COMPATIBLE){
+                    return Some(vec![type_.clone()]);
                 }
             }
         }
@@ -298,6 +334,20 @@ impl Node for ArithmeticNode {
 
     fn unpack(&self) -> Box<dyn Node> {
         Box::new(self.clone())
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        let a = self.argument_a.generate_instructions(context);
+        let b = self.argument_b.generate_instructions(context);
+
+        (
+            vec![
+                a.0,
+                b.0,
+                vec![Instruction::Add(a.1.unwrap(), b.1.unwrap())]
+            ].concat(),
+            a.1
+        )
     }
 }
 
@@ -320,12 +370,16 @@ impl Node for AssignmentNode {
         vec![]
     }
     
-    fn get_datatypes(&self, _: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _: Vec<ObjectType>) -> Option<Vec<ObjectType>> {
         None
     }
     
     fn unpack(&self) -> Box<dyn Node> {
         Box::new(self.clone())
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        todo!()
     }
 }
 
@@ -349,11 +403,33 @@ impl Node for LetNode {
         vec![]
     }
 
-    fn get_datatypes(&self, all_types: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>) -> Option<Vec<ObjectType>> {
         None
     }
 
     fn unpack(&self) -> Box<dyn Node> {
         Box::new(self.clone())
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        let mut instructions: Vec<Instruction> = vec![];
+        let mut result_uuid: Option<Uuid> = None;
+
+        if let Some(assigned_value) = self.assigned_value {
+            let assignment_result = self.assigned_value.unwrap().generate_instructions(context);
+            let mut assignment_instructions = assignment_result.0;
+            instructions.append(&mut assignment_instructions);
+            result_uuid = assignment_result.1;
+        }
+
+        if result_uuid.is_some() {
+            // If there's no uuid, one needs to be assigned still
+            result_uuid = Some(Uuid::new_v4());
+        }
+
+        (*context).objects.insert(result_uuid.unwrap(), self.assigned_value.unwrap().get_datatypes(context.datatypes.values().collect()).unwrap()[0].type_uuid);
+
+
+        (instructions, None)
     }
 }
