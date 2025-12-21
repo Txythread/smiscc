@@ -62,6 +62,9 @@ fn main() {
     if let Some(file_name) = args.file {
         let file_contents = std::fs::read_to_string(file_name).unwrap();
         compile(file_contents);
+    } else {
+        let file_contents = std::fs::read_to_string("test2.txt").unwrap();
+        compile(file_contents);
     }
 
 

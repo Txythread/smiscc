@@ -29,6 +29,7 @@ pub enum Operation {
     #[strum(to_string = "%")]
     Modulo,
 
+    /// Equal (==) in comparisons only
     #[strum(to_string = "==")]
     Equals,
 }

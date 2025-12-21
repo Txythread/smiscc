@@ -1,6 +1,7 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 use derive_new::*;
+use downcast_rs::{Downcast, impl_downcast};
 use crate::compiler::data_types::data_types::Buildable;
 use crate::compiler::data_types::integer::IntegerType;
 use crate::compiler::data_types::object::{ObjectType, Trait};
@@ -10,7 +11,7 @@ use crate::util::operator::Operation;
 
 /// A trait requiring basic functionality for any node in an abstract
 /// syntax tree.
-pub trait Node: Debug {
+pub trait Node: Debug + Downcast {
     /// Gets the position of the entire node in the line map.
     /// The first value (.0) refers to the line number. The second one
     /// is the absolute token position (in characters, start to end)
@@ -41,6 +42,7 @@ pub trait Node: Debug {
     /// Non-Shell nodes don't unpack themselves. They return themselves.
     fn unpack(&self) -> Box<dyn Node>;
 }
+impl_downcast!(Node);
 
 /// Any node that has a type that can be resolved to a value.
 /// **Note**: This is used in the parser to group values and parse
@@ -93,7 +95,7 @@ impl Node for ValueNode {
 pub struct IdentifierNode {
     /// The literal identifier contained.  
     /// This could be a shortened version.
-    identifier: String,
+    pub identifier: String,
     
     /// The datatype (if determined already)
     data_type: Option<ObjectType>,
@@ -292,6 +294,63 @@ impl Node for ArithmeticNode {
 
         // It should just be the data type of the first and second argument, which should be equivalent
         self.argument_a.get_datatypes(all_types)
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        Box::new(self.clone())
+    }
+}
+
+#[derive(Clone, Debug, new, PartialEq)]
+pub struct AssignmentNode {
+    position: (usize, TokenPosition),
+}
+
+
+impl Node for AssignmentNode {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+    
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        current
+    }
+    
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        vec![]
+    }
+    
+    fn get_datatypes(&self, _: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>> {
+        None
+    }
+    
+    fn unpack(&self) -> Box<dyn Node> {
+        Box::new(self.clone())
+    }
+}
+
+#[derive(Clone, Debug, new)]
+pub struct LetNode {
+    identifier: String,
+    assigned_value: Option<Rc<dyn Node>>,
+    position: (usize, TokenPosition),
+}
+
+impl Node for LetNode {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        current
+    }
+
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        vec![]
+    }
+
+    fn get_datatypes(&self, all_types: Vec<(ObjectType, Box<dyn Buildable>)>) -> Option<Vec<ObjectType>> {
+        None
     }
 
     fn unpack(&self) -> Box<dyn Node> {

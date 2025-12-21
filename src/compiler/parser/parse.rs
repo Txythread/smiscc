@@ -1,14 +1,130 @@
 use std::rc::Rc;
+use clap::arg;
 use crate::compiler::line_map::{LineMap, TokenPosition};
+use crate::compiler::parser::statement::Statement;
+use crate::compiler::parser::statements::Statements;
 use crate::compiler::tokenization::token::Token;
 use crate::compiler::parser::tree::node::*;
+use crate::config::tokenization_options::Keyword;
 use crate::util::operator::Operation;
+use strum::IntoEnumIterator;
 
 pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>> {
-    parse_arithmetic_expression(tokens[0].clone(), 1, line_map.clone(), 0, &mut 0)
+    let statements = Statements::iter().collect::<Vec<_>>();
+
+    for x in tokens.iter().enumerate() {
+        let line = x.1;
+        let line_number = x.0;
+
+
+        if line.is_empty() { continue; }
+
+        let first_token = line[0].clone();
+        let mut lines: Vec<Rc<dyn Node>> = vec![];
+
+
+
+        match first_token {
+            Token::KeywordType(keyword, _) => {
+                for statement in statements.iter() {
+                    if let Some(statement_keyword) = statement.get_affiliated_keyword() {
+                        if statement_keyword != keyword { continue; }
+
+                        // The statement is the statement in question.
+                        // Generate its arguments (starting with the header).
+                        let mut arguments: Vec<Rc<dyn Node>> = vec![];
+                        let argument_types = vec![statement.get_header_format(), statement.get_body_format()].concat();
+                        let mut cursor = 1; // skip the first token
+
+                        for type_ in argument_types {
+                            let is_required = type_.1;
+                            let kind = type_.0;
+
+                            println!("looking for kind: {:?}", kind);
+
+
+                            match kind {
+                                ExpressionKind::Value => {
+                                    // Parse an arithmetic expression
+                                    if let Some(result) = parse_arithmetic_expression(line.clone(), line_number as u32, line_map.clone(), 0, &mut cursor, true) {
+                                        arguments.push(result);
+                                    } else {
+                                        if is_required {
+                                            // Throw an error. Something was required that wasn't given in the current statement.
+                                            todo!()
+                                        }
+                                    }
+                                }
+                                ExpressionKind::Assignment => {
+                                    match line[cursor as usize].clone() {
+                                        Token::Assignment(pos ) => arguments.push(Rc::new(AssignmentNode::new((line_number, pos)))),
+                                        _ => {
+                                            // Throw an error.
+                                            todo!()
+                                        }
+                                    }
+
+                                    cursor += 1;
+                                }
+                                ExpressionKind::Keyword(_) => {
+                                    cursor += 1;
+                                }
+                                ExpressionKind::Identifier(_) => {
+                                    match line[cursor as usize].clone() {
+                                        Token::Identifier(id, pos) => {
+                                            arguments.push(Rc::new(IdentifierNode::new(id, None, (line_number, pos))))
+                                        }
+
+                                        _ => {
+                                            // Throw an error.
+                                            todo!()
+                                        }
+                                    }
+                                    cursor += 1;
+                                }
+                            }
+                        }
+
+                        println!("arguments: {:?}", arguments);
+
+                        let statementNode = statement.generate_entire_node(arguments);
+                        lines.push(statementNode.unwrap());
+
+                    }
+                }
+
+
+                println!("lines: {:#?}", lines);
+            }
+
+            _ => {}
+        }
+
+        println!("statement: {:#?}", statements.first().unwrap());
+        return parse_arithmetic_expression(line.clone(), 1, line_map, 0, &mut 0, true);
+    }
+
+    None
+
+
 }
 
-pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_map: LineMap, min_op_importance: u8, cursor: &mut u16) -> Option<Rc<dyn Node>> {
+#[derive(Debug)]
+#[derive(Clone)]
+pub enum ExpressionKind {
+    /// Something that is supposed to be parsed as an arithmetic expression
+    Value,
+
+    Assignment,
+
+    /// **Note:** None means multiple keywords are allowed here
+    Keyword(Option<Keyword>),
+
+    /// **Note:** Only Identifiers that won't get coerced into values
+    Identifier(Option<String>),
+}
+
+pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_map: LineMap, min_op_importance: u8, cursor: &mut u16, stop_at_unexpected_token: bool) -> Option<Rc<dyn Node>> {
     // If there is only one token, the principle is quite simple
     if tokens.len() == 1 {
         if let Some(node) = parse_token(tokens[0].clone(), line_number, line_map.clone()) {
@@ -41,6 +157,8 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
             *cursor += 1;
         }
 
+        if stop_at_unexpected_token && !token.is_expected_in_arithmetic() { *cursor -= 1; break;}
+
         match token {
             Token::ArithmeticParenthesisOpen(_) => {
                 parenthesis_depth += 1;
@@ -50,7 +168,7 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
                 parenthesis_depth -= 1;
 
                 if parenthesis_depth == 0 {
-                    let solved_parenthesis = parse_arithmetic_expression(tokens_in_parenthesis.clone(), line_number, line_map.clone(), 0, &mut 0);
+                    let solved_parenthesis = parse_arithmetic_expression(tokens_in_parenthesis.clone(), line_number, line_map.clone(), 0, &mut 0, false);
                     println!("solved {:?} as {:?}", tokens_in_parenthesis, solved_parenthesis);
                     if let Some(solved_parenthesis) = solved_parenthesis {
                         calculated_nodes.push(solved_parenthesis);
@@ -80,7 +198,7 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
                             continue;
                         }
 
-                        let resulting_node = parse_arithmetic_expression(tokens.clone(), line_number, line_map.clone(), operation.get_operation_order() + 1, cursor).unwrap();
+                        let resulting_node = parse_arithmetic_expression(tokens.clone(), line_number, line_map.clone(), operation.get_operation_order() + 1, cursor, false).unwrap();
                         let start_pos = calculated_nodes.last().unwrap().get_position().1.start;
                         let end_pos = resulting_node.get_position().1.start + calculated_nodes[1].get_position().1.length;
                         let length = end_pos - start_pos;
@@ -183,7 +301,7 @@ mod tests {
                 Token::Operator(Operation::Subtraction, TokenPosition::test_value()),                               // -
                 Token::Identifier("rumänien".to_string(), TokenPosition::test_value()),                             // rumänien
 
-                ], 0, LineMap::new(), 0, &mut 0,
+                ], 0, LineMap::new(), 0, &mut 0, true,
         );
 
         println!("{:#?}", node);
@@ -195,8 +313,8 @@ mod tests {
         let tokens1 = tokenize(split("6 + 7 * 67 - 420;".to_string()).0, &mut LineMap::test_map());
         let tokens2 = tokenize(split("(6 + (7 * 67)) - 420;".to_string()).0, &mut LineMap::test_map());
 
-        let parsed1 = parse_arithmetic_expression(tokens1[0].clone(), 0, LineMap::test_map(), 0, &mut 0);
-        let parsed2 = parse_arithmetic_expression(tokens2[0].clone(), 0, LineMap::test_map(), 0, &mut 0);
+        let parsed1 = parse_arithmetic_expression(tokens1[0].clone(), 0, LineMap::test_map(), 0, &mut 0, true,);
+        let parsed2 = parse_arithmetic_expression(tokens2[0].clone(), 0, LineMap::test_map(), 0, &mut 0, true);
 
         println!("1: {:#?}", parsed1);
         println!("2: {:#?}", parsed2);

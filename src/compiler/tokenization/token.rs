@@ -74,4 +74,15 @@ impl Token {
             _ => None,
         }
     }
+
+    /// Whether this is a reasonable token to expect in an arithmetic operation.
+    /// If it's not, it might interrupt/stop tokens from being parsed in the parser.
+    pub fn is_expected_in_arithmetic(&self) -> bool {
+        match self {
+            Token::KeywordType(_, _) => false,
+            Token::Assignment(_) => false,
+
+            _ => true
+        }
+    }
 }
