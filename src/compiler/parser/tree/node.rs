@@ -1,5 +1,4 @@
 use std::fmt::{Debug, Formatter};
-use std::ops::Deref;
 use std::rc::Rc;
 use derive_new::*;
 use downcast_rs::{Downcast, impl_downcast};
@@ -344,7 +343,15 @@ impl Node for ArithmeticNode {
             vec![
                 a.0,
                 b.0,
-                vec![Instruction::Add(a.1.unwrap(), b.1.unwrap())]
+                match self.operation {
+                    Operation::Addition => vec![Instruction::Add(a.1.unwrap(), b.1.unwrap())],
+                    Operation::Subtraction => vec![Instruction::Sub(a.1.unwrap(), b.1.unwrap())],
+                    Operation::Multiplication => vec![Instruction::Mul(a.1.unwrap(), b.1.unwrap())],
+                    Operation::Division => vec![Instruction::Div(a.1.unwrap(), b.1.unwrap())],
+                    Operation::Modulo => vec![Instruction::Mod(a.1.unwrap(), b.1.unwrap())],
+                    
+                    _ => todo!()
+                }
             ].concat(),
             a.1
         )
@@ -429,6 +436,47 @@ impl Node for LetNode {
 
         (*context).objects.insert(result_uuid.unwrap(), self.assigned_value.clone().unwrap().get_datatypes(context.datatypes.values().map(|x|x.clone()).collect()).unwrap()[0].type_uuid);
 
+
+        (instructions, None)
+    }
+}
+
+/// A node containing multiple lines of code. Note that this node is always an expression,
+/// never a statement. Use with caution.
+#[derive(Debug, new)]
+pub struct CodeBlockNode {
+    position: (usize, TokenPosition),
+    code: Vec<Rc<dyn Node>>,
+}
+
+
+impl Node for CodeBlockNode {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        todo!()
+    }
+
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        self.code.clone()
+    }
+
+    fn get_datatypes(&self, all_types: Vec<ObjectType>) -> Option<Vec<ObjectType>> {
+        None
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        todo!()
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        let mut instructions: Vec<Instruction> = vec![];
+        
+        for code in self.code.iter() {
+            instructions.append(code.generate_instructions(context).0.as_mut());
+        }
 
         (instructions, None)
     }

@@ -103,7 +103,9 @@ pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>>
        // return parse_arithmetic_expression(line.clone(), 1, line_map, 0, &mut 0, true);
     }
 
-    Some(lines[0].clone())
+    let code = CodeBlockNode::new((0, TokenPosition::new(0, 0)), lines);
+
+    Some(Rc::new(code))
 }
 
 #[derive(Debug)]

@@ -1,1 +1,2 @@
-let abc = 3 + 5;
+let abc = 1 + 2 * 3;
+let xyz = 67;

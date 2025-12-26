@@ -32,6 +32,10 @@ pub enum Instruction {
     MoveData(Uuid, i64),
     
     Add(Uuid, Uuid),
+    Sub(Uuid, Uuid),
+    Mul(Uuid, Uuid),
+    Div(Uuid, Uuid),
+    Mod(Uuid, Uuid),
     
     /// Load (size of (datatype (2))) bytes of object at (1) into (0)
     Load(Uuid, Uuid, Uuid),
