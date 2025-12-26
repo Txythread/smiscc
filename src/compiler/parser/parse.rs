@@ -11,6 +11,7 @@ use strum::IntoEnumIterator;
 
 pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>> {
     let statements = Statements::iter().collect::<Vec<_>>();
+    let mut lines: Vec<Rc<dyn Node>> = vec![];
 
     for x in tokens.iter().enumerate() {
         let line = x.1;
@@ -18,14 +19,12 @@ pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>>
 
 
         if line.is_empty() { continue; }
-
         let first_token = line[0].clone();
-        let mut lines: Vec<Rc<dyn Node>> = vec![];
-
 
 
         match first_token {
             Token::KeywordType(keyword, _) => {
+                println!("found keyword: {:?}", keyword);
                 for statement in statements.iter() {
                     if let Some(statement_keyword) = statement.get_affiliated_keyword() {
                         if statement_keyword != keyword { continue; }
@@ -101,12 +100,10 @@ pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>>
         }
 
         println!("statement: {:#?}", statements.first().unwrap());
-        return parse_arithmetic_expression(line.clone(), 1, line_map, 0, &mut 0, true);
+       // return parse_arithmetic_expression(line.clone(), 1, line_map, 0, &mut 0, true);
     }
 
-    None
-
-
+    Some(lines[0].clone())
 }
 
 #[derive(Debug)]

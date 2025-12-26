@@ -415,8 +415,8 @@ impl Node for LetNode {
         let mut instructions: Vec<Instruction> = vec![];
         let mut result_uuid: Option<Uuid> = None;
 
-        if let Some(assigned_value) = self.assigned_value {
-            let assignment_result = self.assigned_value.unwrap().generate_instructions(context);
+        if let Some(assigned_value) = self.assigned_value.clone() {
+            let assignment_result = self.assigned_value.clone().unwrap().generate_instructions(context);
             let mut assignment_instructions = assignment_result.0;
             instructions.append(&mut assignment_instructions);
             result_uuid = assignment_result.1;
@@ -427,7 +427,7 @@ impl Node for LetNode {
             result_uuid = Some(Uuid::new_v4());
         }
 
-        (*context).objects.insert(result_uuid.unwrap(), self.assigned_value.unwrap().get_datatypes(context.datatypes.values().collect()).unwrap()[0].type_uuid);
+        (*context).objects.insert(result_uuid.unwrap(), self.assigned_value.clone().unwrap().get_datatypes(context.datatypes.values().map(|x|x.clone()).collect()).unwrap()[0].type_uuid);
 
 
         (instructions, None)
