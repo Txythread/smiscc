@@ -5,11 +5,15 @@ use crate::compiler::data_types::object::{Object, ObjectType};
 
 /// The current compiler state. This includes what variables are available,
 /// which registers are in use, etc.
-#[derive(new)]
+#[derive(new, Debug, Clone)]
 pub struct Context {
     /// All variables, constants, etc. Given by their full name.
     /// The second Uuid refers to the type of the object.
     pub objects: HashMap<Uuid, Uuid>,
+    
+    /// The objects, mapped by their full name. The Uuid refers
+    /// to the key in [the objects hash map](objects)
+    pub name_map: HashMap<String, Uuid>,
 
     /// All datatypes, including primitive ones
     pub datatypes: HashMap<Uuid, ObjectType>,
@@ -24,6 +28,6 @@ pub struct Context {
 
 impl Context {
     pub fn clear() -> Context {
-        Context { objects: HashMap::new(), datatypes: HashMap::new(), reg_map: Vec::new(), stack_size: 0 }
+        Context { objects: HashMap::new(), name_map: HashMap::new(), datatypes: HashMap::new(), reg_map: Vec::new(), stack_size: 0 }
     }
 }
