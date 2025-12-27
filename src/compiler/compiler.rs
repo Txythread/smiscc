@@ -9,26 +9,14 @@ use crate::compiler::backend::arch::aarch64_macOS;
 pub fn compile(code: String) {
     let mut splitted = split(code);
     let tokens = tokenize(splitted.0.clone(), &mut splitted.1);
-
-    println!("Splitted: {:?}", splitted.clone().0.clone());
-    println!("Tokens: {:?}", tokens);
-
     let parsed = parse(tokens.clone(), splitted.1.clone());
-
-    println!("flattening...");
-
     let flattened = flatten(parsed.clone().unwrap(), &mut Context::clear());
-
-
-    println!("Parsed: {:#?}", parsed);
-
     let arch = aarch64_macOS::generate();
     let assembly = assembly::generate_assembly_instructions(flattened, arch.clone());
 
-
     for instruction in assembly.iter().clone() {
-        println!("{}", instruction.make_string(arch.clone()))
+        print!("{}", instruction.make_string(arch.clone()))
     }
 
-    println!("{:?}", assembly)
+    println!("\nFinished with {} errors", splitted.1.error_count)
 }

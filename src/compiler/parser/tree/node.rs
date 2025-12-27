@@ -345,16 +345,22 @@ impl Node for ArithmeticNode {
         let a = self.argument_a.generate_instructions(context);
         let b = self.argument_b.generate_instructions(context);
 
+        let x = Uuid::new_v4();
+
+
         (
             vec![
                 a.0,
                 b.0,
+                vec![
+                    Instruction::Move(x, a.1.unwrap())
+                ],
                 match self.operation {
-                    Operation::Addition => vec![Instruction::Add(a.1.unwrap(), b.1.unwrap())],
-                    Operation::Subtraction => vec![Instruction::Sub(a.1.unwrap(), b.1.unwrap())],
-                    Operation::Multiplication => vec![Instruction::Mul(a.1.unwrap(), b.1.unwrap())],
-                    Operation::Division => vec![Instruction::Div(a.1.unwrap(), b.1.unwrap())],
-                    Operation::Modulo => vec![Instruction::Mod(a.1.unwrap(), b.1.unwrap())],
+                    Operation::Addition => vec![Instruction::Add(x, b.1.unwrap())],
+                    Operation::Subtraction => vec![Instruction::Sub(x, b.1.unwrap())],
+                    Operation::Multiplication => vec![Instruction::Mul(x, b.1.unwrap())],
+                    Operation::Division => vec![Instruction::Div(x, b.1.unwrap())],
+                    Operation::Modulo => vec![Instruction::Mod(x, b.1.unwrap())],
 
                     _ => todo!()
                 }

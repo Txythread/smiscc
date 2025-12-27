@@ -22,6 +22,10 @@ pub enum AssemblyInstruction {
     SubReg(Register, Register),
     /// Subtracts the data from the register's contents.
     SubImm(Register, i64),
+    /// Multiplies the contents of the second register with the first register's contents.
+    MulReg(Register, Register),
+    /// Divides the first register with the second one.
+    DivReg(Register, Register),
 
     /// Get data from the stack at a specific offset and store it into a register
     /// without changing the stack address
@@ -35,7 +39,7 @@ impl AssemblyInstruction {
     pub fn into_asm(&self) -> String {
         todo!()
     }
-    
+
     pub fn get_instruction_meta(&self) -> InstructionMeta {
         match self {
             AssemblyInstruction::MoveReg(_, _) => InstructionMeta::MoveReg,
@@ -47,9 +51,11 @@ impl AssemblyInstruction {
             AssemblyInstruction::SubReg(_, _) => InstructionMeta::SubReg,
             AssemblyInstruction::StackLoad(_, _) => InstructionMeta::StackLoad,
             &AssemblyInstruction::AddImm(_, _) | &AssemblyInstruction::SubImm(_, _) => todo!(),
+            AssemblyInstruction::MulReg(_, _) => InstructionMeta::MulReg,
+            &AssemblyInstruction::DivReg(_, _) => InstructionMeta::DivReg,
         }
     }
-    
+
     pub fn get_arguments(&self) -> Vec<(/* key */String, /* value: */String)> {
         match self {
             AssemblyInstruction::StackStore(a, b) => {
@@ -64,7 +70,7 @@ impl AssemblyInstruction {
                     )
                 ]
             }
-            
+
             AssemblyInstruction::StackLoad(a, b) => {
                 vec![
                     (
@@ -77,7 +83,7 @@ impl AssemblyInstruction {
                     )
                 ]
             }
-            
+
             AssemblyInstruction::AddImm(a, b) => {
                 vec![
                     (
@@ -90,7 +96,7 @@ impl AssemblyInstruction {
                     )
                 ]
             }
-            
+
             AssemblyInstruction::SubImm(a, b) => {
                 vec![
                     (
@@ -103,7 +109,7 @@ impl AssemblyInstruction {
                     )
                 ]
             }
-            
+
             AssemblyInstruction::MoveReg(a, b) => {
                 vec![
                     (
@@ -116,7 +122,7 @@ impl AssemblyInstruction {
                     )
                 ]
             }
-            
+
             AssemblyInstruction::MoveImm(a, b) => {
                 vec![
                     (
@@ -185,18 +191,45 @@ impl AssemblyInstruction {
                         b.name.clone()
                     )
                 ]
+            },
+
+            AssemblyInstruction::MulReg(a, b) => {
+                vec![
+                    (
+                        String::from("$a"),
+                        a.name.clone()
+                    ),
+                    (
+                        String::from("$b"),
+                        b.name.clone()
+                    )
+                ]
+            }
+
+
+            AssemblyInstruction::DivReg(a, b) => {
+                vec![
+                    (
+                        String::from("$a"),
+                        a.name.clone()
+                    ),
+                    (
+                        String::from("$b"),
+                        b.name.clone()
+                    )
+                ]
             }
         }
     }
-    
+
     pub fn make_string(&self, arch: Architecture) -> String {
         let mut meta = arch.instructions.get(&self.get_instruction_meta()).unwrap().clone();
         let params = self.get_arguments();
-        
+
         for param in params {
             meta = meta.replace(param.0.as_str(), param.1.as_str());
         }
-        
+
         meta
     }
 }
@@ -208,8 +241,8 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
     for instruction in code.clone() {
         match instruction {
             Instruction::Move(objA, objB) => {
-                let mut regA = architecture.get_object(objA);
-                let mut regB = architecture.get_object(objB);
+                let mut regA = architecture.get_object(objA, vec![objB]);
+                let mut regB = architecture.get_object(objB, vec![objA]);
 
                 instructions.append(regA.1.as_mut());
                 instructions.append(regB.1.as_mut());
@@ -217,15 +250,15 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
                 instructions.push(AssemblyInstruction::MoveReg(regA.0, regB.0));
             }
             Instruction::MoveData(objA, data) => {
-                let mut regA = architecture.get_object(objA);
+                let mut regA = architecture.get_object(objA, vec![]);
 
                 instructions.append(regA.1.as_mut());
 
                 instructions.push(AssemblyInstruction::MoveImm(regA.0, data));
             }
             Instruction::Add(objA, objB) => {
-                let mut regA = architecture.get_object(objA);
-                let mut regB = architecture.get_object(objB);
+                let mut regA = architecture.get_object(objA, vec![objB]);
+                let mut regB = architecture.get_object(objB, vec![objA]);
 
                 instructions.append(regA.1.as_mut());
                 instructions.append(regB.1.as_mut());
@@ -233,16 +266,33 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
                 instructions.push(AssemblyInstruction::AddReg(regA.0, regB.0));
             }
             Instruction::Sub(objA, objB) => {
-                let mut regA = architecture.get_object(objA);
-                let mut regB = architecture.get_object(objB);
+                let mut regA = architecture.get_object(objA, vec![objB]);
+                let mut regB = architecture.get_object(objB, vec![objA]);
 
                 instructions.append(regA.1.as_mut());
                 instructions.append(regB.1.as_mut());
 
                 instructions.push(AssemblyInstruction::SubReg(regA.0, regB.0));
             }
-            Instruction::Mul(_, _) => {}
-            Instruction::Div(_, _) => {}
+            Instruction::Mul(objA, objB) => {
+                let mut regA = architecture.get_object(objA, vec![objB]);
+                let mut regB = architecture.get_object(objB, vec![objA]);
+
+                instructions.append(regA.1.as_mut());
+                instructions.append(regB.1.as_mut());
+
+                instructions.push(AssemblyInstruction::MulReg(regA.0, regB.0));
+            }
+            Instruction::Div(objA, objB) => {
+                let mut regA = architecture.get_object(objA, vec![objB]);
+                let mut regB = architecture.get_object(objB, vec![objA]);
+
+                instructions.append(regA.1.as_mut());
+                instructions.append(regB.1.as_mut());
+
+                instructions.push(AssemblyInstruction::DivReg(regA.0, regB.0));
+            }
+
             Instruction::Mod(_, _) => {}
             Instruction::Load(_, _, _) => {}
             Instruction::Store(_, _, _) => {}

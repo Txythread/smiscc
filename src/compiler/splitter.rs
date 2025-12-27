@@ -1,4 +1,4 @@
-use crate::compiler::line_map::{Line, LineMap, TokenPosition};
+use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, Line, LineMap, NotificationInfo, TokenPosition};
 use crate::config::tokenization_options::*;
 
 
@@ -136,7 +136,6 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
             }
 
             if UNIGNORED_SPLIT_CHARACTERS.contains(&character.to_string().as_str()) {
-                println!("Found unignored split character: {:?}", character);
                 end_token(&mut line_tokens, &mut splitted_line);
                 let token = TokenPosition::new(i as u16, 1);
                 line_tokens.push(token.clone());
@@ -176,7 +175,34 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
         if !splitted_line.is_empty() {
             // There was no line ending in the end, throw an error
 
-            // TODO: Throw an error!
+
+            line_map.add_line(  // Add the line temporarily. It will be removed later again.
+                Line::new(
+                    file_name.to_string(),
+                    line_number as u32,
+                    line_tokens.clone(),
+                    0 /* serves no functionality rn */,
+                    trimmed_line.clone(),
+                )
+            );
+
+            let display_info = DisplayCodeInfo::new(
+                line_number as u32 - 1,
+                0,
+                -1,
+                vec![],
+                DisplayCodeKind::InitialError
+            );
+
+            let notification = NotificationInfo::new(
+                "Missing Line Terminator".to_string(),
+                "Consider adding a \";\" at the end of this line.".to_string(),
+                vec![display_info]
+            );
+
+            line_map.display_error(notification);
+            line_map.lines.remove(line_map.lines.len() - 1);
+
         }
 
 

@@ -68,5 +68,5 @@ fn main() {
     }
 
 
-    line_map.display_error(notification);
+    //line_map.display_error(notification);
 }
