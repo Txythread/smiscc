@@ -41,3 +41,23 @@ pub enum Instruction {
     Load(Uuid, Uuid, Uuid),
     Store(Uuid, Uuid, Uuid),
 }
+
+#[derive(Clone, Debug, PartialEq)]
+#[derive(Eq)]
+#[derive(Hash)]
+pub enum InstructionMeta {
+    MoveReg,
+    MoveImm,
+
+    AddReg,
+    SubReg,
+    MulReg,
+    DivReg,
+    ModReg,
+
+    Load,
+    Store,
+
+    StackLoad,
+    StackStore,
+}

@@ -1,9 +1,10 @@
+use crate::compiler::backend::assembly;
 use crate::compiler::backend::context::Context;
 use crate::compiler::backend::flattener::flatten;
 use crate::compiler::splitter::split;
 use crate::compiler::tokenization::tokenizer::tokenize;
 use crate::compiler::parser::parse::parse;
-
+use crate::compiler::backend::arch::aarch64_macOS;
 
 pub fn compile(code: String) {
     let mut splitted = split(code);
@@ -20,4 +21,14 @@ pub fn compile(code: String) {
 
 
     println!("Parsed: {:#?}", parsed);
+
+    let arch = aarch64_macOS::generate();
+    let assembly = assembly::generate_assembly_instructions(flattened, arch.clone());
+
+
+    for instruction in assembly.iter().clone() {
+        println!("{}", instruction.make_string(arch.clone()))
+    }
+
+    println!("{:?}", assembly)
 }
