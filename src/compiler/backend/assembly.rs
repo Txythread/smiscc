@@ -1,3 +1,7 @@
+use std::fs;
+use std::io::Write;
+use std::ops::Deref;
+use std::rc::Rc;
 use crate::compiler::backend::arch::{Architecture, Register};
 use crate::compiler::backend::flattener::{Instruction, InstructionMeta};
 
@@ -222,7 +226,7 @@ impl AssemblyInstruction {
         }
     }
 
-    pub fn make_string(&self, arch: Architecture) -> String {
+    pub fn make_string(&self, arch: Rc<Architecture>) -> String {
         let mut meta = arch.instructions.get(&self.get_instruction_meta()).unwrap().clone();
         let params = self.get_arguments();
 
@@ -230,8 +234,29 @@ impl AssemblyInstruction {
             meta = meta.replace(param.0.as_str(), param.1.as_str());
         }
 
+        meta = meta.replace("$sp", arch.get_stack_pointer().name.as_str());
+        meta = meta.replace("$scratch", arch.get_scratch_register().name.as_str());
+
         meta
     }
+}
+
+pub fn generate_assembly(code: Vec<AssemblyInstruction>, arch: Architecture, output_name: String) {
+    let arch = Rc::new(arch);
+
+    fs::remove_file(output_name.clone()).unwrap();
+
+    let mut file = fs::File::create(&output_name).unwrap();
+
+    file.write(arch.leading_boilerplate.as_bytes()).expect("");
+
+    for instruction in code {
+        file.write(instruction.make_string(arch.clone()).as_bytes()).expect("");
+    }
+    
+    file.write(arch.trailing_boilerplate.as_bytes()).expect("");
+
+    file.flush().expect("");
 }
 
 pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Architecture) -> Vec<AssemblyInstruction> {
@@ -304,7 +329,6 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
         }
 
         let instructions_clone = instructions.iter().clone().skip(instructions_length);
-        print!("{}", instructions_clone.map(|x| x.make_string(architecture.clone())).collect::<Vec<String>>().join(""))
     }
 
     instructions

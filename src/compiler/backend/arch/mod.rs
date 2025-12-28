@@ -12,8 +12,16 @@ use crate::compiler::backend::flattener::{Instruction, InstructionMeta};
 #[derive(new, Debug, Clone, PartialEq)]
 pub struct Architecture {
     pub name: String,
+    /// The instructions. What the string is for is specified by the
+    /// (InstructionMeta)[InstructionMeta] provided. The associated string will get
+    /// some parts replaced.
+    /// 1. Regular arguments are provided as $a, $b, ...
+    /// 1. The stack pointer is provided as $sp.
+    /// 1. The scratch register is provided $scratch
     pub instructions: HashMap<InstructionMeta, String>,
     pub register_map: RegisterMap,
+    pub leading_boilerplate: &'static str,
+    pub trailing_boilerplate: &'static str,
 }
 
 impl Architecture {
@@ -34,7 +42,6 @@ impl Architecture {
 
         // Make room for it in the registers as it's needed regardless of the value being on stack or not.
         let mut result_reg = self.provide_empty_register(preserving);
-        println!("storing resulting register: {:?}", result_reg);
         instructions.append(result_reg.1.as_mut());
 
         let result_reg = result_reg.0;
@@ -66,12 +73,45 @@ impl Architecture {
 
             if register.1 == Some(object) {
                 self.register_map.registers[i].1 = None;
-                println!("freed register: {:?}", register.0.name);
             }
         }
 
         // Remove stack references
-        println!("removed stack info: {:?}", self.register_map.stack.remove(&object));
+        self.register_map.stack.remove(&object);
+    }
+
+    /// Gets the default stack pointer in use for this architecture
+    pub fn get_stack_pointer(&self) -> Register {
+        let sp = self.register_map.registers[self.register_map.stack_pointer_register].0.clone();
+
+        if sp.options != vec![RegisterDataType::Address] {
+            panic!("Stack pointer register was expected, other type of register was found")
+        }
+
+        if sp.kind != RegisterKind::StackPointer {
+            panic!("Stack pointer register was expected, other type of register was found")
+        }
+
+        sp
+    }
+
+    /// Gets the default scratch register in use for this architecture
+    pub fn get_scratch_register(&self) -> Register {
+        let scratch = self.register_map.registers[self.register_map.scratch_register].0.clone();
+
+        if scratch.options.contains(&RegisterDataType::Float) {
+            panic!("Scratch register was expected, other type of register was found")
+        }
+
+        if scratch.kind != RegisterKind::GeneralPurpose {
+            panic!("Scratch register was expected, other type of register was found")
+        }
+
+        if scratch.saving_behaviour != RegisterSavingBehaviour::Scratch {
+            panic!("Scratch register was expected, other type of register was found")
+        }
+
+        scratch
     }
 
     /// Provides an empty register. If there is one available right away, that one
@@ -134,7 +174,10 @@ pub struct RegisterMap {
     stack_offset: usize,
 
     /// The contents of the stack and the offset in comparison to the stack pointer.
-    stack: HashMap</* object- */Uuid, /*stack offset: */usize>
+    stack: HashMap</* object- */Uuid, /*stack offset: */usize>,
+
+    /// The index of the stack pointer register in the [registers map](registers)
+    stack_pointer_register: usize,
 }
 
 #[derive(new, Debug, Clone, PartialEq)]

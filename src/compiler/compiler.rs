@@ -14,8 +14,8 @@ pub fn compile(code: String) {
     let arch = aarch64_macOS::generate();
     let assembly = assembly::generate_assembly_instructions(flattened, arch.clone());
 
-    for instruction in assembly.iter().clone() {
-        print!("{}", instruction.make_string(arch.clone()))
+    if splitted.1.error_count == 0 {
+        assembly::generate_assembly(assembly, arch, "test.s".to_string())
     }
 
     println!("\nFinished with {} errors", splitted.1.error_count)

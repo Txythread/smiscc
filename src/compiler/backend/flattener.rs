@@ -17,7 +17,6 @@ pub fn flatten(line: Rc<dyn Node>, context: &mut Context) -> Vec<Instruction> {
     let mut instructions = result.0;
     let obj_uuid = result.1;
 
-    println!("Node generated uuid: {:#?} and instructions: {:?}", obj_uuid, instructions);
 
     // Find the last occurrence of an object's usage in the
     // assembly and insert drop statements afterward.
@@ -46,8 +45,6 @@ pub fn flatten(line: Rc<dyn Node>, context: &mut Context) -> Vec<Instruction> {
         }
          // */
     }
-
-    println!("Instructions: {:#?}", instructions);
 
     instructions
 }
