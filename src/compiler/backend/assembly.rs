@@ -238,7 +238,9 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
     let mut architecture = architecture;
     let mut instructions: Vec<AssemblyInstruction> = Vec::new();
 
+
     for instruction in code.clone() {
+        let mut instructions_length = instructions.len();
         match instruction {
             Instruction::Move(objA, objB) => {
                 let mut regA = architecture.get_object(objA, vec![objB]);
@@ -296,7 +298,13 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
             Instruction::Mod(_, _) => {}
             Instruction::Load(_, _, _) => {}
             Instruction::Store(_, _, _) => {}
+            Instruction::Drop(obj) => {
+                architecture.delete_object(obj);
+            }
         }
+
+        let instructions_clone = instructions.iter().clone().skip(instructions_length);
+        print!("{}", instructions_clone.map(|x| x.make_string(architecture.clone())).collect::<Vec<String>>().join(""))
     }
 
     instructions

@@ -14,10 +14,40 @@ pub fn flatten(line: Rc<dyn Node>, context: &mut Context) -> Vec<Instruction> {
 
 
     let result = line.generate_instructions(context);
-    let instructions = result.0;
+    let mut instructions = result.0;
     let obj_uuid = result.1;
 
     println!("Node generated uuid: {:#?} and instructions: {:?}", obj_uuid, instructions);
+
+    // Find the last occurrence of an object's usage in the
+    // assembly and insert drop statements afterward.
+
+    let mut objects: Vec<Uuid> = vec![];
+
+    for i in 1..instructions.len() {
+        let i = instructions.len() - i;
+
+        // Find objects that are not needed after this point
+        for object in instructions[i].get_objects() {
+            if !objects.contains(&object) {
+                objects.push(object);
+
+                // Drop the object at this point
+                instructions.insert(i + 1, Instruction::Drop(object))
+
+            }
+        }
+
+        /*/ Find objects that are not needed at this point
+        for object in instructions[i].get_overridden() {
+            if let Some(removal_index) = objects.iter().position(|x| *x==object) {
+                objects.remove(removal_index);
+            }
+        }
+         // */
+    }
+
+    println!("Instructions: {:#?}", instructions);
 
     instructions
 }
@@ -40,6 +70,38 @@ pub enum Instruction {
     /// Load (size of (datatype (2))) bytes of object at (1) into (0)
     Load(Uuid, Uuid, Uuid),
     Store(Uuid, Uuid, Uuid),
+
+    /// Removes an object from the list of objects that need to be
+    /// maintained. This will not clean the heap if this is a pointer.
+    Drop(Uuid),
+}
+
+impl Instruction {
+    pub fn get_objects(&self) -> Vec<Uuid> {
+        match self {
+            Instruction::Move(a, b) => vec![*a, *b],
+            Instruction::Add(a, b) => vec![*a, *b],
+            Instruction::Sub(a, b) => vec![*a, *b],
+            Instruction::Mul(a, b) => vec![*a, *b],
+            Instruction::Div(a, b) => vec![*a, *b],
+            Instruction::Mod(a, b) => vec![*a, *b],
+            Instruction::Load(a, b, _) => vec![*a, *b],
+            Instruction::Store(a, b, _) => vec![*a, *b],
+            Instruction::Drop(a) => vec![*a],
+            Instruction::MoveData(a, _) => vec![*a]
+        }
+    }
+
+    /// Gets all the objects that are overridden, meaning their value
+    /// doesn't matter for this step and what it contained could be
+    /// discarded before.
+    pub fn get_overridden(&self) -> Vec<Uuid> {
+        match self {
+            Instruction::Move(a, _) => vec![*a],
+            Instruction::MoveData(a, _) => vec![*a],
+            _ => vec![]
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]

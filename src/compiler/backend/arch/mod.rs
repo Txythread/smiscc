@@ -53,10 +53,25 @@ impl Architecture {
             self.register_map.registers[register_index.unwrap()].1 = Some(object);
         }
 
-        println!("instructions: {:?}", instructions);
-
 
         (result_reg, instructions)
+    }
+
+    /// Removes an object from the list of maintained objects, freeing the space and
+    /// the registers it uses. This is done by removing all the references to it.
+    pub fn delete_object(&mut self, object: Uuid) {
+        // Remove register references
+        for i in 0..self.register_map.registers.len() {
+            let register = self.register_map.registers[i].clone();
+
+            if register.1 == Some(object) {
+                self.register_map.registers[i].1 = None;
+                println!("freed register: {:?}", register.0.name);
+            }
+        }
+
+        // Remove stack references
+        println!("removed stack info: {:?}", self.register_map.stack.remove(&object));
     }
 
     /// Provides an empty register. If there is one available right away, that one

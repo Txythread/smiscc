@@ -365,7 +365,7 @@ impl Node for ArithmeticNode {
                     _ => todo!()
                 }
             ].concat(),
-            a.1
+            Some(x)
         )
     }
 }
