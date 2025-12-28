@@ -3,14 +3,18 @@ use uuid::Uuid;
 use crate::compiler::backend::context::Context;
 use crate::compiler::data_types::data_types::Buildable;
 use crate::compiler::data_types::integer::IntegerType;
+use crate::compiler::data_types::boolean::Boolean;
 use crate::compiler::parser::tree::node::Node;
 
 pub fn flatten(line: Rc<dyn Node>, context: &mut Context) -> Vec<Instruction> {
     // Generate the datatypes
     let u32_ = IntegerType::Unsigned32BitInteger;
     let u32_type = u32_.build_type();
+    let bool_ = Boolean::new();
+    let bool_type = bool_.build_type();
 
     context.datatypes.insert(u32_type.type_uuid, u32_type);
+    context.datatypes.insert(bool_type.type_uuid, bool_type);
 
 
     let result = line.generate_instructions(context);
@@ -71,7 +75,7 @@ pub enum Instruction {
     /// Removes an object from the list of objects that need to be
     /// maintained. This will not clean the heap if this is a pointer.
     Drop(Uuid),
-    
+
     /// Exit the current programm while returning the given object
     Exit(Uuid),
 }
@@ -123,6 +127,6 @@ pub enum InstructionMeta {
 
     StackLoad,
     StackStore,
-    
+
     Exit,
 }

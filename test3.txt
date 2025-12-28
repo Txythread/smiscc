@@ -1,6 +1,6 @@
 var abc = 1 + 2 * 3;
 let xyz = abc / 2;
-
+let asdf = true;
 abc = abc + 1;
 
 exit abc - 1;

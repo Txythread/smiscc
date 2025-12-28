@@ -13,6 +13,7 @@ _start:
 	mov	x6, x4
 	sdiv	x6, x6, x5
 	mov	x5, 1
+	mov	x5, 1
 	mov	x6, x4
 	add	x6, x6, x5
 	mov	x4, x6

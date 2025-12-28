@@ -2,11 +2,15 @@ use crate::compiler::data_types::data_types::{BuildResult, Buildable};
 use crate::compiler::data_types::object::{ObjectType, Trait};
 use crate::compiler::tokenization::token::Token;
 
-struct Boolean {}
+pub struct Boolean {}
 
 impl Boolean {
     /// The name of the type referring to the boolean type in the user's code
     pub const BOOLEAN_KEYWORD: &str = "bool";
+
+    pub fn new() -> Self {
+        Self {}
+    }
 }
 
 impl Buildable for Boolean {

@@ -227,7 +227,15 @@ impl Node for BoolLiteralNode {
     }
 
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
-        todo!()
+        let uuid = Uuid::new_v4();
+
+        (
+            vec![
+                Instruction::MoveData(uuid, self.content as i64)
+            ]
+            ,
+            Some(uuid)
+        )
     }
 }
 
