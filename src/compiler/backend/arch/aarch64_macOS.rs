@@ -3,16 +3,19 @@ use uuid::Uuid;
 use crate::compiler::backend::arch::{Architecture, Register, RegisterDataType, RegisterKind, RegisterMap, RegisterSavingBehaviour};
 use crate::compiler::backend::flattener::InstructionMeta;
 
+
 pub fn generate() -> Architecture {
     let mut instructions: HashMap<InstructionMeta, String> = HashMap::new();
 
     instructions.insert(InstructionMeta::MoveReg, String::from("\tmov\t$a, $b\n"));
     instructions.insert(InstructionMeta::MoveImm, String::from("\tmov\t$a, $b\n"));
     instructions.insert(InstructionMeta::AddReg, String::from("\tadd\t$a, $a, $b\n"));
+    instructions.insert(InstructionMeta::SubReg, String::from("\tsub\t$a, $a, $b\n"));
     instructions.insert(InstructionMeta::MulReg, String::from("\tmul\t$a, $a, $b\n"));
     instructions.insert(InstructionMeta::DivReg, String::from("\tsdiv\t$a, $a, $b\n"));
     instructions.insert(InstructionMeta::StackStore, String::from("\tstr\t$a, [$sp, #$b]\n"));
     instructions.insert(InstructionMeta::StackLoad, String::from("\tldr\t$a, [$sp, #$b]\n"));
+    instructions.insert(InstructionMeta::Exit, String::from("\tmov\tx16, #1\n\tmov\tx0, $a\n\tsvc\t#0x80\n"));
 
     Architecture::new(
         "aarch64_macOS".to_string(),
@@ -58,17 +61,7 @@ pub fn generate() -> Architecture {
             26,
 
          ),
-        "\
-                .align 2\n\
-                .global _start\n\
-                \n\
-               _start:\n\
-            ",
-        "\
-        \n\
-        \tmov x0, #0\n\
-        \tmov x16, #1\n\
-        \tsvc #0\n\
-        "
+        include_str!("aarch64_macOS_header_bp.s"),
+        ""
     )
 }

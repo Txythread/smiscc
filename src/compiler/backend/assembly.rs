@@ -37,6 +37,9 @@ pub enum AssemblyInstruction {
 
     /// Store data to the stack a given offset without adjusting the stack address pointer.
     StackStore(Register, u64),
+
+    /// Exit (returning Register)
+    Exit(Register),
 }
 
 impl AssemblyInstruction {
@@ -54,9 +57,10 @@ impl AssemblyInstruction {
             AssemblyInstruction::AddReg(_, _) => InstructionMeta::AddReg,
             AssemblyInstruction::SubReg(_, _) => InstructionMeta::SubReg,
             AssemblyInstruction::StackLoad(_, _) => InstructionMeta::StackLoad,
-            &AssemblyInstruction::AddImm(_, _) | &AssemblyInstruction::SubImm(_, _) => todo!(),
+            AssemblyInstruction::AddImm(_, _) | &AssemblyInstruction::SubImm(_, _) => todo!(),
             AssemblyInstruction::MulReg(_, _) => InstructionMeta::MulReg,
-            &AssemblyInstruction::DivReg(_, _) => InstructionMeta::DivReg,
+            AssemblyInstruction::DivReg(_, _) => InstructionMeta::DivReg,
+            AssemblyInstruction::Exit(_) => InstructionMeta::Exit,
         }
     }
 
@@ -223,6 +227,15 @@ impl AssemblyInstruction {
                     )
                 ]
             }
+
+            AssemblyInstruction::Exit(a) => {
+                vec![
+                    (
+                        String::from("$a"),
+                        a.name.clone()
+                    )
+                ]
+            }
         }
     }
 
@@ -325,6 +338,13 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
             Instruction::Store(_, _, _) => {}
             Instruction::Drop(obj) => {
                 architecture.delete_object(obj);
+            }
+            Instruction::Exit(obj) => {
+                let mut regA = architecture.get_object(obj, vec![]);
+
+                instructions.append(regA.1.as_mut());
+
+                instructions.push(AssemblyInstruction::Exit(regA.0));
             }
         }
 

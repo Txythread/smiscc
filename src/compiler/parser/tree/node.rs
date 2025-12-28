@@ -567,3 +567,45 @@ impl Node for CodeBlockNode {
         (instructions, None)
     }
 }
+
+
+/// A node that exits the process. No dark web stuff.
+#[derive(Debug, new)]
+pub struct ExitNode {
+    return_value: Rc<dyn Node>,
+    position: (usize, TokenPosition),
+}
+
+
+impl Node for ExitNode {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        todo!()
+    }
+
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        vec![]
+    }
+
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, _: Context) -> Option<Vec<ObjectType>> {
+        None
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        todo!()
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        let mut instructions: Vec<Instruction> = vec![];
+        let mut return_value = self.return_value.generate_instructions(context);
+
+        instructions.append(return_value.0.as_mut());
+
+        instructions.push(Instruction::Exit(return_value.1.unwrap()));
+
+        (instructions, None)
+    }
+}

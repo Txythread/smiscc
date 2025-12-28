@@ -4,12 +4,13 @@ use crate::compiler::line_map::TokenPosition;
 use crate::config::tokenization_options::Keyword;
 use crate::compiler::parser::parse::ExpressionKind;
 use crate::compiler::parser::statement::Statement;
-use crate::compiler::parser::tree::node::{IdentifierNode, LetNode, Node};
+use crate::compiler::parser::tree::node::{ExitNode, IdentifierNode, LetNode, Node};
 
 #[derive(Debug, EnumIter)]
 pub enum Statements {
     LetStatement,
-    VarStatement
+    VarStatement,
+    ExitStatement,
 }
 
 impl Statement for Statements {
@@ -17,6 +18,7 @@ impl Statement for Statements {
         match self {
             Statements::LetStatement => Some(Keyword::Let),
             Statements::VarStatement => Some(Keyword::Var),
+            Statements::ExitStatement => Some(Keyword::Exit),
         }
     }
 
@@ -36,6 +38,10 @@ impl Statement for Statements {
                         ExpressionKind::Identifier(None),
                         true
                     )
+                ]
+            }
+            Statements::ExitStatement => {
+                vec![
                 ]
             }
         }
@@ -69,6 +75,14 @@ impl Statement for Statements {
                     )
                 ]
             }
+            Statements::ExitStatement => {
+                vec![
+                    (
+                        ExpressionKind::Value,
+                        true
+                    )
+                ]
+            }
         }
     }
 
@@ -77,6 +91,17 @@ impl Statement for Statements {
     }
 
     fn generate_entire_node(&self, arguments: Vec<Rc<dyn Node>>) -> Option<Rc<dyn Node>> {
+        match self {
+            Statements::ExitStatement => {
+                let arg = arguments[0].clone();
+
+                let node = ExitNode::new(arg, (0, TokenPosition::new(0, 0)));
+
+                return Some(Rc::new(node));
+            },
+            _ => {}
+        }
+
         let identifierArg = arguments[0].clone();
         let identifierNode = identifierArg.downcast_rc::<IdentifierNode>().unwrap();
         let identifier = identifierNode.identifier.clone();

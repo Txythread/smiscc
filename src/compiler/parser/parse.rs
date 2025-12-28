@@ -27,6 +27,8 @@ pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>>
                     if let Some(statement_keyword) = statement.get_affiliated_keyword() {
                         if statement_keyword != keyword { continue; }
 
+                        println!("Found statement: {:?}", statement);
+
                         // The statement is the statement in question.
                         // Generate its arguments (starting with the header).
                         let mut arguments: Vec<Rc<dyn Node>> = vec![];
@@ -37,10 +39,13 @@ pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>>
                             let is_required = type_.1;
                             let kind = type_.0;
 
+                            println!("Type: {:?}", kind);
 
 
                             match kind {
                                 ExpressionKind::Value => {
+                                    println!("Tokens: {:?}, cursor: {}", line, cursor);
+
                                     // Parse an arithmetic expression
                                     if let Some(result) = parse_arithmetic_expression(line.clone(), line_number as u32, line_map.clone(), 0, &mut cursor, true) {
                                         arguments.push(result);

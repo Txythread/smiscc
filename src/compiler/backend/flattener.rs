@@ -71,6 +71,9 @@ pub enum Instruction {
     /// Removes an object from the list of objects that need to be
     /// maintained. This will not clean the heap if this is a pointer.
     Drop(Uuid),
+    
+    /// Exit the current programm while returning the given object
+    Exit(Uuid),
 }
 
 impl Instruction {
@@ -85,7 +88,8 @@ impl Instruction {
             Instruction::Load(a, b, _) => vec![*a, *b],
             Instruction::Store(a, b, _) => vec![*a, *b],
             Instruction::Drop(a) => vec![*a],
-            Instruction::MoveData(a, _) => vec![*a]
+            Instruction::MoveData(a, _) => vec![*a],
+            Instruction::Exit(a) => vec![*a],
         }
     }
 
@@ -119,4 +123,6 @@ pub enum InstructionMeta {
 
     StackLoad,
     StackStore,
+    
+    Exit,
 }

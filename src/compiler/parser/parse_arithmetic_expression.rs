@@ -13,6 +13,7 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
         }
     }
 
+
     // Find logical parentheses and calculate stuff for them first
     // Since this is done recursively for each parenthesis, only top-level
     // ones need to be tracked.
@@ -37,6 +38,8 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
         } else {
             *cursor += 1;
         }
+
+        println!("Looking at token: {:?}", token);
 
         if stop_at_unexpected_token && !token.is_expected_in_arithmetic() { *cursor -= 1; break;}
 
@@ -102,7 +105,8 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
                 if parenthesis_depth > 0 {
                     tokens_in_parenthesis.push(token.clone());
                 } else {
-                    calculated_nodes.push(parse_token(token.clone(), line_number, line_map.clone())?)
+                    calculated_nodes.push(parse_token(token.clone(), line_number, line_map.clone())?);
+                    println!("calculated nodes: {:?}", calculated_nodes);
                 }
             }
         }
@@ -117,9 +121,5 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
         calculated_nodes = vec![Rc::new(resulting_node)];
     }
 
-    if calculated_nodes.len() == 1 {
-        Some(calculated_nodes[0].clone())
-    } else {
-        None
-    }
+    Some(calculated_nodes.iter().nth(0)?.clone())
 }

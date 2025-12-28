@@ -146,6 +146,13 @@ pub mod tokenization_options {
         /// inside a function.
         #[strum(serialize = "var")]
         Var,
+        
+        /// ### Exit the Current Process
+        /// 
+        /// This is similar to the "exit"-statements in scripting languages,
+        /// such as most shell languages. This action requires a value.
+        #[strum(serialize = "exit")]
+        Exit,
     }
 
 

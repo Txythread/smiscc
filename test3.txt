@@ -2,3 +2,5 @@ var abc = 1 + 2 * 3;
 let xyz = abc / 2;
 
 abc = abc + 1;
+
+exit abc - 1;
