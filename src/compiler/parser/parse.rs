@@ -53,7 +53,7 @@ pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>>
                                 }
                                 ExpressionKind::Assignment => {
                                     match line[cursor as usize].clone() {
-                                        Token::Assignment(pos ) => arguments.push(Rc::new(AssignmentNode::new((line_number, pos)))),
+                                        Token::Assignment(pos ) => arguments.push(Rc::new(AssignmentSymbolNode::new((line_number, pos)))),
                                         _ => {
                                             // Throw an error.
                                             todo!()
@@ -87,6 +87,21 @@ pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>>
 
                     }
                 }
+            }
+
+            Token::Identifier(name, pos) => {
+                let id_node = IdentifierNode::new(name, None, (line_number, pos.clone()));
+
+                match line[1].clone() {
+                    Token::Assignment(_) => {},
+                    _ => todo!("Throw an error")
+                }
+
+                let value = parse_arithmetic_expression(line.clone(), line_number as u32, line_map.clone(), 0, &mut 2, false).unwrap();
+
+                let assignment_node = AssignmentNode::new(Rc::new(id_node), value, (line_number, pos));
+
+                lines.push(Rc::new(assignment_node));
             }
 
             _ => {}

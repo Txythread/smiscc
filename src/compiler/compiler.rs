@@ -10,11 +10,12 @@ pub fn compile(code: String) {
     let mut splitted = split(code);
     let tokens = tokenize(splitted.0.clone(), &mut splitted.1);
     let parsed = parse(tokens.clone(), splitted.1.clone());
-    let flattened = flatten(parsed.clone().unwrap(), &mut Context::clear());
+    let mut context = Context::clear(splitted.1.clone());
+    let flattened = flatten(parsed.clone().unwrap(), &mut context);
     let arch = aarch64_macOS::generate();
     let assembly = assembly::generate_assembly_instructions(flattened, arch.clone());
 
-    if splitted.1.error_count == 0 {
+    if context.line_map.error_count == 0 {
         assembly::generate_assembly(assembly, arch, "test.s".to_string())
     }
 

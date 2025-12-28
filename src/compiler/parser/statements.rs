@@ -8,19 +8,29 @@ use crate::compiler::parser::tree::node::{IdentifierNode, LetNode, Node};
 
 #[derive(Debug, EnumIter)]
 pub enum Statements {
-    LetStatement    
+    LetStatement,
+    VarStatement
 }
 
 impl Statement for Statements {
     fn get_affiliated_keyword(&self) -> Option<Keyword> {
         match self {
-            Statements::LetStatement => Some(Keyword::Let)
+            Statements::LetStatement => Some(Keyword::Let),
+            Statements::VarStatement => Some(Keyword::Var),
         }
     }
 
     fn get_header_format(&self) -> Vec<(ExpressionKind, bool)> {
         match self { 
             Statements::LetStatement => {
+                vec![
+                    (
+                        ExpressionKind::Identifier(None),
+                        true
+                    )
+                ]
+            }
+            Statements::VarStatement => {
                 vec![
                     (
                         ExpressionKind::Identifier(None),
@@ -45,7 +55,20 @@ impl Statement for Statements {
                         true
                     )
                 ]
-            } 
+            }
+            Statements::VarStatement => {
+                vec![
+                    (
+                        ExpressionKind::Assignment,
+                        true
+                    ),
+
+                    (
+                        ExpressionKind::Value,
+                        true
+                    )
+                ]
+            }
         }
     }
 
@@ -60,7 +83,9 @@ impl Statement for Statements {
         
         let assignedValue = arguments[2].clone();
         
-        let node = LetNode::new(identifier, Some(assignedValue), (0, TokenPosition::new(0,0)));
+        let is_mutable = matches!(self, Statements::VarStatement);
+        
+        let node = LetNode::new(identifier, Some(assignedValue), is_mutable, (0, TokenPosition::new(0,0)));
         
         Some(Rc::new(node))
     }

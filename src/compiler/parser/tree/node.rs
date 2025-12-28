@@ -8,7 +8,7 @@ use crate::compiler::backend::flattener::Instruction;
 use crate::compiler::data_types::data_types::Buildable;
 use crate::compiler::data_types::integer::IntegerType;
 use crate::compiler::data_types::object::{ObjectType, Trait};
-use crate::compiler::line_map::TokenPosition;
+use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, NotificationInfo, TokenPosition};
 use crate::compiler::parser::future::CodeFuture;
 use crate::util::operator::Operation;
 
@@ -54,7 +54,7 @@ impl_downcast!(Node);
 /// Any node that has a type that can be resolved to a value.
 /// **Note**: This is used in the parser to group values and parse
 /// expressions as arguments into statements.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum ValueNode {
     Arithmetic(ArithmeticNode),
     Literal(LiteralValueNode),
@@ -370,8 +370,10 @@ impl Node for ArithmeticNode {
     }
 }
 
-#[derive(Clone, Debug, new, PartialEq)]
+#[derive(Clone, Debug, new)]
 pub struct AssignmentNode {
+    left_side: Rc<IdentifierNode>,
+    right_side: Rc<dyn Node>,
     position: (usize, TokenPosition),
 }
 
@@ -389,10 +391,76 @@ impl Node for AssignmentNode {
         vec![]
     }
     
-    fn get_datatypes(&self, _: Vec<ObjectType>, _: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
         None
     }
     
+    fn unpack(&self) -> Box<dyn Node> {
+        Box::new(self.clone())
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        let mut instructions: Vec<Instruction> = vec![];
+        let mut left_side = self.left_side.generate_instructions(context);
+        let mut right_side = self.right_side.generate_instructions(context);
+
+        instructions.append(left_side.0.as_mut());
+        instructions.append(&mut right_side.0.as_mut());
+
+        // Look if the left side is in the list of mutable objects
+        if !context.mutable_objects.contains(&left_side.1.unwrap()) {
+            let display_info = DisplayCodeInfo::new(
+                self.position.0 as u32,
+                self.position.1.start as u32,
+                self.position.1.start as i32 + self.position.1.length as i32,
+                vec![
+                    "*hint:* consider making this variable mutable".to_string()
+                ],
+                DisplayCodeKind::InitialError
+            );
+
+            let notification = NotificationInfo::new(
+                "Attempt To Modify Immutable Variable".to_string(),
+                "This assignment tries to alter a left side that is immutable".to_string(),
+                vec![display_info],
+            );
+
+            context.line_map.display_error(notification);
+
+            return (instructions, None);
+        }
+
+
+        instructions.push(Instruction::Move(left_side.1.unwrap(), right_side.1.unwrap()));
+
+
+        (instructions, None)
+    }
+}
+
+#[derive(Clone, Debug, new)]
+pub struct AssignmentSymbolNode {
+    position: (usize, TokenPosition),
+}
+
+
+impl Node for AssignmentSymbolNode {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        current
+    }
+
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        vec![]
+    }
+
+    fn get_datatypes(&self, _: Vec<ObjectType>, _: Context) -> Option<Vec<ObjectType>> {
+        None
+    }
+
     fn unpack(&self) -> Box<dyn Node> {
         Box::new(self.clone())
     }
@@ -406,6 +474,7 @@ impl Node for AssignmentNode {
 pub struct LetNode {
     identifier: String,
     assigned_value: Option<Rc<dyn Node>>,
+    is_mutable: bool,
     position: (usize, TokenPosition),
 }
 
@@ -448,6 +517,10 @@ impl Node for LetNode {
 
         (*context).objects.insert(result_uuid.unwrap(), self.assigned_value.clone().unwrap().get_datatypes(context.datatypes.values().map(|x|x.clone()).collect(), context.clone()).unwrap()[0].type_uuid);
         (*context).name_map.insert(self.identifier.clone(), result_uuid.unwrap());
+
+        if self.is_mutable {
+            (*context).mutable_objects.push(result_uuid.unwrap());
+        }
 
 
         (instructions, None)
