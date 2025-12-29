@@ -8,7 +8,7 @@ pub fn generate() -> Architecture {
     let mut instructions: HashMap<InstructionMeta, String> = HashMap::new();
 
     instructions.insert(InstructionMeta::MoveReg, String::from("\tmov\t$a, $b\n"));
-    instructions.insert(InstructionMeta::MoveImm, String::from("\tmov\t$a, $b\n"));
+    instructions.insert(InstructionMeta::MoveImm, String::from("\tmov\t$a, #$b\n"));
     instructions.insert(InstructionMeta::AddReg, String::from("\tadd\t$a, $a, $b\n"));
     instructions.insert(InstructionMeta::SubReg, String::from("\tsub\t$a, $a, $b\n"));
     instructions.insert(InstructionMeta::MulReg, String::from("\tmul\t$a, $a, $b\n"));
@@ -16,7 +16,7 @@ pub fn generate() -> Architecture {
     instructions.insert(InstructionMeta::StackStore, String::from("\tstr\t$a, [$sp, #$b]\n"));
     instructions.insert(InstructionMeta::StackLoad, String::from("\tldr\t$a, [$sp, #$b]\n"));
     instructions.insert(InstructionMeta::Exit, String::from("\tmov\tx16, #1\n\tmov\tx0, $a\n\tsvc\t#0x80\n"));
-    instructions.insert(InstructionMeta::Call, String::from("\tble\t$a\n"));
+    instructions.insert(InstructionMeta::Call, String::from("\tb\t$a\n"));
 
     Architecture::new(
         "aarch64_macOS".to_string(),
