@@ -16,6 +16,7 @@ pub fn generate() -> Architecture {
     instructions.insert(InstructionMeta::StackStore, String::from("\tstr\t$a, [$sp, #$b]\n"));
     instructions.insert(InstructionMeta::StackLoad, String::from("\tldr\t$a, [$sp, #$b]\n"));
     instructions.insert(InstructionMeta::Exit, String::from("\tmov\tx16, #1\n\tmov\tx0, $a\n\tsvc\t#0x80\n"));
+    instructions.insert(InstructionMeta::Call, String::from("\tble\t$a\n"));
 
     Architecture::new(
         "aarch64_macOS".to_string(),
@@ -59,7 +60,7 @@ pub fn generate() -> Architecture {
             0,
             HashMap::new(),
             26,
-
+            vec![0,1,2,3,4,5,6,7]
          ),
         include_str!("aarch64_macOS_header_bp.s"),
         ""

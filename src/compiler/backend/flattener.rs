@@ -4,6 +4,7 @@ use crate::compiler::backend::context::Context;
 use crate::compiler::data_types::data_types::Buildable;
 use crate::compiler::data_types::integer::IntegerType;
 use crate::compiler::data_types::boolean::Boolean;
+use crate::compiler::parser::function_meta::{FunctionArgument, FunctionMeta, FunctionStyle};
 use crate::compiler::parser::tree::node::Node;
 
 pub fn flatten(line: Rc<dyn Node>, context: &mut Context) -> Vec<Instruction> {
@@ -13,8 +14,18 @@ pub fn flatten(line: Rc<dyn Node>, context: &mut Context) -> Vec<Instruction> {
     let bool_ = Boolean::new();
     let bool_type = bool_.build_type();
 
-    context.datatypes.insert(u32_type.type_uuid, u32_type);
+    context.datatypes.insert(u32_type.type_uuid, u32_type.clone());
     context.datatypes.insert(bool_type.type_uuid, bool_type);
+
+    context.function_metas.push(FunctionMeta::new(
+        "print".to_string(),
+        "_print".to_string(),
+        FunctionStyle::C,
+        None,
+        vec![
+            FunctionArgument::new(None, u32_type.type_uuid)
+        ]
+    ));
 
 
     let result = line.generate_instructions(context);
@@ -76,8 +87,13 @@ pub enum Instruction {
     /// maintained. This will not clean the heap if this is a pointer.
     Drop(Uuid),
 
-    /// Exit the current programm while returning the given object
+    /// Exit the current program while returning the given object
     Exit(Uuid),
+
+    /// Calls a function given its assembly name.
+    /// This doesn't only jump, it performs a subroutine, it branches,
+    /// calls a function, however you might want to call it.
+    Call(/* assembly name: */String, /* inputs: */Vec<Uuid>, /* outputs: */Vec<Uuid>)
 }
 
 impl Instruction {
@@ -94,6 +110,7 @@ impl Instruction {
             Instruction::Drop(a) => vec![*a],
             Instruction::MoveData(a, _) => vec![*a],
             Instruction::Exit(a) => vec![*a],
+            Instruction::Call(_, args, outs) => vec![args.clone(), outs.clone()].concat(),
         }
     }
 
@@ -129,4 +146,6 @@ pub enum InstructionMeta {
     StackStore,
 
     Exit,
+
+    Call
 }

@@ -4,6 +4,7 @@ use std::ops::Deref;
 use std::rc::Rc;
 use crate::compiler::backend::arch::{Architecture, Register};
 use crate::compiler::backend::flattener::{Instruction, InstructionMeta};
+use crate::compiler::parser::function_meta::FunctionStyle;
 
 #[derive(Debug)]
 pub enum AssemblyInstruction {
@@ -40,6 +41,9 @@ pub enum AssemblyInstruction {
 
     /// Exit (returning Register)
     Exit(Register),
+
+    /// Call a function (don't just jump to it)
+    Call(String),
 }
 
 impl AssemblyInstruction {
@@ -61,6 +65,7 @@ impl AssemblyInstruction {
             AssemblyInstruction::MulReg(_, _) => InstructionMeta::MulReg,
             AssemblyInstruction::DivReg(_, _) => InstructionMeta::DivReg,
             AssemblyInstruction::Exit(_) => InstructionMeta::Exit,
+            AssemblyInstruction::Call(_) => InstructionMeta::Call,
         }
     }
 
@@ -236,6 +241,14 @@ impl AssemblyInstruction {
                     )
                 ]
             }
+            AssemblyInstruction::Call(a) => {
+                vec![
+                    (
+                        String::from("$a"),
+                        a.clone()
+                    )
+                ]
+            }
         }
     }
 
@@ -345,6 +358,20 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
                 instructions.append(regA.1.as_mut());
 
                 instructions.push(AssemblyInstruction::Exit(regA.0));
+            }
+            Instruction::Call(asm_name, args, out) => {
+                for arg in args.clone().iter().enumerate() {
+                    let i = arg.0;
+                    let arg = arg.1;
+
+                    let reg = architecture.get_register_for_argument(i, FunctionStyle::C);
+                    let mut move_instructions = architecture.move_into_reg(arg.clone(), reg.unwrap(), args.clone());
+
+                    instructions.append(move_instructions.as_mut());
+                }
+
+                instructions.push(AssemblyInstruction::Call(asm_name));
+
             }
         }
 

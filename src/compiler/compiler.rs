@@ -5,11 +5,14 @@ use crate::compiler::splitter::split;
 use crate::compiler::tokenization::tokenizer::tokenize;
 use crate::compiler::parser::parse::parse;
 use crate::compiler::backend::arch::aarch64_macOS;
+use crate::compiler::parser::function_meta::{FunctionArgument, FunctionMeta, FunctionStyle};
 
 pub fn compile(code: String) {
     let mut splitted = split(code);
     let tokens = tokenize(splitted.0.clone(), &mut splitted.1);
+    println!("Tokens: {:?}", tokens);
     let parsed = parse(tokens.clone(), splitted.1.clone());
+    println!("Parsed AST: {:?}", parsed);
     let mut context = Context::clear(splitted.1.clone());
     let flattened = flatten(parsed.clone().unwrap(), &mut context);
     let arch = aarch64_macOS::generate();

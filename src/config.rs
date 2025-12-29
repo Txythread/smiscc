@@ -67,6 +67,12 @@ pub mod tokenization_options {
     /// in either of the lines (except if defined otherwise by other config constants,
     /// though you should not add the same character to the ignored splitting characters.).
     pub const NEW_LOGICAL_LINE_CHARACTERS: [&str; 3] = [";", "{", "}"];
+    
+    
+    /// ### Character that separetes stuff
+    /// 
+    /// The character that separates things like function arguments, array items, etc.
+    pub const SEPARATOR_CHARACTER: &str = ",";
 
 
     /// ### Logical Parentheses

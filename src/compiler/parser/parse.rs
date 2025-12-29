@@ -20,6 +20,8 @@ pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>>
         if line.is_empty() { continue; }
         let first_token = line[0].clone();
 
+        println!("First token: {:?}", first_token);
+
 
         match first_token {
             Token::KeywordType(keyword, _) => {
@@ -99,7 +101,14 @@ pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>>
 
                 match line[1].clone() {
                     Token::Assignment(_) => {},
-                    _ => todo!("Throw an error")
+                    _ => {
+                        println!("Parsing function ");
+                        let value = parse_arithmetic_expression(line.clone(), line_number as u32, line_map.clone(), 0, &mut 0, false).unwrap();
+
+                        lines.push(value);
+
+                        continue;
+                    }
                 }
 
                 let value = parse_arithmetic_expression(line.clone(), line_number as u32, line_map.clone(), 0, &mut 2, false).unwrap();

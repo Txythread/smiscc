@@ -8,6 +8,7 @@ use uuid::Uuid;
 use crate::compiler::backend::arch::register::{RegisterDataType, RegisterKind, RegisterSavingBehaviour};
 use crate::compiler::backend::assembly::AssemblyInstruction;
 use crate::compiler::backend::flattener::{Instruction, InstructionMeta};
+use crate::compiler::parser::function_meta::FunctionStyle;
 
 #[derive(new, Debug, Clone, PartialEq)]
 pub struct Architecture {
@@ -79,6 +80,65 @@ impl Architecture {
         // Remove stack references
         self.register_map.stack.remove(&object);
     }
+
+    /// Moves an object into a specified register
+    pub fn move_into_reg(&mut self, object: Uuid, register: Register, preserving: Vec<Uuid>) -> Vec<AssemblyInstruction> {
+        let mut instructions: Vec<AssemblyInstruction> = Vec::new();
+
+        // Store the register's contents if needed
+        if let Some(reg_contents) = self.register_map.registers.clone().iter().find(|x| x.0==register) {
+            if reg_contents.1 == Some(object) {
+                return instructions;
+            }
+
+            let mut movement = self.provide_empty_register(preserving);
+            instructions.append(movement.1.as_mut());
+            instructions.push(AssemblyInstruction::MoveReg(register.clone(), movement.0.clone()));
+
+            if let Some(index) = self.register_map.registers.iter().position(|x| x.0==movement.0) {
+                self.register_map.registers[index].1 = Some(reg_contents.1.clone().unwrap());
+            }
+        }
+
+        // Update the register state
+        if let Some(index) = self.register_map.registers.iter().position(|x| x.1==Some(object)) {
+            self.register_map.registers[index].1 = Some(object);
+        }
+
+        // Load the register value into the register
+        // 1. Try to find it in the registers
+        for other_register in self.register_map.registers.clone().iter().enumerate() {
+            if other_register.1.1 == Some(object) {
+                self.register_map.registers[other_register.0].1 = None;
+
+                instructions.push(AssemblyInstruction::MoveReg(register.clone(), other_register.1.0.clone()));
+                return instructions;
+            }
+        }
+
+
+        // 2. Try to find it in the stack, as it couldn't be located inside a register
+        for stack_info in self.register_map.stack.clone().iter().enumerate() {
+            if *stack_info.1.0 == object {
+                instructions.push(AssemblyInstruction::StackLoad(register.clone(), *stack_info.1.1 as u64));
+                return instructions;
+            }
+        }
+
+        todo!()
+    }
+
+    /// Get the argument register for an architecture and calling convention
+    /// A return value of None means that it should be stored on the stack.
+    pub fn get_register_for_argument(&self, argument_index: usize, calling_convention: FunctionStyle) -> Option<Register> {
+        match calling_convention {
+            FunctionStyle::C => {
+                Some(self.register_map.registers.iter().nth(self.register_map.c_style_arg_map[argument_index])?.0.clone())
+            }
+            FunctionStyle::Smisc => todo!(),
+        }
+    }
+
 
     /// Gets the default stack pointer in use for this architecture
     pub fn get_stack_pointer(&self) -> Register {
@@ -178,6 +238,10 @@ pub struct RegisterMap {
 
     /// The index of the stack pointer register in the [registers map](registers)
     stack_pointer_register: usize,
+
+    /// A map of where all the arguments go in a C-Style call
+    /// The registers are given by their indexes in the registers.
+    c_style_arg_map: Vec<usize>
 }
 
 #[derive(new, Debug, Clone, PartialEq)]

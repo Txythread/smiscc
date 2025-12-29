@@ -142,6 +142,13 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
                     continue 'token_loop;
                 }
 
+                SEPARATOR_CHARACTER => {
+                    let token = Token::ArgumentSeparator(current_token_pos.clone());
+
+                    line_tokens.push(token);
+                    continue 'token_loop;
+                }
+
                 _ => {}
             }
 

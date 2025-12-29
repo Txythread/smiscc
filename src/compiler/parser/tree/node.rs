@@ -1,4 +1,5 @@
 use std::fmt::{Debug, Formatter};
+use std::ops::Deref;
 use std::rc::Rc;
 use derive_new::*;
 use downcast_rs::{Downcast, impl_downcast};
@@ -615,5 +616,75 @@ impl Node for ExitNode {
         instructions.push(Instruction::Exit(return_value.1.unwrap()));
 
         (instructions, None)
+    }
+}
+
+#[derive(Debug, new)]
+pub struct FunctionCallNode {
+    name: Rc<String>,
+    arguments: Vec<Rc<dyn Node>>,
+    position: (usize, TokenPosition),
+}
+
+impl Node for FunctionCallNode {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        current
+    }
+
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        vec![]
+    }
+
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+        let function_metas = context.function_metas;
+
+        let function_meta = function_metas.iter().find(|&x|x.code_name.as_str()==self.name.as_str())?;
+        let type_uuid = function_meta.return_type_uuid?;
+        let type_ = context.datatypes.get(&type_uuid)?;
+
+        Some(vec![type_.clone()])
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        todo!()
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        let function_metas = context.function_metas.clone();
+
+        let function_meta = function_metas.iter().find(|&x|x.code_name.as_str()==self.name.as_str()).unwrap();
+        let asm_fn_name = function_meta.assembly_name.clone();
+
+        let mut return_uuid: Option<Uuid> = None;
+        let mut return_uuids: Vec<Uuid> = vec![];
+        if function_meta.return_type_uuid.is_some() {
+            return_uuid = Some(Uuid::new_v4());
+            return_uuids.push(return_uuid.unwrap());
+        }
+
+
+        let mut args: Vec<Uuid> = vec![];
+        let mut instructions: Vec<Instruction> = vec![];
+
+        for arg in self.arguments.iter() {
+            let mut arg_result = arg.generate_instructions(context);
+
+            args.push(arg_result.1.unwrap());
+            instructions.append(&mut arg_result.0);
+        }
+
+
+        (
+            vec![
+                instructions,
+                vec![Instruction::Call(asm_fn_name, args, return_uuids)],
+            ].concat()
+            ,
+            return_uuid
+        )
     }
 }

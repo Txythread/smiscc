@@ -32,6 +32,10 @@ pub enum Token {
     /// An operation that sets the left side to the right side
     /// This is like "=" in basically every (non-esoteric) programming language.
     Assignment(TokenPosition),
+    
+    /// Something that seperates two arguments, e.g. in a function call or array.
+    /// This correlates with a "," in most languages..
+    ArgumentSeparator(TokenPosition),
 
     //////////////////////////////////////////
     ////////////// PARENTHESES ///////////////
@@ -58,6 +62,7 @@ impl Token {
             Token::ArithmeticParenthesisOpen(pos) => { pos.clone() }
             Token::Assignment(pos) => { pos.clone() }
             Token::ArithmeticParenthesisClose(pos) => { pos.clone() }
+            Token::ArgumentSeparator(pos) => { pos.clone() }
         }
     }
 

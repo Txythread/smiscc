@@ -1,7 +1,8 @@
+use std::ops::Deref;
 use std::rc::Rc;
 use crate::compiler::line_map::{LineMap, TokenPosition};
 use crate::compiler::parser::parse_token::parse_token;
-use crate::compiler::parser::tree::node::{ArithmeticNode, Node, ValueNode};
+use crate::compiler::parser::tree::node::{ArithmeticNode, FunctionCallNode, IdentifierNode, Node, ValueNode};
 use crate::compiler::tokenization::token::Token;
 use crate::util::operator::Operation;
 
@@ -45,6 +46,58 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
 
         match token {
             Token::ArithmeticParenthesisOpen(_) => {
+                println!("Found open bracket thing");
+                // Detect function calls
+                if current_operation.is_none() {
+                    println!("nop");
+                    if let Some(last_node) = calculated_nodes.last() {
+                        println!("last node found");
+                        if let Some(identifier_node) = last_node.clone().downcast_rc::<ValueNode>().ok() {
+                            if let ValueNode::Identifier(identifier_node) = identifier_node.deref() {
+                                println!("last node is id");
+                                // This parenthesis belongs to a function call
+                                let function_name = identifier_node.identifier.clone();
+
+                                // Gather all the arguments
+                                let mut args: Vec<Rc<dyn Node>> = Vec::new();
+
+                                loop {
+                                    if let Some(new_node) = parse_arithmetic_expression(tokens.clone(), line_number, line_map.clone(), 0, cursor, true) {
+                                        args.push(new_node);
+                                    } else {
+                                        todo!()
+                                    }
+
+                                    *cursor -= 1;
+
+                                    // Look for either "," to indicate another argument or ")" to indicate the end of the function call
+                                    if let Some(token) = tokens.iter().nth(*cursor as usize) {
+                                        *cursor += 1;
+                                        match token {
+                                            Token::ArithmeticParenthesisClose(_) => {break;},
+                                            Token::ArgumentSeparator(_) => {continue},
+                                            _ => {todo!("Unexpected token in function call")}
+                                        }
+                                    } else {
+                                        todo!("Error: Unexpected line ending in function call");
+                                    }
+                                }
+
+                                let function_node = FunctionCallNode::new(
+                                    Rc::new(function_name),
+                                    args,
+                                    (line_number as usize, TokenPosition::new(0, 0))
+                                );
+
+                                calculated_nodes.remove(calculated_nodes.len() - 1);
+                                calculated_nodes.push(Rc::new(function_node));
+
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 parenthesis_depth += 1;
             }
 
