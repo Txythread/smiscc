@@ -4,6 +4,7 @@ use std::rc::Rc;
 use derive_new::*;
 use downcast_rs::{Downcast, impl_downcast};
 use uuid::Uuid;
+use crate::compiler::backend::assembly::AssemblyInstruction;
 use crate::compiler::backend::context::Context;
 use crate::compiler::backend::flattener::Instruction;
 use crate::compiler::data_types::data_types::Buildable;
@@ -49,7 +50,16 @@ pub trait Node: Debug + Downcast {
     /// Turns the node into [instructions](Instruction) and potentially an Uuid for
     /// the resulting value if applicable.
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>);
+
+    /// ### Output Meta Information
+    ///
+    /// Returns None if no output can be expected from the node.
+    /// If the node does deliver output, this outputs whether the value can be mutated
+    /// by choice (when the value can't be re-used anyway) or if it needs to be preserved
+    /// unless the user is specific about changing it (e.g. in an assignment).
+    fn output_is_randomly_mutable(&self) -> Option<bool>;
 }
+
 impl_downcast!(Node);
 
 /// Any node that has a type that can be resolved to a value.
@@ -97,6 +107,10 @@ impl Node for ValueNode {
 
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         self.unpack().generate_instructions(context)
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        self.get_sub_node().output_is_randomly_mutable()
     }
 }
 
@@ -149,6 +163,10 @@ impl Node for IdentifierNode {
 
         (vec![], object_uuid.map(|uuid| uuid.clone()))
     }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        Some(false)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -190,6 +208,10 @@ impl Node for LiteralValueNode {
 
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         todo!()
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        Some(true)
     }
 }
 
@@ -237,6 +259,10 @@ impl Node for BoolLiteralNode {
             ,
             Some(uuid)
         )
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        Some(true)
     }
 }
 
@@ -298,6 +324,10 @@ impl Node for IntegerLiteralNode {
             Some(uuid)
         )
     }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        Some(true)
+    }
 }
 
 /// A [node](Node) in the syntax tree that contains an arithmetic operation
@@ -354,16 +384,39 @@ impl Node for ArithmeticNode {
         let a = self.argument_a.generate_instructions(context);
         let b = self.argument_b.generate_instructions(context);
 
-        let x = Uuid::new_v4();
+        let mut x = a.1.unwrap();
 
+        if self.argument_b.output_is_randomly_mutable() == Some(true) && self.operation.is_commutative() {
+            return (
+                vec![
+                    a.0,
+                    b.0,
+                    vec![],
+                    match self.operation {
+                        Operation::Addition => vec![Instruction::Add(b.1.unwrap(), x)],
+                        Operation::Subtraction => vec![Instruction::Sub(b.1.unwrap(), x)],
+                        Operation::Multiplication => vec![Instruction::Mul(b.1.unwrap(), x)],
+                        Operation::Division => vec![Instruction::Div(b.1.unwrap(), x)],
+                        Operation::Modulo => vec![Instruction::Mod(b.1.unwrap(), x)],
+
+                        _ => todo!()
+                    }
+                ].concat(),
+                Some(b.1.unwrap())
+            )
+        }
+
+        if self.argument_a.output_is_randomly_mutable() != Some(true) {
+            x = Uuid::new_v4();
+        }
 
         (
             vec![
                 a.0,
                 b.0,
-                vec![
+                if x!= a.1.unwrap() {vec![
                     Instruction::Move(x, a.1.unwrap())
-                ],
+                ]} else {vec![]},
                 match self.operation {
                     Operation::Addition => vec![Instruction::Add(x, b.1.unwrap())],
                     Operation::Subtraction => vec![Instruction::Sub(x, b.1.unwrap())],
@@ -376,6 +429,10 @@ impl Node for ArithmeticNode {
             ].concat(),
             Some(x)
         )
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        Some(self.argument_a.output_is_randomly_mutable()? || self.argument_b.output_is_randomly_mutable()?)
     }
 }
 
@@ -445,6 +502,10 @@ impl Node for AssignmentNode {
 
         (instructions, None)
     }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        None
+    }
 }
 
 #[derive(Clone, Debug, new)]
@@ -476,6 +537,10 @@ impl Node for AssignmentSymbolNode {
 
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         todo!()
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        None
     }
 }
 
@@ -513,10 +578,16 @@ impl Node for LetNode {
         let mut result_uuid: Option<Uuid> = None;
 
         if let Some(assigned_value) = self.assigned_value.clone() {
-            let assignment_result = self.assigned_value.clone().unwrap().generate_instructions(context);
+            let assignment_result = assigned_value.clone().generate_instructions(context).clone();
             let mut assignment_instructions = assignment_result.0;
             instructions.append(&mut assignment_instructions);
-            result_uuid = assignment_result.1;
+
+            if assigned_value.output_is_randomly_mutable().unwrap() {
+                result_uuid = assignment_result.1;
+            } else {
+                result_uuid = Some(Uuid::new_v4());
+                instructions.push(Instruction::Move(result_uuid.unwrap(), assignment_result.1.unwrap()));
+            }
         }
 
         if result_uuid.is_none() {
@@ -533,6 +604,10 @@ impl Node for LetNode {
 
 
         (instructions, None)
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        None
     }
 }
 
@@ -575,6 +650,10 @@ impl Node for CodeBlockNode {
 
         (instructions, None)
     }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        None
+    }
 }
 
 
@@ -592,7 +671,7 @@ impl Node for ExitNode {
     }
 
     fn get_future(&self, current: CodeFuture) -> CodeFuture {
-        todo!()
+        CodeFuture::Never
     }
 
     fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
@@ -616,6 +695,10 @@ impl Node for ExitNode {
         instructions.push(Instruction::Exit(return_value.1.unwrap()));
 
         (instructions, None)
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        None
     }
 }
 
@@ -693,5 +776,9 @@ impl Node for FunctionCallNode {
             ,
             return_uuid
         )
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        None
     }
 }

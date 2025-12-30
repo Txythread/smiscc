@@ -1,0 +1,7 @@
+var abc = 1 + 2;
+let xyz = abc / 2; // fix division
+let asdf = true;
+abc = abc + 1;
+let zab = abc;
+
+exit abc - 1; // -> 3
