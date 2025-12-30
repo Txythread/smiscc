@@ -9,7 +9,6 @@ pub fn convert_to_int(input: String) -> Option<Result<i128, ConversionError>> {
     // Ignore characters if needed
     // Usually this will be a "_"
     let cleaned_input = input.replace(INTEGER_CONVERSION_IGNORED_CHARACTERS, "");
-    input = cleaned_input.as_str();
 
     for base in BASES {
         if let Some(result) = base.integer_from_string(cleaned_input.to_string()) {

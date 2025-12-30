@@ -1,4 +1,4 @@
-pub mod aarch64_macOS;
+pub mod aarch64_mac_os;
 mod register;
 
 use std::cmp::PartialEq;
@@ -7,9 +7,8 @@ use derive_new::new;
 use uuid::Uuid;
 use crate::compiler::backend::arch::register::{RegisterDataType, RegisterKind, RegisterSavingBehaviour};
 use crate::compiler::backend::assembly::AssemblyInstruction;
-use crate::compiler::backend::flattener::{Instruction, InstructionMeta};
+use crate::compiler::backend::flattener::InstructionMeta;
 use crate::compiler::parser::function_meta::FunctionStyle;
-use crate::compiler::parser::tree::node::BoolLiteralNode;
 
 #[derive(new, Debug, Clone, PartialEq)]
 pub struct Architecture {
@@ -149,7 +148,7 @@ impl Architecture {
     pub fn backup_caller_saved_regs(&mut self) -> Vec<AssemblyInstruction> {
         let mut instructions: Vec<AssemblyInstruction> = vec![];
         for reg_info in self.register_map.registers.clone().iter().enumerate() {
-            let i = reg_info.0;
+            let _i = reg_info.0;
             let register = reg_info.1.clone();
 
             if register.0.saving_behaviour != RegisterSavingBehaviour::CallerSaved { continue; }

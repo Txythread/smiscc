@@ -3,7 +3,7 @@ use crate::compiler::line_map::LineMap;
 use crate::compiler::parser::tree::node::{BoolLiteralNode, IdentifierNode, IntegerLiteralNode, LiteralValueNode, Node, ValueNode};
 use crate::compiler::tokenization::token::Token;
 
-pub fn parse_token(token: Token, line_number: u32, line_map: LineMap) -> Option<Rc<dyn Node>>{
+pub fn parse_token(token: Token, line_number: u32, _line_map: LineMap) -> Option<Rc<dyn Node>>{
     match token {
         Token::UnspecifiedString(_, _) => {}
         Token::StringLiteral(_, _) => {}

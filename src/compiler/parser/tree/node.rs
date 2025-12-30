@@ -1,10 +1,8 @@
-use std::fmt::{Debug, Formatter};
-use std::ops::Deref;
+use std::fmt::Debug;
 use std::rc::Rc;
 use derive_new::*;
 use downcast_rs::{Downcast, impl_downcast};
 use uuid::Uuid;
-use crate::compiler::backend::assembly::AssemblyInstruction;
 use crate::compiler::backend::context::Context;
 use crate::compiler::backend::flattener::Instruction;
 use crate::compiler::data_types::data_types::Buildable;
@@ -24,9 +22,11 @@ pub trait Node: Debug + Downcast {
 
     /// Gets a change of future if necessary (like return delivering
     /// no future whatsoever).
+    #[allow(dead_code)]
     fn get_future(&self, current: CodeFuture) -> CodeFuture;
 
     /// Returns all the nodes this node contains if applicable
+    #[allow(dead_code)]
     fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>>;
 
 
@@ -142,7 +142,7 @@ impl Node for IdentifierNode {
         vec![]
     }
     
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
         if let Some(type_) = self.data_type.clone() {
             return Some(vec![type_.clone()]);
         }
@@ -206,7 +206,7 @@ impl Node for LiteralValueNode {
         self.get_sub_node().unpack()
     }
 
-    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+    fn generate_instructions(&self, _context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         todo!()
     }
 
@@ -234,7 +234,7 @@ impl Node for BoolLiteralNode {
         Vec::new()
     }
 
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
         for type_ in all_types.iter().clone() {
             // Integer?
             if type_.has_trait(Trait::BOOLEAN_COMPATIBLE) {
@@ -249,7 +249,7 @@ impl Node for BoolLiteralNode {
         Box::new(self.clone())
     }
 
-    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+    fn generate_instructions(&self, _context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         let uuid = Uuid::new_v4();
 
         (
@@ -286,7 +286,7 @@ impl Node for IntegerLiteralNode {
         vec![]
     }
 
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
 
         if let Some(kind) = self.kind.clone() {
             for type_ in all_types.iter().clone() {
@@ -313,7 +313,7 @@ impl Node for IntegerLiteralNode {
         Box::new(self.clone())
     }
 
-    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+    fn generate_instructions(&self, _context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         let uuid = Uuid::new_v4();
 
         (
@@ -457,7 +457,7 @@ impl Node for AssignmentNode {
         vec![]
     }
     
-    fn get_datatypes(&self, types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
         None
     }
     
@@ -535,7 +535,7 @@ impl Node for AssignmentSymbolNode {
         Box::new(self.clone())
     }
 
-    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+    fn generate_instructions(&self, _context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         todo!()
     }
 
@@ -625,7 +625,7 @@ impl Node for CodeBlockNode {
         self.position.clone()
     }
 
-    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+    fn get_future(&self, _current: CodeFuture) -> CodeFuture {
         todo!()
     }
 
@@ -633,7 +633,7 @@ impl Node for CodeBlockNode {
         self.code.clone()
     }
 
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, _: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _: Context) -> Option<Vec<ObjectType>> {
         None
     }
 
@@ -670,7 +670,7 @@ impl Node for ExitNode {
         self.position.clone()
     }
 
-    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+    fn get_future(&self, _current: CodeFuture) -> CodeFuture {
         CodeFuture::Never
     }
 
@@ -678,7 +678,7 @@ impl Node for ExitNode {
         vec![]
     }
 
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, _: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _: Context) -> Option<Vec<ObjectType>> {
         None
     }
 
@@ -722,7 +722,7 @@ impl Node for FunctionCallNode {
         vec![]
     }
 
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
         let function_metas = context.function_metas;
 
         let function_meta = function_metas.iter().find(|&x|x.code_name.as_str()==self.name.as_str())?;
@@ -755,7 +755,7 @@ impl Node for FunctionCallNode {
         let mut moves: Vec<(Uuid, Uuid)> = vec![];
 
         for arg in self.arguments.iter() {
-            let mut arg_result = arg.generate_instructions(context);
+            let arg_result = arg.generate_instructions(context);
             let arg_uuid = Uuid::new_v4();
 
             args.push(arg_uuid);

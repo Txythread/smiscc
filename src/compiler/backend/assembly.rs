@@ -1,6 +1,5 @@
 use std::fs;
 use std::io::Write;
-use std::ops::Deref;
 use std::rc::Rc;
 use crate::compiler::backend::arch::{Architecture, Register};
 use crate::compiler::backend::flattener::{Instruction, InstructionMeta};
@@ -47,10 +46,6 @@ pub enum AssemblyInstruction {
 }
 
 impl AssemblyInstruction {
-    pub fn into_asm(&self) -> String {
-        todo!()
-    }
-
     pub fn get_instruction_meta(&self) -> InstructionMeta {
         match self {
             AssemblyInstruction::MoveReg(_, _) => InstructionMeta::MoveReg,
@@ -291,59 +286,59 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
 
 
     for instruction in code.clone() {
-        let mut instructions_length = instructions.len();
+        let _instructions_length = instructions.len();
         match instruction {
-            Instruction::Move(objA, objB) => {
-                let mut regA = architecture.get_object(objA, vec![objB]);
-                let mut regB = architecture.get_object(objB, vec![objA]);
+            Instruction::Move(obj_a, obj_b) => {
+                let mut reg_a = architecture.get_object(obj_a, vec![obj_b]);
+                let mut reg_b = architecture.get_object(obj_b, vec![obj_a]);
 
-                instructions.append(regA.1.as_mut());
-                instructions.append(regB.1.as_mut());
+                instructions.append(reg_a.1.as_mut());
+                instructions.append(reg_b.1.as_mut());
 
-                instructions.push(AssemblyInstruction::MoveReg(regA.0, regB.0));
+                instructions.push(AssemblyInstruction::MoveReg(reg_a.0, reg_b.0));
             }
-            Instruction::MoveData(objA, data) => {
-                let mut regA = architecture.get_object(objA, vec![]);
+            Instruction::MoveData(obj_a, data) => {
+                let mut reg_a = architecture.get_object(obj_a, vec![]);
 
-                instructions.append(regA.1.as_mut());
+                instructions.append(reg_a.1.as_mut());
 
-                instructions.push(AssemblyInstruction::MoveImm(regA.0, data));
+                instructions.push(AssemblyInstruction::MoveImm(reg_a.0, data));
             }
-            Instruction::Add(objA, objB) => {
-                let mut regA = architecture.get_object(objA, vec![objB]);
-                let mut regB = architecture.get_object(objB, vec![objA]);
+            Instruction::Add(obj_a, obj_b) => {
+                let mut reg_a = architecture.get_object(obj_a, vec![obj_b]);
+                let mut reg_b = architecture.get_object(obj_b, vec![obj_a]);
 
-                instructions.append(regA.1.as_mut());
-                instructions.append(regB.1.as_mut());
+                instructions.append(reg_a.1.as_mut());
+                instructions.append(reg_b.1.as_mut());
 
-                instructions.push(AssemblyInstruction::AddReg(regA.0, regB.0));
+                instructions.push(AssemblyInstruction::AddReg(reg_a.0, reg_b.0));
             }
-            Instruction::Sub(objA, objB) => {
-                let mut regA = architecture.get_object(objA, vec![objB]);
-                let mut regB = architecture.get_object(objB, vec![objA]);
+            Instruction::Sub(obj_a, obj_b) => {
+                let mut reg_a = architecture.get_object(obj_a, vec![obj_b]);
+                let mut reg_b = architecture.get_object(obj_b, vec![obj_a]);
 
-                instructions.append(regA.1.as_mut());
-                instructions.append(regB.1.as_mut());
+                instructions.append(reg_a.1.as_mut());
+                instructions.append(reg_b.1.as_mut());
 
-                instructions.push(AssemblyInstruction::SubReg(regA.0, regB.0));
+                instructions.push(AssemblyInstruction::SubReg(reg_a.0, reg_b.0));
             }
-            Instruction::Mul(objA, objB) => {
-                let mut regA = architecture.get_object(objA, vec![objB]);
-                let mut regB = architecture.get_object(objB, vec![objA]);
+            Instruction::Mul(obj_a, obj_b) => {
+                let mut reg_a = architecture.get_object(obj_a, vec![obj_b]);
+                let mut reg_b = architecture.get_object(obj_b, vec![obj_a]);
 
-                instructions.append(regA.1.as_mut());
-                instructions.append(regB.1.as_mut());
+                instructions.append(reg_a.1.as_mut());
+                instructions.append(reg_b.1.as_mut());
 
-                instructions.push(AssemblyInstruction::MulReg(regA.0, regB.0));
+                instructions.push(AssemblyInstruction::MulReg(reg_a.0, reg_b.0));
             }
-            Instruction::Div(objA, objB) => {
-                let mut regA = architecture.get_object(objA, vec![objB]);
-                let mut regB = architecture.get_object(objB, vec![objA]);
+            Instruction::Div(obj_a, obj_b) => {
+                let mut reg_a = architecture.get_object(obj_a, vec![obj_b]);
+                let mut reg_b = architecture.get_object(obj_b, vec![obj_a]);
 
-                instructions.append(regA.1.as_mut());
-                instructions.append(regB.1.as_mut());
+                instructions.append(reg_a.1.as_mut());
+                instructions.append(reg_b.1.as_mut());
 
-                instructions.push(AssemblyInstruction::DivReg(regA.0, regB.0));
+                instructions.push(AssemblyInstruction::DivReg(reg_a.0, reg_b.0));
             }
 
             Instruction::Mod(_, _) => {}
@@ -353,13 +348,13 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
                 architecture.delete_object(obj);
             }
             Instruction::Exit(obj) => {
-                let mut regA = architecture.get_object(obj, vec![]);
+                let mut reg_a = architecture.get_object(obj, vec![]);
 
-                instructions.append(regA.1.as_mut());
+                instructions.append(reg_a.1.as_mut());
 
-                instructions.push(AssemblyInstruction::Exit(regA.0));
+                instructions.push(AssemblyInstruction::Exit(reg_a.0));
             }
-            Instruction::Call(asm_name, args, out) => {
+            Instruction::Call(asm_name, args, _out) => {
                 instructions.append(&mut architecture.backup_caller_saved_regs());
                 
                 for arg in args.clone().iter().enumerate() {

@@ -1,7 +1,6 @@
 use colorize::AnsiColor;
 use termimad;
 
-
 #[derive(Clone, Debug)]
 pub struct LineMap {
     pub lines: Vec<Line>,
@@ -53,6 +52,23 @@ impl LineMap{
 
         println!("{}", info.message);
         println!()
+    }
+
+    /// Display a message summing up information about how the process went.
+    pub fn display_finish(&self) {
+        if self.error_count != 0 {
+            let message = format!("Compiling Failed with {} errors and {} warnings", self.error_count, self.warning_count).red().bold();
+            println!("{}", message);
+            return;
+        }
+
+        if self.warning_count != 0 {
+            let message = format!("Compiling Succeeded with {} warnings", self.warning_count).yellow().bold();
+            println!("{}", message);
+            return;
+        }
+        let message = "Compilation Succeeded".green().bold();
+        println!("{}", message);
     }
 
     pub fn new() -> Self {
@@ -255,6 +271,7 @@ pub enum DisplayCodeKind{
 #[derive(Clone, Debug)]
 pub struct Line{
     pub trimmed_contents: String,
+    #[allow(dead_code)]
     pub indent: u16,
     pub source_file_name: String,
     pub line_number: u32,

@@ -1,4 +1,3 @@
-use derive_new::new;
 use uuid::Uuid;
 use crate::compiler::data_types::data_types::Buildable;
 use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, LineMap, NotificationInfo, TokenPosition};
@@ -54,7 +53,7 @@ pub fn generate_object<T: Buildable + ?Sized>(tokens: &mut Vec<Token>, object_ty
     let last_token_pos = tokens.last().unwrap().get_position();
     let result_end_pos = last_token_pos.start + last_token_pos.length;
     let result_length = result_end_pos - result_start_pos;
-    let result_position = TokenPosition::new(result_start_pos, result_length);
+    let _result_position = TokenPosition::new(result_start_pos, result_length);
 
 
     // Was geht ab in Rumänien?

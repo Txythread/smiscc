@@ -14,7 +14,7 @@ impl Boolean {
 }
 
 impl Buildable for Boolean {
-    fn build(&self, tokens: Vec<Token>, parent_type: ObjectType) -> BuildResult {
+    fn build(&self, _tokens: Vec<Token>, _parent_type: ObjectType) -> BuildResult {
         todo!()
     }
 

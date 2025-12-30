@@ -86,7 +86,7 @@ impl Statement for Statements {
         }
     }
 
-    fn generate_header_node(&self, arguments: Vec<Rc<dyn Node>>) -> Option<Rc<dyn Node>> {
+    fn generate_header_node(&self, _arguments: Vec<Rc<dyn Node>>) -> Option<Rc<dyn Node>> {
         todo!()
     }
 
@@ -102,15 +102,15 @@ impl Statement for Statements {
             _ => {}
         }
 
-        let identifierArg = arguments[0].clone();
-        let identifierNode = identifierArg.downcast_rc::<IdentifierNode>().unwrap();
-        let identifier = identifierNode.identifier.clone();
+        let identifier_arg = arguments[0].clone();
+        let identifier_node = identifier_arg.downcast_rc::<IdentifierNode>().unwrap();
+        let identifier = identifier_node.identifier.clone();
         
-        let assignedValue = arguments[2].clone();
+        let assigned_value = arguments[2].clone();
         
         let is_mutable = matches!(self, Statements::VarStatement);
         
-        let node = LetNode::new(identifier, Some(assignedValue), is_mutable, (0, TokenPosition::new(0,0)));
+        let node = LetNode::new(identifier, Some(assigned_value), is_mutable, (0, TokenPosition::new(0, 0)));
         
         Some(Rc::new(node))
     }

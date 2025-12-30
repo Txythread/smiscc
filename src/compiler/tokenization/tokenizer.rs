@@ -1,11 +1,9 @@
 use strum::IntoEnumIterator;
 use crate::compiler::data_types::integer::*;
 use crate::compiler::line_map::LineMap;
-use crate::compiler::line_map::*;
 use crate::compiler::tokenization::token::{Token, Token::* };
 use crate::config::tokenization_options::*;
 use crate::config::tokenization_options::Keyword;
-use crate::compiler::data_types::integer::*;
 use crate::util::operator;
 
 /// ### Turn the split strings into tokens ("classify" them)

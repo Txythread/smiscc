@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use derive_new::new;
 use uuid::Uuid;
-use crate::compiler::data_types::object::{Object, ObjectType};
+use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::line_map::LineMap;
 use crate::compiler::parser::function_meta::FunctionMeta;
 
@@ -27,9 +27,7 @@ pub struct Context {
     /// All datatypes, including primitive ones
     pub datatypes: HashMap<Uuid, ObjectType>,
 
-    /// The general purpose registers mapped to the objects they contain
-    pub reg_map: Vec<String>,
-    
+
     /// The stack offset in the current block
     pub stack_size: usize,
     
@@ -41,6 +39,6 @@ pub struct Context {
 
 impl Context {
     pub fn clear(line_map: LineMap) -> Context {
-        Context { objects: HashMap::new(), mutable_objects: Vec::new(), line_map, name_map: HashMap::new(), datatypes: HashMap::new(), reg_map: Vec::new(), stack_size: 0, function_metas: Vec::new() }
+        Context { objects: HashMap::new(), mutable_objects: Vec::new(), line_map, name_map: HashMap::new(), datatypes: HashMap::new(), stack_size: 0, function_metas: Vec::new() }
     }
 }

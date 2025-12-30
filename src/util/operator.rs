@@ -1,5 +1,4 @@
 use strum_macros::{EnumString, EnumIter, AsRefStr};
-use strum::IntoEnumIterator;
 
 // This file contains methods & definitions for arithmetic operators.
 

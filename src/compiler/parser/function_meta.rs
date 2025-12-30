@@ -19,5 +19,6 @@ pub struct FunctionArgument {
 #[derive(Debug, Clone)]
 pub enum FunctionStyle {
     C,
+    #[allow(dead_code)]
     Smisc
 }

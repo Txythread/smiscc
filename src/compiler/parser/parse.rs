@@ -89,8 +89,8 @@ pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>>
                         }
 
 
-                        let statementNode = statement.generate_entire_node(arguments);
-                        lines.push(statementNode.unwrap());
+                        let statement_node = statement.generate_entire_node(arguments);
+                        lines.push(statement_node.unwrap());
 
                     }
                 }

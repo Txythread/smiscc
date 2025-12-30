@@ -55,7 +55,7 @@ fn main() {
         DisplayCodeKind::InitialError
     );
 
-    let notification = NotificationInfo::new(String::from("Test"), String::from("This is a test notification."), vec![info.clone()]);
+    let _notification = NotificationInfo::new(String::from("Test"), String::from("This is a test notification."), vec![info.clone()]);
 
     let args = ArgumentList::parse();
 

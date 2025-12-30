@@ -81,6 +81,7 @@ pub mod tokenization_options {
     ///
     /// **Note:** Don't use the same character here twice as that would lead
     /// to undefined & unpredictable behaviour.
+    #[allow(dead_code)]
     pub const LOGICAL_PARENTHESES: [(&str, &str); 4] = [CODE_BLOCK_PARENTHESES, ARITHMETIC_PARENTHESES, ARRAY_PARENTHESES, TEMPLATE_PARENTHESES];
 
 
@@ -88,6 +89,7 @@ pub mod tokenization_options {
     ///
     /// ... are parentheses defining the start (.0) and end (.1) of a code block.
     /// In most languages, this correlates with "{" and "}".
+    #[allow(dead_code)]
     pub const CODE_BLOCK_PARENTHESES: (&str, &str) = ("{", "}");
 
     /// ### Array Parentheses
@@ -95,6 +97,7 @@ pub mod tokenization_options {
     /// Those parentheses do everything related with arrays. Whether that be defining
     /// one, indexing one, etc.
     /// In most languages, this correlates with "\[" and "\]"
+    #[allow(dead_code)]
     pub const ARRAY_PARENTHESES: (&str, &str) = ("[", "]");
 
     /// ### Arithmetic Parentheses
@@ -107,6 +110,7 @@ pub mod tokenization_options {
     /// ### Template Parentheses
     ///
     /// ... do exactly what their name suggests. Correlates to "<" & ">" in most languages.
+    #[allow(dead_code)]
     pub const TEMPLATE_PARENTHESES: (&str, &str) = ("<", ">");
 
     /// ### String Markers

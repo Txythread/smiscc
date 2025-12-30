@@ -2,7 +2,7 @@ use std::ops::Deref;
 use std::rc::Rc;
 use crate::compiler::line_map::{LineMap, TokenPosition};
 use crate::compiler::parser::parse_token::parse_token;
-use crate::compiler::parser::tree::node::{ArithmeticNode, FunctionCallNode, IdentifierNode, Node, ValueNode};
+use crate::compiler::parser::tree::node::{ArithmeticNode, FunctionCallNode, Node, ValueNode};
 use crate::compiler::tokenization::token::Token;
 use crate::util::operator::Operation;
 

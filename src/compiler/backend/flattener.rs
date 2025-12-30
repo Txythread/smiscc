@@ -30,7 +30,7 @@ pub fn flatten(line: Rc<dyn Node>, context: &mut Context) -> Vec<Instruction> {
 
     let result = line.generate_instructions(context);
     let mut instructions = result.0;
-    let obj_uuid = result.1;
+    let _obj_uuid = result.1;
 
 
     // Find the last occurrence of an object's usage in the
@@ -117,6 +117,7 @@ impl Instruction {
     /// Gets all the objects that are overridden, meaning their value
     /// doesn't matter for this step and what it contained could be
     /// discarded before.
+    #[allow(dead_code)]
     pub fn get_overridden(&self) -> Vec<Uuid> {
         match self {
             Instruction::Move(a, _) => vec![*a],
