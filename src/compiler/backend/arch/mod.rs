@@ -9,6 +9,7 @@ use crate::compiler::backend::arch::register::{RegisterDataType, RegisterKind, R
 use crate::compiler::backend::assembly::AssemblyInstruction;
 use crate::compiler::backend::flattener::{Instruction, InstructionMeta};
 use crate::compiler::parser::function_meta::FunctionStyle;
+use crate::compiler::parser::tree::node::BoolLiteralNode;
 
 #[derive(new, Debug, Clone, PartialEq)]
 pub struct Architecture {
@@ -42,7 +43,7 @@ impl Architecture {
         }
 
         // Make room for it in the registers as it's needed regardless of the value being on stack or not.
-        let mut result_reg = self.provide_empty_register(preserving);
+        let mut result_reg = self.provide_empty_register(preserving, &|_|true);
         instructions.append(result_reg.1.as_mut());
 
         let result_reg = result_reg.0;
@@ -91,12 +92,14 @@ impl Architecture {
                 return instructions;
             }
 
-            let mut movement = self.provide_empty_register(preserving);
-            instructions.append(movement.1.as_mut());
-            instructions.push(AssemblyInstruction::MoveReg(register.clone(), movement.0.clone()));
+            if let Some(reg_contents) = reg_contents.1 {
+                let mut movement = self.provide_empty_register(preserving, &|_| true);
+                instructions.append(movement.1.as_mut());
+                instructions.push(AssemblyInstruction::MoveReg(register.clone(), movement.0.clone()));
 
-            if let Some(index) = self.register_map.registers.iter().position(|x| x.0==movement.0) {
-                self.register_map.registers[index].1 = Some(reg_contents.1.clone().unwrap());
+                if let Some(index) = self.register_map.registers.iter().position(|x| x.0 == movement.0) {
+                    self.register_map.registers[index].1 = Some(reg_contents);
+                }
             }
         }
 
@@ -141,7 +144,7 @@ impl Architecture {
 
 
     /// Stores all the caller saved regs to other empty registers or the stack
-    pub fn backup_caller_saved_regs(&mut self) {
+    pub fn backup_caller_saved_regs(&mut self) -> Vec<AssemblyInstruction> {
         let mut instructions: Vec<AssemblyInstruction> = vec![];
         for reg_info in self.register_map.registers.clone().iter().enumerate() {
             let i = reg_info.0;
@@ -151,14 +154,10 @@ impl Architecture {
 
             if let Some(object) = register.1 {
                 // Look for an empty reg to put stuff in or put it on the stack
-                if let Some(index) = self.register_map.registers.iter().position(|x| x.0==register.0) {
-                    self.register_map.registers[index].1 = None;
-                }
-
                 if let Some(mut empty_register) = self.conditionally_provide_empty_register(vec![]) {
                     // Put the register in the register
                     instructions.append(empty_register.1.as_mut());
-                    instructions.push(AssemblyInstruction::MoveReg(empty_register.0.clone(), register.0));
+                    instructions.push(AssemblyInstruction::MoveReg(empty_register.0.clone(), register.0.clone()));
 
                     if let Some(index) = self.register_map.registers.iter().position(|x| x.0==empty_register.0) {
                         self.register_map.registers[index].1 = Some(object);
@@ -167,33 +166,39 @@ impl Architecture {
                     // Put the data in the stack
                     let mut movement = self.push_object_to_stack(object);
 
-                    instructions.append(movement.as_mut())
+                    instructions.append(movement.as_mut().unwrap())
+                }
+
+                if let Some(index) = self.register_map.registers.iter().position(|x| x.0==register.0) {
+                    self.register_map.registers[index].1 = None;
                 }
             }
         }
+
+        instructions
     }
 
     /// Takes a register and throws its data onto the stack either at the location
     /// it was stored in already or creates a new position.
     /// This expects a register to currently possess the data.
-    pub fn push_object_to_stack(&mut self, object: Uuid) -> Vec<AssemblyInstruction> {
+    pub fn push_object_to_stack(&mut self, object: Uuid) -> Option<Vec<AssemblyInstruction>> {
         // Try to locate the object on the stack
-        let register = self.register_map.registers.iter().find(|x| x.1==Some(object)).unwrap().0.clone();
+        let register = self.register_map.registers.iter().find(|x| x.1==Some(object))?.0.clone();
 
         for stack_info in self.register_map.stack.clone() {
             if stack_info.0 == object {
-                return vec![
+                return Some(vec![
                     AssemblyInstruction::StackStore(register, stack_info.1 as u64)
-                ]
+                ])
             }
         }
 
         let stack_top = self.register_map.stack_offset;
         self.register_map.stack_offset += register.size_bytes as usize;
 
-        vec![
+        Some(vec![
             AssemblyInstruction::StackStore(register, stack_top as u64)
-        ]
+        ])
     }
 
 
@@ -236,7 +241,7 @@ impl Architecture {
     /// free and the data should potentially be stored on the stack instead.
     pub fn conditionally_provide_empty_register(&mut self, ignoring: Vec<Uuid>) -> Option<(Register, Vec<AssemblyInstruction>)> {
         let mut other_self = self.clone();
-        let result = other_self.provide_empty_register(ignoring);
+        let result = other_self.provide_empty_register(ignoring, &|x| x.saving_behaviour==RegisterSavingBehaviour::CalleeSaved);
 
         // Look if the register is empty
         let register = self.register_map.registers.iter().find(|&x| x.0==result.0).unwrap();
@@ -251,13 +256,15 @@ impl Architecture {
         Some(result)
     }
 
+
     /// Provides an empty register. If there is one available right away, that one
     /// is chosen. When all registers are used, the stack is used to store the data.
     /// Registers containing the values of ignored objects will not be chosen.
-    pub fn provide_empty_register(&mut self, ignoring: Vec<Uuid>) -> (Register, Vec<AssemblyInstruction>) {
+    /// Registers may only be chosen when the allow_reg function returns true on them.
+    pub fn provide_empty_register(&mut self, ignoring: Vec<Uuid>, allow_reg: &dyn Fn(Register) -> bool) -> (Register, Vec<AssemblyInstruction>) {
         // Try to locate an empty register if possible.
         for register in self.register_map.registers.clone() {
-            if register.1.is_none() {
+            if register.1.is_none() && allow_reg(register.0.clone()) {
                 return (register.0, vec![])
             }
         }
@@ -267,6 +274,11 @@ impl Architecture {
         for i in 0..self.register_map.registers.len() {
             let register = self.register_map.registers[i].clone();
 
+            if register.1.is_none() {
+                // This register has been skipped, although it is empty, there's no
+                // reason for that to change now, so skip it again
+                continue;
+            }
 
             if ignoring.contains(&register.1.unwrap()) {
                 continue;
@@ -275,6 +287,8 @@ impl Architecture {
             if matches!(register.0.kind, RegisterKind::GeneralPurpose) {
                 // Found a general purpose register
                 // If it's been stored on the stack already, re-use this position.
+
+                if !allow_reg(register.0.clone()) { continue;}
 
                 let stack_pos = self.register_map.stack.iter().find(|x|x.0.clone() == register.1.unwrap());
 

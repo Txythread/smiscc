@@ -360,6 +360,8 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
                 instructions.push(AssemblyInstruction::Exit(regA.0));
             }
             Instruction::Call(asm_name, args, out) => {
+                instructions.append(&mut architecture.backup_caller_saved_regs());
+                
                 for arg in args.clone().iter().enumerate() {
                     let i = arg.0;
                     let arg = arg.1;
