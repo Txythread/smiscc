@@ -373,11 +373,13 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
                 }
 
                 instructions.push(AssemblyInstruction::Call(asm_name));
+                
+                for arg in args.clone().iter() {
+                    architecture.delete_object(*arg);
+                }
 
             }
         }
-
-        let instructions_clone = instructions.iter().clone().skip(instructions_length);
     }
 
     instructions

@@ -8,7 +8,7 @@ pub fn generate() -> Architecture {
     let mut instructions: HashMap<InstructionMeta, String> = HashMap::new();
 
     instructions.insert(InstructionMeta::MoveReg, String::from("\tmov\t$a, $b\n"));
-    instructions.insert(InstructionMeta::MoveImm, String::from("\tmov\t$a, #jjj$b\n"));
+    instructions.insert(InstructionMeta::MoveImm, String::from("\tmov\t$a, #$b\n"));
     instructions.insert(InstructionMeta::AddReg, String::from("\tadd\t$a, $a, $b\n"));
     instructions.insert(InstructionMeta::SubReg, String::from("\tsub\t$a, $a, $b\n"));
     instructions.insert(InstructionMeta::MulReg, String::from("\tmul\t$a, $a, $b\n"));

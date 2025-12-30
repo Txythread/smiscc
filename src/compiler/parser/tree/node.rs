@@ -669,12 +669,19 @@ impl Node for FunctionCallNode {
 
         let mut args: Vec<Uuid> = vec![];
         let mut instructions: Vec<Instruction> = vec![];
+        let mut moves: Vec<(Uuid, Uuid)> = vec![];
 
         for arg in self.arguments.iter() {
             let mut arg_result = arg.generate_instructions(context);
+            let arg_uuid = Uuid::new_v4();
 
-            args.push(arg_result.1.unwrap());
-            instructions.append(&mut arg_result.0);
+            args.push(arg_uuid);
+            instructions.append(&mut arg_result.0.clone());
+            moves.push((arg_uuid, arg_result.1.unwrap()))
+        }
+
+        for move_ in moves {
+            instructions.push(Instruction::Move(move_.0, move_.1));
         }
 
 
