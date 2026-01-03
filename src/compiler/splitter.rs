@@ -37,7 +37,7 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
 
     let mut in_block_comment: bool = false;
 
-    for x in code.lines().enumerate() {
+    'line_loop: for x in code.lines().enumerate() {
         let line = x.1.to_string();
         let line_number = x.0 + 1;
 
@@ -53,7 +53,7 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
         // Skip ahead in case the trimmed line contains nothing.
         if trimmed_line.is_empty() { continue; }
 
-        // The logic line's seperated contents
+        // The logic line's separated contents
         // One line in the code may produce multiple lines in the result in case there are multiple statements
         let mut splitted_line: Vec<String> = Vec::new();
 
@@ -135,6 +135,7 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
                 continue;
             }
 
+
             if UNIGNORED_SPLIT_CHARACTERS.contains(&character.to_string().as_str()) {
                 end_token(&mut line_tokens, &mut splitted_line);
                 let token = TokenPosition::new(i as u16, 1);
@@ -145,7 +146,17 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
 
             if NEW_LOGICAL_LINE_CHARACTERS.contains(&character.to_string().as_str()) {
                 // 1. Save the current line's tokens to split code.
+                println!("ending line due to char: {}", character);
                 end_token(&mut line_tokens, &mut splitted_line);
+
+                if character != ';' {
+                    current_token_text = character.to_string();
+
+                    line_tokens.push(current_token_position.clone());
+                    splitted_line.push(current_token_text.clone());
+
+                    current_token_text = String::new();
+                }
 
                 if !splitted_line.is_empty() {
                     splitted_code.push(splitted_line.clone());
@@ -166,6 +177,9 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
                     current_token_position = TokenPosition::new(i as u16 + 1, 0);
                     line_tokens = Vec::new();
                 }
+
+                println!("broke with line contents: {:?}", splitted_line);
+                continue 'line_loop;
             }
 
             current_token_text = current_token_text.clone() + &character.to_string();
@@ -174,6 +188,7 @@ pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
 
         if !splitted_line.is_empty() {
             // There was no line ending in the end, throw an error
+            println!("Splitted line: {:?}", splitted_line);
 
 
             line_map.add_line(  // Add the line temporarily. It will be removed later again.

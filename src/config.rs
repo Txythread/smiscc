@@ -35,7 +35,7 @@ pub mod tokenization_options {
     /// (`hello+++world` will still get processed into `["hello", "+", "+", "+", "world"]`).
     ///
     /// This is used in the splitter.
-    pub const UNIGNORED_SPLIT_CHARACTERS: [&str; 20] = ["{", "}", "(", ")", "[", "]", "<", ">", "?", "!", ".", ",", "\"", "\'", "=", "+", "-", "*", "/", "#"];
+    pub const UNIGNORED_SPLIT_CHARACTERS: [&str; 18] = ["(", ")", "[", "]", "<", ">", "?", "!", ".", ",", "\"", "\'", "=", "+", "-", "*", "/", "#"];
 
 
     /// ### Characters that prevent split characters from creating new tokens until their counterpart is met.
