@@ -1,12 +1,13 @@
 use crate::compiler::compiler::compile;
-use crate::compiler::line_map::*;
 use clap::Parser;
+use crate::help::help::print_help;
 
 mod compiler;
 mod config;
 mod util;
+mod help;
 
-#[derive(Debug, PartialEq, Parser)]
+#[derive(Clone, Debug, PartialEq, Parser)]
 pub struct ArgumentList{
     pub file: Option<String>,
 
@@ -24,49 +25,23 @@ pub struct ArgumentList{
 
     #[clap(short, long)]
     pub generate_instruction_table: bool,           // --generate-instructions-table
+
+    #[clap(long)]
+    pub show_tokens: bool,                          // --show-tokens
 }
 
 fn main() {
-    let mut line_map = LineMap::new();
-
-    line_map.add_line(Line::new(
-        "main.txt".to_string(),
-        1,
-        vec![
-            TokenPosition::new(0, 3),
-            TokenPosition::new(4, 4),
-            TokenPosition::new(8, 1),
-            TokenPosition::new(10, 2),
-            TokenPosition::new(13, 1),
-        ],
-        0,
-        "let test = 50;".to_string(),
-    ));
-
-
-    let info = DisplayCodeInfo::new(
-        0,
-        1,
-        1,
-        vec![
-            "**note:** This is an example note".to_string(),
-            "*hint:* Change this variable".to_string(),
-        ],
-        DisplayCodeKind::InitialError
-    );
-
-    let _notification = NotificationInfo::new(String::from("Test"), String::from("This is a test notification."), vec![info.clone()]);
-
     let args = ArgumentList::parse();
 
-    if let Some(file_name) = args.file {
-        let file_contents = std::fs::read_to_string(file_name).unwrap();
-        compile(file_contents);
-    } else {
-        let file_contents = std::fs::read_to_string("test2.txt").unwrap();
-        compile(file_contents);
+    if args.help {
+        print_help(args.clone())
     }
 
-
-    //line_map.display_error(notification);
+    if let Some(ref file_name) = args.file {
+        let file_contents = std::fs::read_to_string(file_name).unwrap();
+        compile(file_contents, args);
+    } else {
+        let file_contents = std::fs::read_to_string("test2.txt").unwrap();
+        compile(file_contents, args);
+    }
 }

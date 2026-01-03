@@ -1,5 +1,6 @@
 use clap::{Arg};
 use std::process::Command;
+use crate::ArgumentList;
 use crate::compiler::backend::assembly;
 use crate::compiler::backend::context::Context;
 use crate::compiler::backend::flattener::flatten;
@@ -8,9 +9,16 @@ use crate::compiler::tokenization::tokenizer::tokenize;
 use crate::compiler::parser::parse::parse;
 use crate::compiler::backend::arch::aarch64_mac_os;
 
-pub fn compile(code: String) {
+pub fn compile(code: String, args: ArgumentList) {
     let mut splitted = split(code);
     let tokens = tokenize(splitted.0.clone(), &mut splitted.1);
+    
+    if args.show_tokens {
+        for line in tokens.iter().enumerate() {
+            println!("{}:\t{:?}", line.0 + 1, line.1)
+        }
+    }
+    
     let parsed = parse(tokens.clone(), splitted.1.clone());
     let mut context = Context::clear(splitted.1.clone());
     let flattened = flatten(parsed.clone().unwrap(), &mut context);

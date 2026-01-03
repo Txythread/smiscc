@@ -1,5 +1,8 @@
 # TODO - List
 
+## Tokenization
+1. Tell `==` apart from `=`
+
 ## Control Flow
 1. Code Blocks
 2. *if* - Statement
