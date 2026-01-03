@@ -110,6 +110,7 @@ impl Node for ValueNode {
     }
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
+        println!("mutability of sub node: {:?}", self.get_sub_node().output_is_randomly_mutable());
         self.get_sub_node().output_is_randomly_mutable()
     }
 }
@@ -582,7 +583,7 @@ impl Node for LetNode {
             let mut assignment_instructions = assignment_result.0;
             instructions.append(&mut assignment_instructions);
 
-            if assigned_value.output_is_randomly_mutable().unwrap() {
+            if assigned_value.output_is_randomly_mutable() == Some(true) {
                 result_uuid = assignment_result.1;
             } else {
                 result_uuid = Some(Uuid::new_v4());
@@ -756,11 +757,18 @@ impl Node for FunctionCallNode {
 
         for arg in self.arguments.iter() {
             let arg_result = arg.generate_instructions(context);
-            let arg_uuid = Uuid::new_v4();
 
-            args.push(arg_uuid);
             instructions.append(&mut arg_result.0.clone());
-            moves.push((arg_uuid, arg_result.1.unwrap()))
+
+            if arg.output_is_randomly_mutable() == Some(true) {
+                println!("Randomly mutable argument detected");
+                args.push(arg_result.1.unwrap());
+            } else {
+                println!("Unmutable argument detected: {:?}", arg);
+                let arg_uuid = Uuid::new_v4();
+                args.push(arg_uuid);
+                moves.push((arg_uuid, arg_result.1.unwrap()));
+            }
         }
 
         for move_ in moves {

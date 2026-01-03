@@ -9,8 +9,7 @@
 1. Parse Data Types
 
 ## Functions
-1. Outputs in external definitions
-2. Function declarations (`func was_geht(x: u32) -> u32 {}`)
+1. Function declarations (`func was_geht(x: u32) -> u32 {}`)
 
 
 ## Variables & Constants

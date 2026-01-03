@@ -1,4 +1,5 @@
 pub mod aarch64_mac_os;
+pub mod smiscc_none;
 mod register;
 
 use std::cmp::PartialEq;

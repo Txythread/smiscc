@@ -55,7 +55,7 @@ pub fn compile(code: String) {
         .arg("-arch")
         .arg("arm64");
 
-    let _ = command.output().unwrap();
+    println!("{:?}", command.output().unwrap());
 
 
 

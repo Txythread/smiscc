@@ -21,7 +21,7 @@ pub fn flatten(line: Rc<dyn Node>, context: &mut Context) -> Vec<Instruction> {
         "print".to_string(),
         "_print".to_string(),
         FunctionStyle::C,
-        None,
+        Some(u32_type.type_uuid),
         vec![
             FunctionArgument::new(None, u32_type.type_uuid)
         ]
