@@ -11,9 +11,7 @@ use crate::compiler::backend::arch::aarch64_mac_os;
 pub fn compile(code: String) {
     let mut splitted = split(code);
     let tokens = tokenize(splitted.0.clone(), &mut splitted.1);
-    println!("Tokens: {:?}", tokens);
     let parsed = parse(tokens.clone(), splitted.1.clone());
-    println!("Parsed AST: {:?}", parsed);
     let mut context = Context::clear(splitted.1.clone());
     let flattened = flatten(parsed.clone().unwrap(), &mut context);
     let arch = aarch64_mac_os::generate();
@@ -57,7 +55,7 @@ pub fn compile(code: String) {
         .arg("-arch")
         .arg("arm64");
 
-    println!("output: {}", String::from_utf8_lossy(&command.output().unwrap().stdout));;
+    let _ = command.output().unwrap();
 
 
 

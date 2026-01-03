@@ -3,4 +3,8 @@ Cargo.lock
 
 .*
 
+*.o
+test*.s
+build/
+
 .idea
