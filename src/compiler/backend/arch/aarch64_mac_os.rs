@@ -17,6 +17,7 @@ pub fn generate() -> Architecture {
     instructions.insert(InstructionMeta::StackLoad, String::from("\tldr\t$a, [$sp, #$b]\n"));
     instructions.insert(InstructionMeta::Exit, String::from("\tmov\tx16, #1\n\tmov\tx0, $a\n\tsvc\t#0x80\n"));
     instructions.insert(InstructionMeta::Call, String::from("\tbl\t$a\n"));
+    instructions.insert(InstructionMeta::Label, String::from("\n$a:\n"));
 
     Architecture::new(
         "aarch64_macOS".to_string(),

@@ -1,5 +1,6 @@
 use std::fs;
 use std::io::Write;
+use std::ops::Deref;
 use std::rc::Rc;
 use crate::compiler::backend::arch::{Architecture, Register};
 use crate::compiler::backend::flattener::{Instruction, InstructionMeta};
@@ -43,6 +44,8 @@ pub enum AssemblyInstruction {
 
     /// Call a function (don't just jump to it)
     Call(String),
+    
+    Label(Rc<String>),
 }
 
 impl AssemblyInstruction {
@@ -61,6 +64,7 @@ impl AssemblyInstruction {
             AssemblyInstruction::DivReg(_, _) => InstructionMeta::DivReg,
             AssemblyInstruction::Exit(_) => InstructionMeta::Exit,
             AssemblyInstruction::Call(_) => InstructionMeta::Call,
+            AssemblyInstruction::Label(_) => InstructionMeta::Label,
         }
     }
 
@@ -244,6 +248,14 @@ impl AssemblyInstruction {
                     )
                 ]
             }
+            AssemblyInstruction::Label(label) => {
+                vec![
+                    (
+                        String::from("$a"),
+                        label.deref().clone()
+                    )
+                ]
+            }
         }
     }
 
@@ -373,6 +385,9 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
                     architecture.delete_object(*arg);
                 }
 
+            },
+            Instruction::Label(asm_name, global) => {
+                instructions.push(AssemblyInstruction::Label(asm_name));
             }
         }
     }

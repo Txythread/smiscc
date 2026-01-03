@@ -1,8 +1,10 @@
 use std::fmt::Debug;
+use std::ops::Deref;
 use std::rc::Rc;
 use derive_new::*;
 use downcast_rs::{Downcast, impl_downcast};
 use uuid::Uuid;
+use crate::compiler::backend::context;
 use crate::compiler::backend::context::Context;
 use crate::compiler::backend::flattener::Instruction;
 use crate::compiler::data_types::data_types::Buildable;
@@ -617,6 +619,7 @@ impl Node for LetNode {
 #[derive(Debug, new)]
 pub struct CodeBlockNode {
     position: (usize, TokenPosition),
+    label: Rc<Option<String>>,
     code: Vec<Rc<dyn Node>>,
 }
 
@@ -643,7 +646,11 @@ impl Node for CodeBlockNode {
     }
 
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        let name: String = {if let Some(label) = self.label.clone().deref() { label.clone() } else { context.label_count += 1; String::from("LB") + (context.label_count - 1).to_string().as_str() }};
+
         let mut instructions: Vec<Instruction> = vec![];
+        
+        instructions.push(Instruction::Label(Rc::new(name), false));
 
         for code in self.code.iter() {
             instructions.append(code.generate_instructions(context).0.as_mut());

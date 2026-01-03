@@ -122,7 +122,7 @@ pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>>
         }
     }
 
-    let code = CodeBlockNode::new((0, TokenPosition::new(0, 0)), lines);
+    let code = CodeBlockNode::new((0, TokenPosition::new(0, 0)), Rc::new(Some("_start".to_string())), lines);
 
     Some(Rc::new(code))
 }

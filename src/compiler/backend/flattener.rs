@@ -93,7 +93,11 @@ pub enum Instruction {
     /// Calls a function given its assembly name.
     /// This doesn't only jump, it performs a subroutine, it branches,
     /// calls a function, however you might want to call it.
-    Call(/* assembly name: */String, /* inputs: */Vec<Uuid>, /* outputs: */Vec<Uuid>)
+    Call(/* assembly name: */String, /* inputs: */Vec<Uuid>, /* outputs: */Vec<Uuid>),
+
+    /// Defines a label at the current code position
+    /// This label is globalized if the bool is true
+    Label(Rc<String>, bool),
 }
 
 impl Instruction {
@@ -111,6 +115,7 @@ impl Instruction {
             Instruction::MoveData(a, _) => vec![*a],
             Instruction::Exit(a) => vec![*a],
             Instruction::Call(_, args, outs) => vec![args.clone(), outs.clone()].concat(),
+            Instruction::Label(_, _) => vec![],
         }
     }
 
@@ -148,5 +153,7 @@ pub enum InstructionMeta {
 
     Exit,
 
-    Call
+    Call,
+
+    Label
 }

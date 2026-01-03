@@ -34,11 +34,15 @@ pub struct Context {
     /// All the meta information about all functions, or at least the
     /// ones currently in scope.
     pub function_metas: Vec<FunctionMeta>,
+
+    /// The amount of labels generated, useful for creating new label names
+    /// when none are forced by the user.
+    pub label_count: usize
 }
 
 
 impl Context {
     pub fn clear(line_map: LineMap) -> Context {
-        Context { objects: HashMap::new(), mutable_objects: Vec::new(), line_map, name_map: HashMap::new(), datatypes: HashMap::new(), stack_size: 0, function_metas: Vec::new() }
+        Context { objects: HashMap::new(), mutable_objects: Vec::new(), line_map, name_map: HashMap::new(), datatypes: HashMap::new(), stack_size: 0, function_metas: Vec::new(), label_count: 0 }
     }
 }
