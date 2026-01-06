@@ -88,7 +88,7 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
                 let keyword: Keyword = keyword;
 
                 if keyword.as_ref() == token {
-                    let token = Token::KeywordType(keyword, current_token_pos.clone());
+                    let token = KeywordType(keyword, current_token_pos.clone());
 
                     line_tokens.push(token);
                     continue 'token_loop;
@@ -100,7 +100,15 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
             const FALSE_KEYWORD: &str = BOOL_STATE_NAMES.1;
             const ARITHMETIC_PARENTHESIS_OPEN: &str = ARITHMETIC_PARENTHESES.0;
             const ARITHMETIC_PARENTHESIS_CLOSE: &str = ARITHMETIC_PARENTHESES.1;
+            const CODE_BLOCK_PARENTHESIS_OPEN: &str = CODE_BLOCK_PARENTHESES.1;
+            const CODE_BLOCK_PARENTHESIS_CLOSE: &str = CODE_BLOCK_PARENTHESES.1;
             match token.as_str() {
+                CODE_BLOCK_PARENTHESES_OPEN => {
+                    let token = CodeBlockParenthesisOpen(current_token_pos.clone());
+                    line_tokens.push(token);
+                    continue 'token_loop;
+                }
+
                 // Look if it's true
                  TRUE_KEYWORD=> {
                     let token = BoolLiteral(true, current_token_pos.clone());
@@ -146,17 +154,28 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
                     line_tokens.push(token);
                     continue 'token_loop;
                 }
-                
-                ";" => {
-                    let token = HardNewline(current_token_pos.clone());
-                    
+
+
+
+                CODE_BLOCK_PARENTHESIS_CLOSE => {
+                    let token = CodeBlockParenthesisClose(current_token_pos.clone());
+
                     line_tokens.push(token);
                     continue 'token_loop;
                 }
-                
+
+
+
+                ";" => {
+                    let token = HardNewline(current_token_pos.clone());
+
+                    line_tokens.push(token);
+                    continue 'token_loop;
+                }
+
                 "\n" => {
                     let token = SoftNewline(current_token_pos.clone());
-                    
+
                     line_tokens.push(token);
                     continue 'token_loop;
                 }

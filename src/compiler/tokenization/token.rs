@@ -46,12 +46,18 @@ pub enum Token {
     
     /// The closing part of the arithmetic/default parenthesis (")")
     ArithmeticParenthesisClose(TokenPosition),
-    
+
     /// A newline that doesn't force a logical newline (e.g. \n)
     SoftNewline(TokenPosition),
-    
+
     /// A newline that should lead to a new line in the parsing state (e.g. ";")
     HardNewline(TokenPosition),
+
+    /// An opening code block parenthesis ("{")
+    CodeBlockParenthesisOpen(TokenPosition),
+
+    /// A closing code block parenthesis ("}")
+    CodeBlockParenthesisClose(TokenPosition),
 
 }
 
@@ -69,7 +75,8 @@ impl Token {
             Token::Assignment(pos) => { pos.clone() }
             Token::ArithmeticParenthesisClose(pos) => { pos.clone() }
             Token::ArgumentSeparator(pos) => { pos.clone() },
-            Token::SoftNewline(pos) | Token::HardNewline(pos) => { pos.clone() }
+            Token::SoftNewline(pos) | Token::HardNewline(pos) => { pos.clone() },
+            Token::CodeBlockParenthesisOpen(pos) | Token::CodeBlockParenthesisClose(pos) => pos.clone(),
         }
     }
 
@@ -97,6 +104,15 @@ impl Token {
             Token::HardNewline(_) => false,
 
             _ => true
+        }
+    }
+
+    pub fn is_line_delimiting(&self) -> bool {
+        match self {
+            Token::HardNewline(_) => true,
+            Token::SoftNewline(_) => true,
+
+            _ => false
         }
     }
 }

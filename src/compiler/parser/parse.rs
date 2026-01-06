@@ -98,12 +98,14 @@ pub fn parse(files: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>> 
                 }
 
                 Token::Identifier(name, pos) => {
-                    let id_node = IdentifierNode::new(name, None, (file_number, pos.clone()));
+                    let id_node = IdentifierNode::new(name.clone(), None, (file_number, pos.clone()));
 
-                    match contents[1].clone() {
+                    println!("found identifier: {:?}", name.clone());
+
+                    cursor = line_start;
+                    match contents[cursor + 1].clone() {
                         Token::Assignment(_) => {},
                         _ => {
-                            cursor = line_start;
                             let value = parse_arithmetic_expression(contents.clone(), file_number as u32, line_map.clone(), 0, &mut cursor, false).unwrap();
 
                             lines_in_block.push(value);
