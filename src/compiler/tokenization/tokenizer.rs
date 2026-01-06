@@ -102,8 +102,10 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
             const ARITHMETIC_PARENTHESIS_CLOSE: &str = ARITHMETIC_PARENTHESES.1;
             const CODE_BLOCK_PARENTHESIS_OPEN: &str = CODE_BLOCK_PARENTHESES.1;
             const CODE_BLOCK_PARENTHESIS_CLOSE: &str = CODE_BLOCK_PARENTHESES.1;
+            const OTHER: &str = CODE_BLOCK_PARENTHESES.0;
             match token.as_str() {
-                CODE_BLOCK_PARENTHESES_OPEN => {
+                // Look if is a parenthesis
+                OTHER => {
                     let token = CodeBlockParenthesisOpen(current_token_pos.clone());
                     line_tokens.push(token);
                     continue 'token_loop;

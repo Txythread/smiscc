@@ -20,7 +20,7 @@ pub fn compile(code: String, args: ArgumentList) {
         }
     }
 
-    let parsed = parse(tokens.clone(), line_map.clone());
+    let parsed = parse(tokens.clone(), &mut line_map);
     let mut context = Context::clear(line_map);
     let flattened = flatten(parsed.clone().unwrap(), &mut context);
     let arch = aarch64_mac_os::generate();

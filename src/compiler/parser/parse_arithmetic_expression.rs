@@ -6,7 +6,7 @@ use crate::compiler::parser::tree::node::{ArithmeticNode, FunctionCallNode, Node
 use crate::compiler::tokenization::token::Token;
 use crate::util::operator::Operation;
 
-pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_map: LineMap, min_op_importance: u8, cursor: &mut usize, stop_at_unexpected_token: bool) -> Option<Rc<dyn Node>> {
+pub fn parse_arithmetic_expression(tokens: Rc<Vec<Token>>, line_number: u32, line_map: LineMap, min_op_importance: u8, cursor: &mut usize, stop_at_unexpected_token: bool) -> Option<Rc<dyn Node>> {
     // If there is only one token, the principle is quite simple
     if tokens.len() -*cursor == 1 {
         if let Some(node) = parse_token(tokens[*cursor].clone(), line_number, line_map.clone()) {
@@ -103,7 +103,7 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
                 parenthesis_depth -= 1;
 
                 if parenthesis_depth == 0 {
-                    let solved_parenthesis = parse_arithmetic_expression(tokens_in_parenthesis.clone(), line_number, line_map.clone(), 0, &mut 0, false);
+                    let solved_parenthesis = parse_arithmetic_expression(Rc::new(tokens_in_parenthesis.clone()), line_number, line_map.clone(), 0, &mut 0, false);
                     if let Some(solved_parenthesis) = solved_parenthesis {
                         calculated_nodes.push(solved_parenthesis);
                     } else {

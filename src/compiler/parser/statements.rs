@@ -6,7 +6,7 @@ use crate::compiler::parser::parse::ExpressionKind;
 use crate::compiler::parser::statement::Statement;
 use crate::compiler::parser::tree::node::{ExitNode, IdentifierNode, LetNode, Node};
 
-#[derive(Debug, EnumIter)]
+#[derive(Clone, Debug, EnumIter)]
 pub enum Statements {
     LetStatement,
     VarStatement,

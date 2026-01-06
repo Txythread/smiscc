@@ -617,13 +617,22 @@ impl Node for LetNode {
 
 /// A node containing multiple lines of code. Note that this node is always an expression,
 /// never a statement. Use with caution.
-#[derive(Debug, new)]
+#[derive(Clone, Debug, new)]
 pub struct CodeBlockNode {
     position: (usize, TokenPosition),
     label: Rc<Option<String>>,
     code: Vec<Rc<dyn Node>>,
 }
 
+impl CodeBlockNode {
+    pub fn push_code(&mut self, code: Rc<dyn Node>) {
+        self.code.push(code);
+    }
+    
+    pub fn append_code(&mut self, code: Vec<Rc<dyn Node>>) {
+        self.code.append(&mut code.clone());
+    }
+}
 
 impl Node for CodeBlockNode {
     fn get_position(&self) -> (usize, TokenPosition) {
