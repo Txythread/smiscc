@@ -1,6 +1,6 @@
+use colorize::AnsiColor;
 use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, Line, LineMap, NotificationInfo, TokenPosition};
 use crate::config::tokenization_options::*;
-
 
 /// ### Splits code into lines and lines into token-like parts.
 ///
@@ -28,203 +28,123 @@ use crate::config::tokenization_options::*;
 /// and a corresponding line mapping.
 ///
 /// *Note*: The parts don't always correlate with atomic tokens. Look at -=.
-pub fn split(code: String) -> (Vec<Vec<String>>, LineMap) {
-    let file_name = "n/a";
+pub fn split(code: String, file_name: String, line_map: &mut LineMap) -> Vec<String> {
+    let mut tokens: Vec<String> = Vec::new();
+
+    let mut block_escaped: bool = false;
+
+    let mut current_token: String = String::new();
+
+    let ignored_single_char_matches = IGNORED_SPLIT_CHARACTERS.iter().filter(|&x| x.len() == 1).map(|&x|x.clone().chars().collect()).collect::<Vec<Vec<char>>>();
+    let ignored_double_char_matches = IGNORED_SPLIT_CHARACTERS.iter().filter(|&x| x.len() == 2).map(|&x|x.clone().chars().collect()).collect::<Vec<Vec<char>>>();
+
+    let unignored_single_char_matches = UNIGNORED_SPLIT_CHARACTERS.iter().filter(|&x| x.len() == 1).map(|&x|x.clone().chars().collect()).collect::<Vec<Vec<char>>>();
+    let unignored_double_char_matches = UNIGNORED_SPLIT_CHARACTERS.iter().filter(|&x| x.len() == 2).map(|&x|x.clone().chars().collect()).collect::<Vec<Vec<char>>>();
 
 
-    let mut line_map = LineMap::new();
-    let mut splitted_code: Vec<Vec<String>> = Vec::new();
+    let mut clean_code = String::new();
 
-    let mut in_block_comment: bool = false;
+    for line in code.lines() {
+        clean_code += trim(line.to_string(), &mut block_escaped).as_str();
+    }
 
-    'line_loop: for x in code.lines().enumerate() {
-        let line = x.1.to_string();
-        let line_number = x.0 + 1;
+    let code = clean_code;
+    line_map.files.push(Line::new(file_name, 0, vec![], 0, code.clone()));
 
+    block_escaped = false;
 
-        // The character that, when between escape preventing characters, shows what character needs
-        // to be reached for the no-escape sequence to end. Look at ESCAPE_PREVENTING_CHARS in config
-        // for more information. None if in no such sequence.
-        let mut escape_preventing_char_end: Option<char> = None;
+    for char in code.chars() {
+        let mut match_: String = String::new();
+        let mut match_is_included = false;
 
-        // Remove the comments
-        let trimmed_line = trim(line, &mut in_block_comment);
+        if STRING_MARKERS.0 == char && !block_escaped {
+            if !current_token.is_empty() {
+                tokens.push(current_token.clone());
+                current_token = String::new();
+            }
+            line_map.files[0].tokens_positions.push(TokenPosition::new(0, 0));
+            tokens.push(char.to_string());
+            line_map.files[0].tokens_positions.push(TokenPosition::new(0, 0));
+            block_escaped = true;
+            continue;
+        }
 
-        // Skip ahead in case the trimmed line contains nothing.
-        if trimmed_line.is_empty() { continue; }
+        if STRING_MARKERS.1 == char && block_escaped {
+            tokens.push(current_token.clone());
+            line_map.files[1].tokens_positions.push(TokenPosition::new(0, 0));
+            tokens.push(char.to_string());
 
-        // The logic line's separated contents
-        // One line in the code may produce multiple lines in the result in case there are multiple statements
-        let mut splitted_line: Vec<String> = Vec::new();
+            current_token = String::new();
+            block_escaped = false;
+            continue;
+        }
 
-        // The tokens for the logical line (see above)
-        let mut line_tokens: Vec<TokenPosition> = Vec::new();
+        if block_escaped {
+            current_token.push(char);
+            continue;
+        }
 
-        let mut current_token_position: TokenPosition = TokenPosition::new(0, 0);
+        match_ = ignored_single_char_matches.iter().find(|&x|x == &vec![char]).unwrap_or(&vec![]).to_vec().iter().collect();
 
+        if match_.is_empty() {
+            match_ = unignored_single_char_matches.iter().find(|&x|x == &vec![char]).unwrap_or(&vec![]).to_vec().iter().collect();
 
-        let mut current_token_text: String = String::new();
+            match_is_included = true;
+        }
 
-        // Separate into (unclassified) tokens
-        for x in trimmed_line.clone().chars().enumerate() {
-            let character = x.1.clone();
-            let i = x.0;
+        if match_.is_empty() {
+            if let Some(previous_char) = current_token.chars().last() {
+                match_is_included = false;
 
-            // Store the position (i) as the end position of the current token.
-            let mut end_token = |line_tokens: &mut Vec<TokenPosition>, splitted_line: &mut Vec<String>| {
-                current_token_position.length = i as u16 - current_token_position.clone().start;
-
-                // Store the token if (and only if) it has a positive length
-                if current_token_position.length != 0 {
-                    line_tokens.push(current_token_position.clone());
-                    splitted_line.push(current_token_text.clone());
+                // Find a double-character token that matches the previous and teh last token
+                if let Some(double_char_match) = ignored_double_char_matches.iter().find(|&x| x == &vec![previous_char, char]) {
+                    match_ = double_char_match.iter().collect::<String>();
                 }
 
-                current_token_position = TokenPosition::new(i as u16 + 1, 0);
-                current_token_text = String::new();
-            };
+                if match_.is_empty() {
+                    match_is_included = true;
 
-            // In case this is in an escaped sequence, look if it's the end character
-            if let Some(escape_end_char) = escape_preventing_char_end {
-                if character == escape_end_char {
-                    // Store anything within the sequence.
-                    end_token(&mut line_tokens, &mut splitted_line);
 
-                    // Store the current one, too
-                    let token = TokenPosition::new(i as u16, 1);
-                    line_tokens.push(token.clone());
-                    splitted_line.push(String::from(character));
-
-                    // End the sequence
-                    escape_preventing_char_end = None;
-                }else {
-                    // Add to the sequence
-                    current_token_text = current_token_text.clone() + &character.to_string();
+                    // Find a double-character token that matches the previous and teh last token
+                    if let Some(double_char_match) = unignored_double_char_matches.iter().find(|&x| x == &vec![previous_char, char]) {
+                        match_ = double_char_match.iter().collect::<String>();
+                    }
                 }
-
-                // If it ended or not, continue. No other checks need to be performed.
-                continue;
             }
-
-            if ESCAPE_PREVENTING_CHARACTERS.map(|x| x.0).contains(&character) {
-                // A character that should prevent the creation of new tokens until the
-                // corresponding end character has been found was found.
-
-                // Add the current token & store the current character
-                end_token(&mut line_tokens, &mut splitted_line);
-                let token = TokenPosition::new(i as u16, 1);
-                line_tokens.push(token.clone());
-                splitted_line.push(String::from(character));
-
-
-                // Get the end character
-                let pair = ESCAPE_PREVENTING_CHARACTERS.iter().find(|&&x| x.0 == character).unwrap(); // This being Some(_) is proven by the entering of this if statement
-                let end_character = pair.1;
-
-                // Store the end_character for searching it in later iterations
-                escape_preventing_char_end = Some(end_character);
-
-
-                continue;
-            }
-
-            if IGNORED_SPLIT_CHARACTERS.contains(&character.to_string().as_str()) {
-                end_token(&mut line_tokens, &mut splitted_line);
-
-                // Skip to prevent the addition of the character to the line
-                continue;
-            }
-
-
-            if UNIGNORED_SPLIT_CHARACTERS.contains(&character.to_string().as_str()) {
-                end_token(&mut line_tokens, &mut splitted_line);
-                let token = TokenPosition::new(i as u16, 1);
-                line_tokens.push(token.clone());
-                splitted_line.push(String::from(character));
-                continue;
-            }
-
-            if NEW_LOGICAL_LINE_CHARACTERS.contains(&character.to_string().as_str()) {
-                // 1. Save the current line's tokens to split code.
-                println!("ending line due to char: {}", character);
-                end_token(&mut line_tokens, &mut splitted_line);
-
-                if character != ';' {
-                    current_token_text = character.to_string();
-
-                    line_tokens.push(current_token_position.clone());
-                    splitted_line.push(current_token_text.clone());
-
-                    current_token_text = String::new();
-                }
-
-                if !splitted_line.is_empty() {
-                    splitted_code.push(splitted_line.clone());
-                    splitted_line = Vec::new();
-
-                    line_map.add_line(
-                        Line::new(
-                            file_name.to_string(),
-                            line_number as u32,
-                            line_tokens.clone(),
-                            0 /* serves no functionality rn */,
-                            trimmed_line.clone(),
-                        )
-                    );
-
-                    current_token_text = String::new();
-
-                    current_token_position = TokenPosition::new(i as u16 + 1, 0);
-                    line_tokens = Vec::new();
-                }
-
-                println!("broke with line contents: {:?}", splitted_line);
-                continue 'line_loop;
-            }
-
-            current_token_text = current_token_text.clone() + &character.to_string();
         }
 
 
-        if !splitted_line.is_empty() {
-            // There was no line ending in the end, throw an error
-            println!("Splitted line: {:?}", splitted_line);
+        if match_.is_empty() {
+            current_token.push(char);
+        } else {
+            if match_.len() == 1 {
+                if !current_token.is_empty() {
+                    tokens.push(current_token.clone());
+                }
+                line_map.files[0].tokens_positions.push(TokenPosition::new(0, 0));
+            } else {
+                current_token.remove(current_token.len() - 1);
+                if !current_token.is_empty() {
+                    tokens.push(current_token.clone());
+                }
+            }
 
+            if match_is_included {
+                tokens.push(match_.clone());
+                line_map.files[0].tokens_positions.push(TokenPosition::new(0, 0));
+            }
 
-            line_map.add_line(  // Add the line temporarily. It will be removed later again.
-                Line::new(
-                    file_name.to_string(),
-                    line_number as u32,
-                    line_tokens.clone(),
-                    0 /* serves no functionality rn */,
-                    trimmed_line.clone(),
-                )
-            );
-
-            let display_info = DisplayCodeInfo::new(
-                line_number as u32 - 1,
-                0,
-                -1,
-                vec![],
-                DisplayCodeKind::InitialError
-            );
-
-            let notification = NotificationInfo::new(
-                "Missing Line Terminator".to_string(),
-                "Consider adding a \";\" at the end of this line.".to_string(),
-                vec![display_info]
-            );
-
-            line_map.display_error(notification);
-            line_map.lines.remove(line_map.lines.len() - 1);
-
+            current_token = String::new();
         }
 
 
     }
 
-    (splitted_code, line_map)
+
+    tokens
 }
+
+
 
 
 /// ### Removes comments, leading and trailing whitespaces.
@@ -282,6 +202,7 @@ pub fn trim(line: String, in_block_comment: &mut bool) -> String {
 
 #[cfg(test)]
 mod tests {
+    use crate::compiler::line_map::LineMap;
     use crate::compiler::splitter::{split, trim};
 
 
@@ -335,17 +256,17 @@ mod tests {
         ];
 
         let expected = vec![
-            vec!["let", "a", "=", "10"],
-            vec!["let", "b", "=", "a", "+", "3"],
-            vec!["b", "-", "=", "1"],
-            vec!["let", "c", "=", "\"", "Hello, world!", "\""],
-            vec!["let", "d", "=", "\"", "\""],
-            vec!["(", "was", "geht", ")"],
-        ];
+            vec!["let", "a", "=", "10", ";", ],
+            vec!["let", "b", "=", "a", "+", "3", ";", ],
+            vec!["b", "-", "=", "1", ";", ],
+            vec!["let", "c", "=", "\"", "Hello, world!", "\"", ";", ],
+            vec!["let", "d", "=", "\"", "", "\"", ";",],
+            vec!["(", "was", "geht", ")", ";",],
+        ].concat();
 
-        let actual = split(lines.join("\n"));
+        let actual = split(lines.join("\n"), String::new(), &mut LineMap::test_map());
 
-        assert_eq!(expected, actual.0);
+        assert_eq!(expected.join(":"), actual.join(":"));
 
     }
 }

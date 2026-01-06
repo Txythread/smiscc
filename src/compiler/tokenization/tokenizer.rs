@@ -134,15 +134,29 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
 
                 // Check if it's an assigment
                 ASSIGNMENT_OPERATION => {
-                    let token = Token::Assignment(current_token_pos.clone());
+                    let token = Assignment(current_token_pos.clone());
 
                     line_tokens.push(token);
                     continue 'token_loop;
                 }
 
                 SEPARATOR_CHARACTER => {
-                    let token = Token::ArgumentSeparator(current_token_pos.clone());
+                    let token = ArgumentSeparator(current_token_pos.clone());
 
+                    line_tokens.push(token);
+                    continue 'token_loop;
+                }
+                
+                ";" => {
+                    let token = HardNewline(current_token_pos.clone());
+                    
+                    line_tokens.push(token);
+                    continue 'token_loop;
+                }
+                
+                "\n" => {
+                    let token = SoftNewline(current_token_pos.clone());
+                    
                     line_tokens.push(token);
                     continue 'token_loop;
                 }
@@ -155,7 +169,7 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
             // Check if it's an integer literal
             {
                 let integer_value = generate_integer(
-                    Token::UnspecifiedString(token.clone(), current_token_pos.clone()),
+                    UnspecifiedString(token.clone(), current_token_pos.clone()),
                     integer_types.clone(),
                     line_number as u32,
                     token_number as u32,
@@ -163,7 +177,7 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
                 );
 
                 if let Some(integer_value) = integer_value {
-                    line_tokens.push(Token::IntegerLiteral(integer_value.0, integer_value.1, current_token_pos.clone()));
+                    line_tokens.push(IntegerLiteral(integer_value.0, integer_value.1, current_token_pos.clone()));
                     continue 'token_loop;
                 }
             }

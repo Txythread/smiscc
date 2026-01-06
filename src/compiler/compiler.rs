@@ -8,19 +8,20 @@ use crate::compiler::splitter::split;
 use crate::compiler::tokenization::tokenizer::tokenize;
 use crate::compiler::parser::parse::parse;
 use crate::compiler::backend::arch::aarch64_mac_os;
+use crate::compiler::line_map::LineMap;
 
 pub fn compile(code: String, args: ArgumentList) {
-    let mut splitted = split(code);
-    let tokens = tokenize(splitted.0.clone(), &mut splitted.1);
-    
+    let mut line_map: LineMap = LineMap::new();
+    let mut splitted = split(code, String::from("test*.txt"), &mut line_map);
+    let tokens = tokenize(vec![splitted.clone()], &mut line_map);
     if args.show_tokens {
         for line in tokens.iter().enumerate() {
             println!("{}:\t{:?}", line.0 + 1, line.1)
         }
     }
-    
-    let parsed = parse(tokens.clone(), splitted.1.clone());
-    let mut context = Context::clear(splitted.1.clone());
+
+    let parsed = parse(tokens.clone(), line_map.clone());
+    let mut context = Context::clear(line_map);
     let flattened = flatten(parsed.clone().unwrap(), &mut context);
     let arch = aarch64_mac_os::generate();
     let assembly = assembly::generate_assembly_instructions(flattened, arch.clone());
@@ -44,7 +45,6 @@ pub fn compile(code: String, args: ArgumentList) {
 
     let syslibroot = String::from_utf8(xc_command.stdout).unwrap();
 
-    println!("syslibroot: {}", syslibroot);
 
     let mut command = Command::new("ld");
 
@@ -63,7 +63,6 @@ pub fn compile(code: String, args: ArgumentList) {
         .arg("-arch")
         .arg("arm64");
 
-    println!("{:?}", command.output().unwrap());
 
 
 

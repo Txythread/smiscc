@@ -25,6 +25,8 @@ pub fn parse_token(token: Token, line_number: u32, _line_map: LineMap) -> Option
         Token::ArithmeticParenthesisOpen(_) => {}
         Token::ArithmeticParenthesisClose(_) => {}
         Token::ArgumentSeparator(_) => {}
+        Token::SoftNewline(_) => {}
+        Token::HardNewline(_) => {}
     }
 
     None

@@ -34,7 +34,7 @@ pub enum Token {
     Assignment(TokenPosition),
     
     /// Something that seperates two arguments, e.g. in a function call or array.
-    /// This correlates with a "," in most languages..
+    /// This correlates with a "," in most languages.
     ArgumentSeparator(TokenPosition),
 
     //////////////////////////////////////////
@@ -46,6 +46,12 @@ pub enum Token {
     
     /// The closing part of the arithmetic/default parenthesis (")")
     ArithmeticParenthesisClose(TokenPosition),
+    
+    /// A newline that doesn't force a logical newline (e.g. \n)
+    SoftNewline(TokenPosition),
+    
+    /// A newline that should lead to a new line in the parsing state (e.g. ";")
+    HardNewline(TokenPosition),
 
 }
 
@@ -62,7 +68,8 @@ impl Token {
             Token::ArithmeticParenthesisOpen(pos) => { pos.clone() }
             Token::Assignment(pos) => { pos.clone() }
             Token::ArithmeticParenthesisClose(pos) => { pos.clone() }
-            Token::ArgumentSeparator(pos) => { pos.clone() }
+            Token::ArgumentSeparator(pos) => { pos.clone() },
+            Token::SoftNewline(pos) | Token::HardNewline(pos) => { pos.clone() }
         }
     }
 
@@ -86,6 +93,8 @@ impl Token {
         match self {
             Token::KeywordType(_, _) => false,
             Token::Assignment(_) => false,
+            Token::SoftNewline(_) => false,
+            Token::HardNewline(_) => false,
 
             _ => true
         }

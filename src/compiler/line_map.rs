@@ -3,7 +3,7 @@ use termimad;
 
 #[derive(Clone, Debug)]
 pub struct LineMap {
-    pub lines: Vec<Line>,
+    pub files: Vec<Line>,
     pub warning_count: u32,
     pub error_count: u32,
 }
@@ -11,7 +11,7 @@ pub struct LineMap {
 
 impl LineMap{
     pub fn add_line(&mut self, line: Line){
-        self.lines.push(line.clone());
+        self.files.push(line.clone());
     }
 
     pub fn display_warning(&mut self, info: NotificationInfo){
@@ -72,7 +72,7 @@ impl LineMap{
     }
 
     pub fn new() -> Self {
-        LineMap{lines: Vec::new(), warning_count: 0, error_count: 0 }
+        LineMap{ files: Vec::new(), warning_count: 0, error_count: 0 }
     }
 
 
@@ -81,15 +81,15 @@ impl LineMap{
     /// If the end index is negative, this means everything in the
     /// line after the start index.
     pub fn get_position_of_tokens(&self, line: u32, start_pos: u16, end_pos: i16) -> TokenPosition{
-        let start_token_start = self.lines[line as usize].tokens_positions[start_pos as usize].start;
+        let start_token_start = self.files[line as usize].tokens_positions[start_pos as usize].start;
 
         let mut end_pos = end_pos;
         // If the end token is negative, this means the entire line should be underlined
         if end_pos.is_negative(){
-            end_pos = (self.lines[line as usize].tokens_positions.len() - 1) as i16;
+            end_pos = (self.files[line as usize].tokens_positions.len() - 1) as i16;
         }
 
-        let end_token_position = self.lines[line as usize].tokens_positions[end_pos as usize].clone();
+        let end_token_position = self.files[line as usize].tokens_positions[end_pos as usize].clone();
         let end_token_end = end_token_position.start + end_token_position.length;
         let total_length = end_token_end - start_token_start;
 
@@ -164,7 +164,7 @@ impl DisplayCodeInfo {
 
     /// Write the information to the screen given a line map (which contains the code).
     pub fn print(&mut self, line_map: LineMap){
-        let line = line_map.lines[self.line_number_in_map as usize].clone();
+        let line = line_map.files[self.line_number_in_map as usize].clone();
         
         let line_number_string = format!("{} |", line.line_number);
 

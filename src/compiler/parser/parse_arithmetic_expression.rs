@@ -6,13 +6,14 @@ use crate::compiler::parser::tree::node::{ArithmeticNode, FunctionCallNode, Node
 use crate::compiler::tokenization::token::Token;
 use crate::util::operator::Operation;
 
-pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_map: LineMap, min_op_importance: u8, cursor: &mut u16, stop_at_unexpected_token: bool) -> Option<Rc<dyn Node>> {
+pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_map: LineMap, min_op_importance: u8, cursor: &mut usize, stop_at_unexpected_token: bool) -> Option<Rc<dyn Node>> {
     // If there is only one token, the principle is quite simple
-    if tokens.len() == 1 {
-        if let Some(node) = parse_token(tokens[0].clone(), line_number, line_map.clone()) {
+    if tokens.len() -*cursor == 1 {
+        if let Some(node) = parse_token(tokens[*cursor].clone(), line_number, line_map.clone()) {
             return Some(node)
         }
     }
+
 
 
     // Find logical parentheses and calculate stuff for them first
@@ -29,32 +30,29 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
 
     let mut current_operation: Option<Operation> = None;
 
-    for x in tokens.iter().enumerate() {
+    for x in tokens.iter().enumerate().skip(*cursor) {
         let token = x.1;
-        let token_number = x.0;
+        let token_number = x.0 + *cursor;
 
-        if token_number < *cursor as usize {
-            // The cursor is after this. Skip.
-            continue;
-        } else {
-            *cursor += 1;
-        }
 
-        println!("Looking at token: {:?}", token);
+
+        *cursor += 1;
 
         if stop_at_unexpected_token && !token.is_expected_in_arithmetic() { *cursor -= 1; break;}
 
+        if matches!(token, Token::SoftNewline(_)) || matches!(token, Token::HardNewline(_)) {
+            *cursor -= 1;
+            break;
+        }
+
+
         match token {
             Token::ArithmeticParenthesisOpen(_) => {
-                println!("Found open bracket thing");
                 // Detect function calls
                 if current_operation.is_none() {
-                    println!("nop");
                     if let Some(last_node) = calculated_nodes.last() {
-                        println!("last node found");
                         if let Some(identifier_node) = last_node.clone().downcast_rc::<ValueNode>().ok() {
                             if let ValueNode::Identifier(identifier_node) = identifier_node.deref() {
-                                println!("last node is id");
                                 // This parenthesis belongs to a function call
                                 let function_name = identifier_node.identifier.clone();
 
@@ -106,7 +104,6 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
 
                 if parenthesis_depth == 0 {
                     let solved_parenthesis = parse_arithmetic_expression(tokens_in_parenthesis.clone(), line_number, line_map.clone(), 0, &mut 0, false);
-                    println!("solved {:?} as {:?}", tokens_in_parenthesis, solved_parenthesis);
                     if let Some(solved_parenthesis) = solved_parenthesis {
                         calculated_nodes.push(solved_parenthesis);
                     } else {
@@ -154,12 +151,12 @@ pub fn parse_arithmetic_expression(tokens: Vec<Token>, line_number: u32, line_ma
                 }
             }
 
+
             _ => {
                 if parenthesis_depth > 0 {
                     tokens_in_parenthesis.push(token.clone());
                 } else {
                     calculated_nodes.push(parse_token(token.clone(), line_number, line_map.clone())?);
-                    println!("calculated nodes: {:?}", calculated_nodes);
                 }
             }
         }

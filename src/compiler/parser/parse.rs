@@ -8,121 +8,136 @@ use crate::config::tokenization_options::Keyword;
 use strum::IntoEnumIterator;
 use crate::compiler::parser::parse_arithmetic_expression::parse_arithmetic_expression;
 
-pub fn parse(tokens: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>> {
+pub fn parse(files: Vec<Vec<Token>>, line_map: LineMap) -> Option<Rc<dyn Node>> {
     let statements = Statements::iter().collect::<Vec<_>>();
-    let mut lines: Vec<Rc<dyn Node>> = vec![];
+    let mut lines_in_block: Vec<Rc<dyn Node>> = vec![];
 
-    for x in tokens.iter().enumerate() {
-        let line = x.1;
-        let line_number = x.0;
+    let mut blocks: Vec<CodeBlockNode> = vec![];
 
+    for x in files.iter().enumerate() {
+        let contents = x.1;
+        let file_number = x.0;
 
-        if line.is_empty() { continue; }
-        let first_token = line[0].clone();
-
-        println!("First token: {:?}", first_token);
+        let mut cursor = 0;
 
 
-        match first_token {
-            Token::KeywordType(keyword, _) => {
-                for statement in statements.iter() {
-                    if let Some(statement_keyword) = statement.get_affiliated_keyword() {
-                        if statement_keyword != keyword { continue; }
-
-                        println!("Found statement: {:?}", statement);
-
-                        // The statement is the statement in question.
-                        // Generate its arguments (starting with the header).
-                        let mut arguments: Vec<Rc<dyn Node>> = vec![];
-                        let argument_types = vec![statement.get_header_format(), statement.get_body_format()].concat();
-                        let mut cursor = 1; // skip the first token
-
-                        for type_ in argument_types {
-                            let is_required = type_.1;
-                            let kind = type_.0;
-
-                            println!("Type: {:?}", kind);
+        if contents.is_empty() { continue; }
 
 
-                            match kind {
-                                ExpressionKind::Value => {
-                                    println!("Tokens: {:?}, cursor: {}", line, cursor);
+        'line_loop: loop {
+            let first_token = contents[cursor].clone();
+            let line_start = cursor;
+            cursor += 1;
 
-                                    // Parse an arithmetic expression
-                                    if let Some(result) = parse_arithmetic_expression(line.clone(), line_number as u32, line_map.clone(), 0, &mut cursor, true) {
-                                        arguments.push(result);
-                                    } else {
-                                        if is_required {
-                                            // Throw an error. Something was required that wasn't given in the current statement.
-                                            todo!()
+            match first_token.clone() {
+                Token::KeywordType(keyword, _) => {
+                    for statement in statements.iter() {
+                        if let Some(statement_keyword) = statement.get_affiliated_keyword() {
+                            if statement_keyword != keyword { continue; }
+
+
+                            // The statement is the statement in question.
+                            // Generate its arguments (starting with the header).
+                            let mut arguments: Vec<Rc<dyn Node>> = vec![];
+                            let argument_types = vec![statement.get_header_format(), statement.get_body_format()].concat();
+
+                            for type_ in argument_types {
+                                let is_required = type_.1;
+                                let kind = type_.0;
+
+
+
+                                match kind {
+                                    ExpressionKind::Value => {
+
+                                        // Parse an arithmetic expression
+                                        if let Some(result) = parse_arithmetic_expression(contents.clone(), file_number as u32, line_map.clone(), 0, &mut cursor, true) {
+                                            arguments.push(result);
+                                        } else {
+                                            if is_required {
+                                                // Throw an error. Something was required that wasn't given in the current statement.
+                                                todo!()
+                                            }
                                         }
                                     }
-                                }
-                                ExpressionKind::Assignment => {
-                                    match line[cursor as usize].clone() {
-                                        Token::Assignment(pos ) => arguments.push(Rc::new(AssignmentSymbolNode::new((line_number, pos)))),
-                                        _ => {
-                                            // Throw an error.
-                                            todo!()
-                                        }
-                                    }
-
-                                    cursor += 1;
-                                }
-                                ExpressionKind::Keyword(_) => {
-                                    cursor += 1;
-                                }
-                                ExpressionKind::Identifier(_) => {
-                                    match line[cursor as usize].clone() {
-                                        Token::Identifier(id, pos) => {
-                                            arguments.push(Rc::new(IdentifierNode::new(id, None, (line_number, pos))))
+                                    ExpressionKind::Assignment => {
+                                        match contents[cursor as usize].clone() {
+                                            Token::Assignment(pos) => arguments.push(Rc::new(AssignmentSymbolNode::new((file_number, pos)))),
+                                            _ => {
+                                                // Throw an error.
+                                                todo!()
+                                            }
                                         }
 
-                                        _ => {
-                                            // Throw an error.
-                                            todo!()
-                                        }
+                                        cursor += 1;
                                     }
-                                    cursor += 1;
+                                    ExpressionKind::Keyword(_) => {
+                                        cursor += 1;
+                                    }
+                                    ExpressionKind::Identifier(_) => {
+                                        match contents[cursor as usize].clone() {
+                                            Token::Identifier(id, pos) => {
+                                                arguments.push(Rc::new(IdentifierNode::new(id, None, (file_number, pos))))
+                                            }
+
+                                            _ => {
+                                                // Throw an error.
+                                                todo!()
+                                            }
+                                        }
+                                        cursor += 1;
+                                    }
                                 }
                             }
+
+
+                            let statement_node = statement.generate_entire_node(arguments);
+                            lines_in_block.push(statement_node.unwrap());
                         }
-
-
-                        let statement_node = statement.generate_entire_node(arguments);
-                        lines.push(statement_node.unwrap());
-
-                    }
-                }
-            }
-
-            Token::Identifier(name, pos) => {
-                let id_node = IdentifierNode::new(name, None, (line_number, pos.clone()));
-
-                match line[1].clone() {
-                    Token::Assignment(_) => {},
-                    _ => {
-                        println!("Parsing function ");
-                        let value = parse_arithmetic_expression(line.clone(), line_number as u32, line_map.clone(), 0, &mut 0, false).unwrap();
-
-                        lines.push(value);
-
-                        continue;
                     }
                 }
 
-                let value = parse_arithmetic_expression(line.clone(), line_number as u32, line_map.clone(), 0, &mut 2, false).unwrap();
+                Token::Identifier(name, pos) => {
+                    let id_node = IdentifierNode::new(name, None, (file_number, pos.clone()));
 
-                let assignment_node = AssignmentNode::new(Rc::new(id_node), value, (line_number, pos));
+                    match contents[1].clone() {
+                        Token::Assignment(_) => {},
+                        _ => {
+                            cursor = line_start;
+                            let value = parse_arithmetic_expression(contents.clone(), file_number as u32, line_map.clone(), 0, &mut cursor, false).unwrap();
 
-                lines.push(Rc::new(assignment_node));
+                            lines_in_block.push(value);
+
+                            continue;
+                        }
+                    }
+
+                    cursor = line_start + 2;
+                    let value = parse_arithmetic_expression(contents.clone(), file_number as u32, line_map.clone(), 0, &mut cursor, false).unwrap();
+
+                    let assignment_node = AssignmentNode::new(Rc::new(id_node), value, (file_number, pos));
+
+                    lines_in_block.push(Rc::new(assignment_node));
+                }
+
+                _ => {}
             }
 
-            _ => {}
+            // Skip all newlines
+            loop {
+                match contents[cursor] {
+                    Token::SoftNewline(_) | Token::HardNewline(_) => {cursor += 1}
+                    _ => {continue 'line_loop}
+                }
+
+                if contents.len() <= cursor {
+                    break 'line_loop;
+                }
+            }
         }
     }
 
-    let code = CodeBlockNode::new((0, TokenPosition::new(0, 0)), Rc::new(Some("_start".to_string())), lines);
+    let code = CodeBlockNode::new((0, TokenPosition::new(0, 0)), Rc::new(Some("_start".to_string())), lines_in_block);
 
     Some(Rc::new(code))
 }
@@ -178,20 +193,17 @@ mod tests {
                 ], 0, LineMap::new(), 0, &mut 0, true,
         );
 
-        println!("{:#?}", node);
 
     }
 
     #[test]
     fn test_parse_multiplication() {
-        let tokens1 = tokenize(split("6 + 7 * 67 - 420;".to_string()).0, &mut LineMap::test_map());
-        let tokens2 = tokenize(split("(6 + (7 * 67)) - 420;".to_string()).0, &mut LineMap::test_map());
+        let tokens1 = tokenize(vec![split("6 + 7 * 67 - 420;".to_string(), String::from("test.txt"), &mut LineMap::test_map())], &mut LineMap::test_map());
+        let tokens2 = tokenize(vec![split("(6 + (7 * 67)) - 420;".to_string(), String::from("test.txt"), &mut LineMap::test_map())], &mut LineMap::test_map());
 
         let parsed1 = parse_arithmetic_expression(tokens1[0].clone(), 0, LineMap::test_map(), 0, &mut 0, true,);
         let parsed2 = parse_arithmetic_expression(tokens2[0].clone(), 0, LineMap::test_map(), 0, &mut 0, true);
 
-        println!("1: {:#?}", parsed1);
-        println!("2: {:#?}", parsed2);
 
         assert_eq!(format!("{:#?}", parsed1), format!("{:#?}", parsed2));
     }

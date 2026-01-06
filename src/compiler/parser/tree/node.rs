@@ -112,7 +112,6 @@ impl Node for ValueNode {
     }
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
-        println!("mutability of sub node: {:?}", self.get_sub_node().output_is_randomly_mutable());
         self.get_sub_node().output_is_randomly_mutable()
     }
 }
@@ -389,7 +388,7 @@ impl Node for ArithmeticNode {
 
         let mut x = a.1.unwrap();
 
-        if self.argument_b.output_is_randomly_mutable() == Some(true) && self.operation.is_commutative() {
+        if self.argument_b.output_is_randomly_mutable() == Some(true) && self.operation.is_commutative() && self.argument_a.output_is_randomly_mutable() != Some(true) {
             return (
                 vec![
                     a.0,
@@ -582,6 +581,8 @@ impl Node for LetNode {
 
         if let Some(assigned_value) = self.assigned_value.clone() {
             let assignment_result = assigned_value.clone().generate_instructions(context).clone();
+
+
             let mut assignment_instructions = assignment_result.0;
             instructions.append(&mut assignment_instructions);
 
@@ -649,7 +650,7 @@ impl Node for CodeBlockNode {
         let name: String = {if let Some(label) = self.label.clone().deref() { label.clone() } else { context.label_count += 1; String::from("LB") + (context.label_count - 1).to_string().as_str() }};
 
         let mut instructions: Vec<Instruction> = vec![];
-        
+
         instructions.push(Instruction::Label(Rc::new(name), false));
 
         for code in self.code.iter() {
@@ -752,6 +753,7 @@ impl Node for FunctionCallNode {
 
         let mut return_uuid: Option<Uuid> = None;
         let mut return_uuids: Vec<Uuid> = vec![];
+
         if function_meta.return_type_uuid.is_some() {
             return_uuid = Some(Uuid::new_v4());
             return_uuids.push(return_uuid.unwrap());
@@ -768,10 +770,8 @@ impl Node for FunctionCallNode {
             instructions.append(&mut arg_result.0.clone());
 
             if arg.output_is_randomly_mutable() == Some(true) {
-                println!("Randomly mutable argument detected");
                 args.push(arg_result.1.unwrap());
             } else {
-                println!("Unmutable argument detected: {:?}", arg);
                 let arg_uuid = Uuid::new_v4();
                 args.push(arg_uuid);
                 moves.push((arg_uuid, arg_result.1.unwrap()));
