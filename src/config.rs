@@ -163,6 +163,13 @@ pub mod tokenization_options {
         /// such as most shell languages. This action requires a value.
         #[strum(serialize = "exit")]
         Exit,
+        
+        /// ### Define a New Function
+        /// 
+        /// This is similar to the "func", "fn" or "function" statements in most
+        /// languages.
+        #[strum(serialize = "func")]
+        Function,
     }
 
 

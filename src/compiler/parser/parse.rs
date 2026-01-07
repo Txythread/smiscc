@@ -32,16 +32,17 @@ pub fn parse(files: Vec<Vec<Token>>, line_map: &mut LineMap) -> Option<Rc<dyn No
                 Rc::new(files[0].clone()),
                 &mut cursor,
                 line_map,
-                statements.clone(),
+                Rc::new(statements.clone()),
                 0,
                 &mut blocks,
                 0,
+                &mut 0,
             )
         }
     }
 
 
-    Some(Rc::new(blocks[0].clone()))
+    Some(Rc::new(CodeBlockArray::new((0, TokenPosition::new(0, 0)), blocks.clone())))
 }
 
 #[derive(Debug)]
@@ -57,6 +58,8 @@ pub enum ExpressionKind {
 
     /// **Note:** Only Identifiers that won't get coerced into values
     Identifier(Option<String>),
+
+    CodeBlock,
 }
 
 

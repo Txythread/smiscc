@@ -6,11 +6,9 @@ _print:
     ret
 
 _stray:
-	mov	x0, #1
-	mov	x19, x0
-	mov	x0, x19
-	bl	_print
-	mov	x0, x1
+
+LB0:
+	mov	x0, #0
 	mov	x16, #1
 	mov	x0, x0
 	svc	#0x80

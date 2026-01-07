@@ -11,6 +11,7 @@ pub enum Statements {
     LetStatement,
     VarStatement,
     ExitStatement,
+    FunctionStatement,
 }
 
 impl Statement for Statements {
@@ -19,6 +20,7 @@ impl Statement for Statements {
             Statements::LetStatement => Some(Keyword::Let),
             Statements::VarStatement => Some(Keyword::Var),
             Statements::ExitStatement => Some(Keyword::Exit),
+            Statements::FunctionStatement => Some(Keyword::Function),
         }
     }
 
@@ -41,6 +43,11 @@ impl Statement for Statements {
                 ]
             }
             Statements::ExitStatement => {
+                vec![
+                ]
+            }
+
+            Statements::FunctionStatement => {
                 vec![
                 ]
             }
@@ -83,6 +90,14 @@ impl Statement for Statements {
                     )
                 ]
             }
+            Statements::FunctionStatement => {
+                vec![
+                    (
+                        ExpressionKind::CodeBlock,
+                        true
+                    )
+                ]
+            }
         }
     }
 
@@ -99,6 +114,10 @@ impl Statement for Statements {
 
                 return Some(Rc::new(node));
             },
+
+            Statements::FunctionStatement => {
+                return None;
+            }
             _ => {}
         }
 

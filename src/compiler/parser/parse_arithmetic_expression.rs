@@ -40,7 +40,7 @@ pub fn parse_arithmetic_expression(tokens: Rc<Vec<Token>>, line_number: u32, lin
 
         if stop_at_unexpected_token && !token.is_expected_in_arithmetic() { *cursor -= 1; break;}
 
-        if matches!(token, Token::SoftNewline(_)) || matches!(token, Token::HardNewline(_)) {
+        if token.is_line_delimiting() {
             *cursor -= 1;
             break;
         }

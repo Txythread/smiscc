@@ -111,6 +111,8 @@ impl Token {
         match self {
             Token::HardNewline(_) => true,
             Token::SoftNewline(_) => true,
+            Token::CodeBlockParenthesisOpen(_) => true,
+            Token::CodeBlockParenthesisClose(_) => true,
 
             _ => false
         }

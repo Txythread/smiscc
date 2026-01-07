@@ -720,7 +720,7 @@ impl Node for ExitNode {
     }
 }
 
-#[derive(Debug, new)]
+#[derive(Clone, Debug, new)]
 pub struct FunctionCallNode {
     name: Rc<String>,
     arguments: Vec<Rc<dyn Node>>,
@@ -799,6 +799,51 @@ impl Node for FunctionCallNode {
             ].concat()
             ,
             return_uuid
+        )
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        None
+    }
+}
+
+#[derive(Clone, Debug, new)]
+pub struct CodeBlockArray {
+    pub position: (usize, TokenPosition),
+    pub code_blocks: Vec<CodeBlockNode>
+}
+
+impl Node for CodeBlockArray {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+    
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        current
+    }
+    
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        vec![]
+    }
+    
+    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
+        None
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        Box::new((*self).clone())
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        let mut instructions: Vec<Instruction> = vec![];
+
+        for code_block in self.code_blocks.iter() {
+            instructions.append(code_block.generate_instructions(context).0.as_mut());
+        }
+
+        (
+            instructions,
+            None
         )
     }
 
