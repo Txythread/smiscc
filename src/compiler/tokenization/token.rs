@@ -58,6 +58,8 @@ pub enum Token {
 
     /// A closing code block parenthesis ("}")
     CodeBlockParenthesisClose(TokenPosition),
+    
+    Colon(TokenPosition),
 
 }
 
@@ -77,6 +79,7 @@ impl Token {
             Token::ArgumentSeparator(pos) => { pos.clone() },
             Token::SoftNewline(pos) | Token::HardNewline(pos) => { pos.clone() },
             Token::CodeBlockParenthesisOpen(pos) | Token::CodeBlockParenthesisClose(pos) => pos.clone(),
+            Token::Colon(pos) => pos.clone()
         }
     }
 
@@ -89,6 +92,7 @@ impl Token {
             Token::UnspecifiedString(text, _) => { Some(text.clone()) }
             Token::Operator(op, _) => { Some(op.clone().as_ref().to_string()) }
             Token::Assignment(_) => { Some(ASSIGNMENT_OPERATION.to_string()) }
+            Token::Colon(_) => Some(":".to_string()),
 
             _ => None,
         }
@@ -102,6 +106,7 @@ impl Token {
             Token::Assignment(_) => false,
             Token::SoftNewline(_) => false,
             Token::HardNewline(_) => false,
+            Token::Colon(_) => false,
 
             _ => true
         }

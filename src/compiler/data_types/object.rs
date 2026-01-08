@@ -1,5 +1,7 @@
 use uuid::Uuid;
+use crate::compiler::data_types::boolean::Boolean;
 use crate::compiler::data_types::data_types::Buildable;
+use crate::compiler::data_types::integer::IntegerType;
 use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, LineMap, NotificationInfo, TokenPosition};
 use crate::compiler::tokenization::token::Token;
 
@@ -192,6 +194,16 @@ pub struct ObjectType{
 impl ObjectType {
     pub fn new(name: String, type_uuid: Uuid) -> ObjectType {
         ObjectType { name, traits: vec![], type_uuid }
+    }
+    
+    pub fn generate_built_ins() -> Vec<ObjectType> {
+        // Generate the datatypes
+        let u32_ = IntegerType::Unsigned32BitInteger;
+        let u32_type = u32_.build_type();
+        let bool_ = Boolean::new();
+        let bool_type = bool_.build_type();
+        
+        vec![u32_type, bool_type]
     }
 
     pub fn add_trait(&mut self, trait_: &str) {

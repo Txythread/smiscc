@@ -920,3 +920,39 @@ impl Node for FunctionDeclarationNode {
         None
     }
 }
+
+#[derive(Clone, Debug, new)]
+pub struct ArgumentsNode<T> {
+    pub position: (usize, TokenPosition),
+    pub args: Rc<Vec<T>>
+}
+
+impl<T: 'static + Debug + Clone> Node for ArgumentsNode<T> {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        current
+    }
+
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        vec![]
+    }
+
+    fn get_datatypes(&self, _: Vec<ObjectType>, _: Context) -> Option<Vec<ObjectType>> {
+        None
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        Box::new((*self).clone())
+    }
+
+    fn generate_instructions(&self, _: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        (vec![], None)
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        None
+    }
+}

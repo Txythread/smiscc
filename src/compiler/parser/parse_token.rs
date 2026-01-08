@@ -29,6 +29,7 @@ pub fn parse_token(token: Token, line_number: u32, _line_map: LineMap) -> Option
         Token::HardNewline(_) => {}
         Token::CodeBlockParenthesisClose(_) => {}
         Token::CodeBlockParenthesisOpen(_) => {}
+        Token::Colon(_) => {}
     }
 
     None

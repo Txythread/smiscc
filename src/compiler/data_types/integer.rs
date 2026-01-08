@@ -234,7 +234,7 @@ impl Buildable for IntegerType {
         match token {
             Token::UnspecifiedString(token_content, _) => {
                 let mut token_content = token_content.clone();
-                if token_content.ends_with(self.get_code_name().as_str()){
+                if token_content.ends_with(self.get_code_name().as_str()) && token_content.len() != self.get_code_name().len() {
                     token_content = token_content.strip_suffix(self.get_code_name().as_str()).unwrap().parse().unwrap();
                     ambiguous = false;
                 }

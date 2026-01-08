@@ -8,24 +8,8 @@ use crate::compiler::parser::function_meta::{FunctionArgument, FunctionMeta, Fun
 use crate::compiler::parser::tree::node::Node;
 
 pub fn flatten(line: Rc<dyn Node>, context: &mut Context) -> Vec<Instruction> {
-    // Generate the datatypes
-    let u32_ = IntegerType::Unsigned32BitInteger;
-    let u32_type = u32_.build_type();
-    let bool_ = Boolean::new();
-    let bool_type = bool_.build_type();
 
-    context.datatypes.insert(u32_type.type_uuid, u32_type.clone());
-    context.datatypes.insert(bool_type.type_uuid, bool_type);
 
-    context.function_metas.push(FunctionMeta::new(
-        "print".to_string(),
-        "_print".to_string(),
-        FunctionStyle::C,
-        Some(u32_type.type_uuid),
-        vec![
-            FunctionArgument::new(None, u32_type.type_uuid)
-        ]
-    ));
 
 
     let result = line.generate_instructions(context);

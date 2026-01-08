@@ -1,10 +1,13 @@
 use std::rc::Rc;
+use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::line_map::{LineMap, TokenPosition};
 use crate::compiler::parser::parse::ExpressionKind;
+use crate::compiler::parser::parse_arg_array::parse_arg_array;
 use crate::compiler::parser::parse_arithmetic_expression::parse_arithmetic_expression;
+use crate::compiler::parser::parse_datatype::{parse_parameter_descriptor, ParameterDescriptor};
 use crate::compiler::parser::statement::Statement;
 use crate::compiler::parser::statements::Statements;
-use crate::compiler::parser::tree::node::{AssignmentNode, AssignmentSymbolNode, CodeBlockNode, IdentifierNode, Node};
+use crate::compiler::parser::tree::node::{ArgumentsNode, AssignmentNode, AssignmentSymbolNode, CodeBlockNode, IdentifierNode, Node};
 use crate::compiler::tokenization::token::Token;
 
 /// Generates nodes for one logical line or statement.
@@ -18,7 +21,7 @@ use crate::compiler::tokenization::token::Token;
 /// line. It can handle multiple code blocks as long as those were themselves started
 /// within the **logical** line. Meaning something like a "func"-statement can be fully
 /// parsed while this function gets invoked only once.
-pub fn parse_line(tokens: Rc<Vec<Token>>, cursor: &mut usize, line_map: &mut LineMap, statements: Rc<Vec<Statements>>, file_number: usize, blocks: &mut Vec<CodeBlockNode>, current_block_idx: usize, code_block_depth: &mut u32) {
+pub fn parse_line(tokens: Rc<Vec<Token>>, cursor: &mut usize, line_map: &mut LineMap, statements: Rc<Vec<Statements>>, file_number: usize, blocks: &mut Vec<CodeBlockNode>, current_block_idx: usize, code_block_depth: &mut u32, datatypes: Rc<Vec<ObjectType>>) {
     let first_token: Token = tokens[*cursor].clone();
     let line_start = *cursor;
     *cursor += 1;
@@ -99,13 +102,25 @@ pub fn parse_line(tokens: Rc<Vec<Token>>, cursor: &mut usize, line_map: &mut Lin
                                 blocks.push(block);
 
                                 while *code_block_depth > initial_block_depth {
-                                    parse_line(tokens.clone(), cursor, line_map, statements.clone(), file_number, blocks, blocks.len() - 1, code_block_depth);
+                                    parse_line(tokens.clone(), cursor, line_map, statements.clone(), file_number, blocks, blocks.len() - 1, code_block_depth, datatypes.clone());
                                 }
 
                                 let block = blocks.pop().unwrap();
 
 
                                 arguments.push(Rc::new(block));
+                            }
+                            ExpressionKind::ParameterDescriptorArray => {
+                                arguments.push(Rc::new(
+                                    ArgumentsNode::<ParameterDescriptor>::new(
+                                        (0, TokenPosition::new(0, 0)),
+                                        Rc::new(
+                                        parse_arg_array::<ParameterDescriptor>(tokens.clone(), cursor, datatypes.clone(), line_map,
+                                                                               &|tokens, cursor, line_map, data_types|
+                                                                                   parse_parameter_descriptor(tokens, cursor, datatypes.clone(), line_map, true))
+                                    )
+                                )
+                                ));
                             }
                         }
                     }

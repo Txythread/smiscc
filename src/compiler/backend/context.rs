@@ -25,6 +25,7 @@ pub struct Context {
     pub name_map: HashMap<String, Uuid>,
 
     /// All datatypes, including primitive ones
+    /// (key: their type UUID, contents: entire object type)
     pub datatypes: HashMap<Uuid, ObjectType>,
 
 

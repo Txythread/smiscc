@@ -52,6 +52,11 @@ impl Statement for Statements {
                     (
                         ExpressionKind::Identifier(None),
                         true
+                    ),
+
+                    (
+                        ExpressionKind::ParameterDescriptorArray,
+                        true
                     )
                 ]
             }
@@ -124,7 +129,7 @@ impl Statement for Statements {
                 let identifier_node = identifier_arg.downcast_rc::<IdentifierNode>().unwrap();
                 let identifier = identifier_node.identifier.clone();
 
-                let block = arguments[1].clone();
+                let block = arguments.last().unwrap().clone();
                 let block = block.downcast_rc::<CodeBlockNode>().unwrap();
 
                 let function_node = FunctionDeclarationNode::new(
@@ -132,6 +137,8 @@ impl Statement for Statements {
                     Rc::new(identifier),
                     block.clone(),
                 );
+
+                println!("Function node got args: {:#?}", arguments);
 
 
                 return Some(Rc::new(function_node));

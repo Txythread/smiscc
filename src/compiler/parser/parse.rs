@@ -6,10 +6,11 @@ use crate::compiler::tokenization::token::Token;
 use crate::compiler::parser::tree::node::*;
 use crate::config::tokenization_options::Keyword;
 use strum::IntoEnumIterator;
+use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::parser::parse_arithmetic_expression::parse_arithmetic_expression;
 use crate::compiler::parser::parse_line::parse_line;
 
-pub fn parse(files: Vec<Vec<Token>>, line_map: &mut LineMap) -> Option<Rc<dyn Node>> {
+pub fn parse(files: Vec<Vec<Token>>, line_map: &mut LineMap, object_types: &mut Rc<Vec<ObjectType>>) -> Option<Rc<dyn Node>> {
     let statements = Statements::iter().collect::<Vec<_>>();
     let mut lines_in_block: Vec<Rc<dyn Node>> = vec![];
 
@@ -37,6 +38,7 @@ pub fn parse(files: Vec<Vec<Token>>, line_map: &mut LineMap) -> Option<Rc<dyn No
                 &mut blocks,
                 0,
                 &mut 0,
+                object_types.clone(),
             )
         }
     }
@@ -60,6 +62,8 @@ pub enum ExpressionKind {
     Identifier(Option<String>),
 
     CodeBlock,
+
+    ParameterDescriptorArray
 }
 
 

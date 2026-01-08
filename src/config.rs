@@ -35,7 +35,7 @@ pub mod tokenization_options {
     /// (`hello+++world` will still get processed into `["hello", "+", "+", "+", "world"]`).
     ///
     /// This is used in the splitter.
-    pub const UNIGNORED_SPLIT_CHARACTERS: [&str; 22] = ["{", "}", "(", ")", "[", "]", "<", ">", "?", "!", ".", ",", "\"", "\'", "=", "+", "-", "*", "/", "#", "\n", ";"];
+    pub const UNIGNORED_SPLIT_CHARACTERS: [&str; 23] = ["{", "}", "(", ")", "[", "]", "<", ">", "?", "!", ".", ",", "\"", "\'", "=", "+", "-", "*", "/", "#", "\n", ";", ":"];
 
 
     /// ### Characters that prevent split characters from creating new tokens until their counterpart is met.
@@ -163,9 +163,9 @@ pub mod tokenization_options {
         /// such as most shell languages. This action requires a value.
         #[strum(serialize = "exit")]
         Exit,
-        
+
         /// ### Define a New Function
-        /// 
+        ///
         /// This is similar to the "func", "fn" or "function" statements in most
         /// languages.
         #[strum(serialize = "func")]

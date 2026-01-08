@@ -1,8 +1,9 @@
-func was_geht {
+func was_geht(ab in: u32) {
 	exit 0;
 }
 
-func start {
+func start(a: u32) {
+	let a = 10;
 	was_geht();
 }
 

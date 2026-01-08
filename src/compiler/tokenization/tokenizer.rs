@@ -181,6 +181,13 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
                     line_tokens.push(token);
                     continue 'token_loop;
                 }
+                
+                ":" => {
+                    let token = Colon(current_token_pos.clone());
+                    
+                    line_tokens.push(token);
+                    continue 'token_loop;
+                }
 
                 _ => {}
             }

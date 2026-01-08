@@ -8,7 +8,9 @@ use crate::compiler::splitter::split;
 use crate::compiler::tokenization::tokenizer::tokenize;
 use crate::compiler::parser::parse::parse;
 use crate::compiler::backend::arch::aarch64_mac_os;
+use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::line_map::LineMap;
+use std::rc::Rc;
 
 pub fn compile(code: String, args: ArgumentList) {
     let mut line_map: LineMap = LineMap::new();
@@ -20,8 +22,13 @@ pub fn compile(code: String, args: ArgumentList) {
         }
     }
 
-    let parsed = parse(tokens.clone(), &mut line_map);
+    let mut object_types = Rc::new(ObjectType::generate_built_ins());
+
+    let parsed = parse(tokens.clone(), &mut line_map, &mut object_types);
     let mut context = Context::clear(line_map);
+    object_types.iter().for_each(|object_type| {
+       context.datatypes.insert(object_type.type_uuid, object_type.clone());
+    });
     let flattened = flatten(parsed.clone().unwrap(), &mut context);
     let arch = aarch64_mac_os::generate();
     let assembly = assembly::generate_assembly_instructions(flattened, arch.clone());
