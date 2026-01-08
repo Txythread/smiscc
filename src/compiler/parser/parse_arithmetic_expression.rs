@@ -63,7 +63,8 @@ pub fn parse_arithmetic_expression(tokens: Rc<Vec<Token>>, line_number: u32, lin
                                     if let Some(new_node) = parse_arithmetic_expression(tokens.clone(), line_number, line_map.clone(), 0, cursor, true) {
                                         args.push(new_node);
                                     } else {
-                                        todo!()
+                                        // Just here for the note:
+                                        // no arg was passed at all.
                                     }
 
                                     *cursor -= 1;
@@ -74,7 +75,7 @@ pub fn parse_arithmetic_expression(tokens: Rc<Vec<Token>>, line_number: u32, lin
                                         match token {
                                             Token::ArithmeticParenthesisClose(_) => {break;},
                                             Token::ArgumentSeparator(_) => {continue},
-                                            _ => {todo!("Unexpected token in function call")}
+                                            _ => {todo!("Unexpected token in function call: {:?}", token)}
                                         }
                                     } else {
                                         todo!("Error: Unexpected line ending in function call");

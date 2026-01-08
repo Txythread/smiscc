@@ -12,3 +12,11 @@ LB0:
 	mov	x16, #1
 	mov	x0, x0
 	svc	#0x80
+
+_start:
+	bl	LB0
+
+	mov	x0, #1
+	mov	x16, #1
+	mov	x0, x0
+	svc	#0x80

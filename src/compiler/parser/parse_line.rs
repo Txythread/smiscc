@@ -98,15 +98,14 @@ pub fn parse_line(tokens: Rc<Vec<Token>>, cursor: &mut usize, line_map: &mut Lin
                                 let block = CodeBlockNode::new((file_number, TokenPosition::new(0, 0)), Rc::new(None), vec![]);
                                 blocks.push(block);
 
-                                println!("cursor at: {}", *cursor);
-
                                 while *code_block_depth > initial_block_depth {
                                     parse_line(tokens.clone(), cursor, line_map, statements.clone(), file_number, blocks, blocks.len() - 1, code_block_depth);
                                 }
 
-                                println!("-> cursor at: {}", *cursor);
+                                let block = blocks.pop().unwrap();
 
-                                arguments.push(Rc::new(blocks.last().unwrap().clone()));
+
+                                arguments.push(Rc::new(block));
                             }
                         }
                     }

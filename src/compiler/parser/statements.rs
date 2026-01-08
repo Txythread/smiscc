@@ -4,7 +4,7 @@ use crate::compiler::line_map::TokenPosition;
 use crate::config::tokenization_options::Keyword;
 use crate::compiler::parser::parse::ExpressionKind;
 use crate::compiler::parser::statement::Statement;
-use crate::compiler::parser::tree::node::{ExitNode, IdentifierNode, LetNode, Node};
+use crate::compiler::parser::tree::node::{CodeBlockNode, ExitNode, FunctionDeclarationNode, IdentifierNode, LetNode, Node};
 
 #[derive(Clone, Debug, EnumIter)]
 pub enum Statements {
@@ -49,6 +49,10 @@ impl Statement for Statements {
 
             Statements::FunctionStatement => {
                 vec![
+                    (
+                        ExpressionKind::Identifier(None),
+                        true
+                    )
                 ]
             }
         }
@@ -116,7 +120,21 @@ impl Statement for Statements {
             },
 
             Statements::FunctionStatement => {
-                return None;
+                let identifier_arg = arguments[0].clone();
+                let identifier_node = identifier_arg.downcast_rc::<IdentifierNode>().unwrap();
+                let identifier = identifier_node.identifier.clone();
+
+                let block = arguments[1].clone();
+                let block = block.downcast_rc::<CodeBlockNode>().unwrap();
+
+                let function_node = FunctionDeclarationNode::new(
+                    (0, TokenPosition::new(0, 0)),
+                    Rc::new(identifier),
+                    block.clone(),
+                );
+
+
+                return Some(Rc::new(function_node));
             }
             _ => {}
         }

@@ -11,6 +11,7 @@ use crate::compiler::data_types::data_types::Buildable;
 use crate::compiler::data_types::integer::IntegerType;
 use crate::compiler::data_types::object::{ObjectType, Trait};
 use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, NotificationInfo, TokenPosition};
+use crate::compiler::parser::function_meta::{FunctionMeta, FunctionStyle};
 use crate::compiler::parser::future::CodeFuture;
 use crate::util::operator::Operation;
 
@@ -383,8 +384,9 @@ impl Node for ArithmeticNode {
     }
 
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
-        let a = self.argument_a.generate_instructions(context);
-        let b = self.argument_b.generate_instructions(context);
+        let self_ = self.clone();
+        let a = self_.argument_a.generate_instructions(context);
+        let b = self_.argument_b.generate_instructions(context);
 
         let mut x = a.1.unwrap();
 
@@ -632,6 +634,14 @@ impl CodeBlockNode {
     pub fn append_code(&mut self, code: Vec<Rc<dyn Node>>) {
         self.code.append(&mut code.clone());
     }
+
+    pub fn assign_label(&mut self, context: &mut Context) -> Rc<String> {
+        let name: String = {if let Some(label) = self.label.clone().deref() { label.clone() } else { context.label_count += 1; String::from("LB") + (context.label_count - 1).to_string().as_str() }};
+
+        self.label = Rc::new(Some(name.clone()));
+
+        Rc::new(name.clone())
+    }
 }
 
 impl Node for CodeBlockNode {
@@ -657,7 +667,7 @@ impl Node for CodeBlockNode {
 
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         let name: String = {if let Some(label) = self.label.clone().deref() { label.clone() } else { context.label_count += 1; String::from("LB") + (context.label_count - 1).to_string().as_str() }};
-
+        
         let mut instructions: Vec<Instruction> = vec![];
 
         instructions.push(Instruction::Label(Rc::new(name), false));
@@ -840,6 +850,65 @@ impl Node for CodeBlockArray {
         for code_block in self.code_blocks.iter() {
             instructions.append(code_block.generate_instructions(context).0.as_mut());
         }
+
+        (
+            instructions,
+            None
+        )
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        None
+    }
+}
+
+
+#[derive(Clone, Debug, new)]
+pub struct FunctionDeclarationNode {
+    pub position: (usize, TokenPosition),
+    pub name: Rc<String>,
+    pub block: Rc<CodeBlockNode>
+}
+
+impl Node for FunctionDeclarationNode {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+    
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        current
+    }
+    
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        vec![]
+    }
+    
+    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
+        None
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        Box::new((*self).clone())
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        let mut block = self.block.deref().clone();
+        let asm_label = block.assign_label(context);
+        let mut instructions: Vec<Instruction> = block.generate_instructions(context).0.to_vec();
+
+        context.function_metas.push(
+            FunctionMeta::new(
+                self.name.deref().clone(),
+                asm_label.deref().clone(),
+                FunctionStyle::C,
+                None,
+                vec![],
+            )
+        );
+
+        println!("Function {} produced instructions", self.name);
+
+
 
         (
             instructions,

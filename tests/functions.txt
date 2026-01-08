@@ -1,3 +1,9 @@
-func {
+func was_geht {
 	exit 0;
 }
+
+func start {
+	was_geht();
+}
+
+exit 1;
