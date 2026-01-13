@@ -82,6 +82,11 @@ pub enum Instruction {
     /// Defines a label at the current code position
     /// This label is globalized if the bool is true
     Label(Rc<String>, bool),
+    
+    
+    ReceiveArgument(Uuid, u8),
+    
+    FunctionEnd,
 }
 
 impl Instruction {
@@ -99,7 +104,8 @@ impl Instruction {
             Instruction::MoveData(a, _) => vec![*a],
             Instruction::Exit(a) => vec![*a],
             Instruction::Call(_, args, outs) => vec![args.clone(), outs.clone()].concat(),
-            Instruction::Label(_, _) => vec![],
+            Instruction::Label(_, _) | Instruction::FunctionEnd => vec![],
+            Instruction::ReceiveArgument(_, _) => { vec![] }
         }
     }
 
@@ -124,7 +130,9 @@ pub enum InstructionMeta {
     MoveImm,
 
     AddReg,
+    AddImm,
     SubReg,
+    SubImm,
     MulReg,
     DivReg,
     ModReg,

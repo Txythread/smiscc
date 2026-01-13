@@ -11,8 +11,9 @@ use crate::compiler::data_types::data_types::Buildable;
 use crate::compiler::data_types::integer::IntegerType;
 use crate::compiler::data_types::object::{ObjectType, Trait};
 use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, NotificationInfo, TokenPosition};
-use crate::compiler::parser::function_meta::{FunctionMeta, FunctionStyle};
+use crate::compiler::parser::function_meta::{FunctionArgument, FunctionMeta, FunctionStyle};
 use crate::compiler::parser::future::CodeFuture;
+use crate::compiler::parser::parse_datatype::ParameterDescriptor;
 use crate::util::operator::Operation;
 
 /// A trait requiring basic functionality for any node in an abstract
@@ -789,9 +790,11 @@ impl Node for FunctionCallNode {
             instructions.append(&mut arg_result.0.clone());
 
             if arg.output_is_randomly_mutable() == Some(true) {
+                println!("added mutable: argument to function: {:?}", arg_result);
                 args.push(arg_result.1.unwrap());
             } else {
                 let arg_uuid = Uuid::new_v4();
+                println!("added mutable: argument to function: {:?}", arg_uuid);
                 args.push(arg_uuid);
                 moves.push((arg_uuid, arg_result.1.unwrap()));
             }
@@ -867,7 +870,8 @@ impl Node for CodeBlockArray {
 pub struct FunctionDeclarationNode {
     pub position: (usize, TokenPosition),
     pub name: Rc<String>,
-    pub block: Rc<CodeBlockNode>
+    pub block: Rc<CodeBlockNode>,
+    pub parameters: Rc<Vec<ParameterDescriptor>>,
 }
 
 impl Node for FunctionDeclarationNode {
@@ -894,7 +898,23 @@ impl Node for FunctionDeclarationNode {
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         let mut block = self.block.deref().clone();
         let asm_label = block.assign_label(context);
-        let mut instructions: Vec<Instruction> = block.generate_instructions(context).0.to_vec();
+        let parameters: Vec<FunctionArgument> = self.parameters.iter().map(|x|x.generate_function_argument()).collect();
+        let parameter_uuids = parameters.iter().map(|x|x.own_uuid);
+        let mut instructions: Vec<Instruction> = parameter_uuids.enumerate().map(|x|Instruction::ReceiveArgument(x.1, x.0 as u8)).collect();
+
+        // Update the context
+        for i in 0..self.parameters.len() {
+            if let Some(name) = self.parameters[i].internal_name.clone() {
+                let uuid = parameters[i].own_uuid;
+                let type_uuid = parameters[i].type_uuid;
+                (*context).objects.insert(uuid, type_uuid);
+                (*context).name_map.insert(name.clone(), uuid);
+                println!("inserted {} leading to: {:?}", name, uuid)
+            }
+        }
+
+        instructions.append(&mut block.generate_instructions(context).0.to_vec());
+
 
         context.function_metas.push(
             FunctionMeta::new(
@@ -902,9 +922,17 @@ impl Node for FunctionDeclarationNode {
                 asm_label.deref().clone(),
                 FunctionStyle::C,
                 None,
-                vec![],
+                parameters.clone()
             )
         );
+
+        instructions.push(
+            Instruction::FunctionEnd
+        );
+
+        println!("declaring function");
+
+
 
         println!("Function {} produced instructions", self.name);
 

@@ -59,7 +59,8 @@ impl AssemblyInstruction {
             AssemblyInstruction::AddReg(_, _) => InstructionMeta::AddReg,
             AssemblyInstruction::SubReg(_, _) => InstructionMeta::SubReg,
             AssemblyInstruction::StackLoad(_, _) => InstructionMeta::StackLoad,
-            AssemblyInstruction::AddImm(_, _) | &AssemblyInstruction::SubImm(_, _) => todo!(),
+            AssemblyInstruction::AddImm(_, _) => InstructionMeta::AddImm,
+            AssemblyInstruction::SubImm(_, _) => InstructionMeta::SubImm,
             AssemblyInstruction::MulReg(_, _) => InstructionMeta::MulReg,
             AssemblyInstruction::DivReg(_, _) => InstructionMeta::DivReg,
             AssemblyInstruction::Exit(_) => InstructionMeta::Exit,
@@ -296,9 +297,14 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
     let mut architecture = architecture;
     let mut instructions: Vec<AssemblyInstruction> = Vec::new();
 
+    let mut label_idx: usize = 0;
+
+    architecture.prepare_new_function();
+
 
     for instruction in code.clone() {
         let _instructions_length = instructions.len();
+        println!("instruction: {:?}", instruction);
         match instruction {
             Instruction::Move(obj_a, obj_b) => {
                 let mut reg_a = architecture.get_object(obj_a, vec![obj_b]);
@@ -367,8 +373,11 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
                 instructions.push(AssemblyInstruction::Exit(reg_a.0));
             }
             Instruction::Call(asm_name, args, _out) => {
+                println!("backing up caller, regmap: {:?}", architecture.register_map.clone());
                 instructions.append(&mut architecture.backup_caller_saved_regs());
-                
+                println!("backed up caller, prodcuing reg map: {:?}", architecture.register_map.clone());
+                println!("instructions: {:?}", instructions);
+
                 for arg in args.clone().iter().enumerate() {
                     let i = arg.0;
                     let arg = arg.1;
@@ -388,6 +397,19 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
             },
             Instruction::Label(asm_name, global) => {
                 instructions.push(AssemblyInstruction::Label(asm_name));
+                label_idx = instructions.len();
+            }
+            Instruction::FunctionEnd => {
+                let (header, mut trailer) = architecture.end_function();
+                instructions.append(&mut trailer);
+                instructions.splice(label_idx..label_idx, header);
+            }
+            Instruction::ReceiveArgument(arg_name, arg_index) => {
+                if let Some(position) = architecture.get_register_for_argument(arg_index as usize, FunctionStyle::C) {
+                    architecture.move_into_reg_no_code(arg_name, position);
+                } else {
+                    todo!("No register for argument found")
+                }
             }
         }
     }

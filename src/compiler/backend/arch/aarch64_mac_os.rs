@@ -18,6 +18,8 @@ pub fn generate() -> Architecture {
     instructions.insert(InstructionMeta::Exit, String::from("\tmov\tx16, #1\n\tmov\tx0, $a\n\tsvc\t#0x80\n"));
     instructions.insert(InstructionMeta::Call, String::from("\tbl\t$a\n"));
     instructions.insert(InstructionMeta::Label, String::from("\n$a:\n"));
+    instructions.insert(InstructionMeta::AddImm, String::from("\tadd\t$a, $a, #$b\n"));
+    instructions.insert(InstructionMeta::SubImm, String::from("\tsub\t$a, $a, #$b\n"));
 
     Architecture::new(
         "aarch64_macOS".to_string(),
@@ -57,6 +59,7 @@ pub fn generate() -> Architecture {
 
                 (Register::new("sp".to_string(), RegisterKind::StackPointer, 8, RegisterSavingBehaviour::CalleeSaved, vec![RegisterDataType::Address]), Some(Uuid::new_v4())),
             ],
+            vec![],
             8,
             0,
             HashMap::new(),
@@ -64,6 +67,7 @@ pub fn generate() -> Architecture {
             vec![0,1,2,3,4,5,6,7]
          ),
         include_str!("aarch64_macOS_header_bp.s"),
-        ""
+        "",
+        16
     )
 }

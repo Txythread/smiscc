@@ -8,15 +8,17 @@ _print:
 _stray:
 
 LB0:
-	mov	x0, #0
+	sub	sp, sp, #0
 	mov	x16, #1
 	mov	x0, x0
 	svc	#0x80
+	add	sp, sp, #0
 
-LB1:
-	mov	x0, #10
+_start:
+	sub	sp, sp, #16
+	mov	x1, #0
+	str	x0, [sp, #0]
+	str	x1, [sp, #8]
+	ldr	x0, [sp, #8]
 	bl	LB0
-	mov	x0, #1
-	mov	x16, #1
-	mov	x0, x0
-	svc	#0x80
+	add	sp, sp, #16

@@ -1,10 +1,7 @@
-func was_geht(ab in: u32) {
-	exit 0;
+func was_geht(in a: u32) {
+	exit a;
 }
 
 func start(a: u32) {
-	let a = 10;
-	was_geht();
+	was_geht(0);
 }
-
-exit 1;

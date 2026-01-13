@@ -24,6 +24,7 @@ pub struct Architecture {
     pub register_map: RegisterMap,
     pub leading_boilerplate: &'static str,
     pub trailing_boilerplate: &'static str,
+    pub address_alignment: usize,
 }
 
 impl Architecture {
@@ -82,12 +83,23 @@ impl Architecture {
         self.register_map.stack.remove(&object);
     }
 
+
+    /// Moves data into a register without updating the code, so just
+    /// the register map will be affected.
+    pub fn move_into_reg_no_code(&mut self, object: Uuid, register: Register) {
+        let index = self.register_map.registers.iter().position(|x| x.0 == register);
+        self.register_map.registers[index.unwrap()].1 = Some(object);
+    }
+
     /// Moves an object into a specified register
     pub fn move_into_reg(&mut self, object: Uuid, register: Register, preserving: Vec<Uuid>) -> Vec<AssemblyInstruction> {
         let mut instructions: Vec<AssemblyInstruction> = Vec::new();
 
+
+
         // Store the register's contents if needed
         if let Some(reg_contents) = self.register_map.registers.clone().iter().find(|x| x.0==register) {
+            println!("Reg currently contains: {:?} expected: {:?}", reg_contents, object);
             if reg_contents.1 == Some(object) {
                 return instructions;
             }
@@ -142,6 +154,104 @@ impl Architecture {
         }
     }
 
+    /// Prepares the data for a new function.
+    /// This means that:
+    /// 1. All register contents will be forgotten
+    /// 2. The stack data will be cleared.
+    /// 3. The callee saved regs get backed up
+    pub fn prepare_new_function(&mut self) {
+        self.clear_registers_and_stack();
+        self.backup_callee_saved_regs();
+    }
+
+    /// Stops the current function and generates heading and trailing
+    /// code.
+    /// This means that:
+    /// 1. The stack pointer gets set (header)
+    /// 2. The stack pointer gets restored (trailer)
+    /// 3. The callee-saved registers get restored
+    /// 4. [A new function gets prepared](Self::prepare_new_function)
+    ///
+    /// The first result of this function is the header, the second the
+    /// trailer code.
+    pub fn end_function(&mut self) -> (Vec<AssemblyInstruction>, Vec<AssemblyInstruction>) {
+        let stack_offset = (self.register_map.stack_offset + (self.register_map.stack_offset % 16)) as i64;
+        let header: Vec<AssemblyInstruction> = vec![
+            AssemblyInstruction::SubImm(self.get_stack_pointer(), stack_offset),
+        ];
+
+        let mut trailer: Vec<AssemblyInstruction> = vec![
+            AssemblyInstruction::AddImm(self.get_stack_pointer(), stack_offset),
+        ];
+
+        println!("backup map: {:?}", self.register_map.backup_reg_map.iter().map(|x| x.0.name.clone()).collect::<Vec<String>>());
+
+        trailer.append(&mut self.restore_backup_map());
+        println!("restored");
+        self.prepare_new_function();
+        println!("prepared");
+
+        (header, trailer)
+    }
+
+    /// Creates UUIDs for the callee-saved registers and writes to
+    /// the backup register map for restoring the state later.
+    pub fn backup_callee_saved_regs(&mut self) {
+        for x in self.register_map.registers.clone().iter().enumerate() {
+            let register = x.1.0.clone();
+            let i = x.0;
+
+            if matches!(register.saving_behaviour, RegisterSavingBehaviour::CalleeSaved) {
+                let uuid = Some(Uuid::new_v4());
+                self.register_map.registers[i].1 = uuid.clone();
+                self.register_map.backup_reg_map.push((register, uuid));
+            }
+        }
+    }
+
+    /// Restores the register map that was backed up if possible and
+    /// deletes all the other UUIDs.
+    pub fn restore_backup_map(&mut self) -> Vec<AssemblyInstruction> {
+        let mut instructions: Vec<AssemblyInstruction> = Vec::new();
+        let mut backup_uuids: Vec<Uuid> = self.register_map.backup_reg_map.iter().map(|x|x.1.unwrap()).collect();
+
+        // Delete all unlisted objects in the registers
+        for object in self.register_map.clone().registers.iter().map(|x|x.1).filter(|x|x.is_some()).map(|x|x.unwrap()) {
+            if !backup_uuids.contains(&object) {
+                self.delete_object(object.clone());
+            }
+        }
+
+        // Delete all unlisted objects in the stack
+        for object in self.register_map.clone().stack.keys() {
+            if !backup_uuids.contains(&object) {
+                self.delete_object(object.clone());
+            }
+        }
+
+        println!("restore/backup map: {:?}", self.register_map.backup_reg_map.iter().map(|x| x.0.name.clone()).collect::<Vec<String>>());
+
+        let mut correctly_placed_uuids: Vec<Uuid> = Vec::new();
+        while !self.register_map.backup_reg_map.is_empty() {
+            let item = self.register_map.backup_reg_map.pop().unwrap();
+            let object = item.1.unwrap().clone();
+            println!("item: {:?}", item.0.name);
+            instructions.append(&mut self.move_into_reg(object, item.0, correctly_placed_uuids.clone()));
+            correctly_placed_uuids.push(object);
+        }
+
+        instructions
+    }
+
+    pub fn clear_registers_and_stack(&mut self) {
+        for i in 0..self.register_map.registers.len() {
+            self.register_map.registers[i].1 = None;
+        }
+
+        self.register_map.stack = HashMap::new();
+        self.register_map.stack_offset = 0;
+    }
+
 
 
 
@@ -155,8 +265,10 @@ impl Architecture {
             if register.0.saving_behaviour != RegisterSavingBehaviour::CallerSaved { continue; }
 
             if let Some(object) = register.1 {
+                println!("tryna backup {:?} from register: {}", object, register.0.name);
                 // Look for an empty reg to put stuff in or put it on the stack
                 if let Some(mut empty_register) = self.conditionally_provide_empty_register(vec![]) {
+                    println!("empty register: {} to backup {:?} provided", empty_register.0.name, object);
                     // Put the register in the register
                     instructions.append(empty_register.1.as_mut());
                     instructions.push(AssemblyInstruction::MoveReg(empty_register.0.clone(), register.0.clone()));
@@ -167,6 +279,8 @@ impl Architecture {
                 } else {
                     // Put the data in the stack
                     let mut movement = self.push_object_to_stack(object);
+
+                    println!("pushed object to stack: {:?}, making the stack: {:#?}", object, self.register_map.stack);
 
                     instructions.append(movement.as_mut().unwrap())
                 }
@@ -197,6 +311,8 @@ impl Architecture {
 
         let stack_top = self.register_map.stack_offset;
         self.register_map.stack_offset += register.size_bytes as usize;
+
+        self.register_map.stack.insert(object, stack_top);
 
         Some(vec![
             AssemblyInstruction::StackStore(register, stack_top as u64)
@@ -319,6 +435,8 @@ impl Architecture {
 #[derive(new, Debug, Clone, PartialEq)]
 pub struct RegisterMap {
     registers: Vec<(Register, Option<Uuid>)>,
+
+    backup_reg_map: Vec<(Register, Option<Uuid>)>,
 
     /// The index of the scratch register in the [registers map](registers)
     scratch_register: usize,

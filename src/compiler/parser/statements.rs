@@ -3,8 +3,9 @@ use strum_macros::EnumIter;
 use crate::compiler::line_map::TokenPosition;
 use crate::config::tokenization_options::Keyword;
 use crate::compiler::parser::parse::ExpressionKind;
+use crate::compiler::parser::parse_datatype::ParameterDescriptor;
 use crate::compiler::parser::statement::Statement;
-use crate::compiler::parser::tree::node::{CodeBlockNode, ExitNode, FunctionDeclarationNode, IdentifierNode, LetNode, Node};
+use crate::compiler::parser::tree::node::{ArgumentsNode, CodeBlockNode, ExitNode, FunctionDeclarationNode, IdentifierNode, LetNode, Node};
 
 #[derive(Clone, Debug, EnumIter)]
 pub enum Statements {
@@ -132,10 +133,15 @@ impl Statement for Statements {
                 let block = arguments.last().unwrap().clone();
                 let block = block.downcast_rc::<CodeBlockNode>().unwrap();
 
+
+                let argument_node = arguments[1].clone().downcast_rc::<ArgumentsNode<ParameterDescriptor>>().unwrap();
+                let parameters = argument_node.args.clone();
+
                 let function_node = FunctionDeclarationNode::new(
                     (0, TokenPosition::new(0, 0)),
                     Rc::new(identifier),
                     block.clone(),
+                    parameters.clone()
                 );
 
                 println!("Function node got args: {:#?}", arguments);

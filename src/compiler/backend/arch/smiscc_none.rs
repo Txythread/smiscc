@@ -56,6 +56,7 @@ pub fn generate() -> Architecture {
 
                 (Register::new("sp".to_string(), RegisterKind::StackPointer, 8, RegisterSavingBehaviour::CalleeSaved, vec![RegisterDataType::Address]), Some(Uuid::new_v4())),
             ],
+            vec![],
             8,
             0,
             HashMap::new(),
@@ -63,6 +64,7 @@ pub fn generate() -> Architecture {
             vec![0,1,2,3,4,5,6,7]
          ),
         include_str!("aarch64_macOS_header_bp.s"),
-        ""
+        "",
+        16
     )
 }

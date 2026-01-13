@@ -3,6 +3,7 @@ use uuid::Uuid;
 use derive_new::new;
 use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::line_map::LineMap;
+use crate::compiler::parser::function_meta::{FunctionArgument, FunctionMeta};
 use crate::compiler::tokenization::token::Token;
 
 /// Gets a datatype from the list of types and returns its uuid.
@@ -72,4 +73,10 @@ pub struct ParameterDescriptor {
     pub internal_name: Option<String>,
 
     pub datatype: Uuid,
+}
+
+impl ParameterDescriptor {
+    pub fn generate_function_argument(&self) -> FunctionArgument {
+        FunctionArgument::new(self.name.clone(), self.datatype, Uuid::new_v4())
+    }
 }

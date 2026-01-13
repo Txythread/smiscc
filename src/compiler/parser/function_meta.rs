@@ -13,6 +13,7 @@ pub struct FunctionMeta {
 #[derive(Debug, Clone, new)]
 pub struct FunctionArgument {
     pub name: Option<String>,
+    pub own_uuid: Uuid,
     pub type_uuid: Uuid,
 }
 
