@@ -1,7 +1,7 @@
-func was_geht(in a: u32) {
-	exit a;
-}
-
 func start(a: u32) {
 	was_geht(0);
+}
+
+func was_geht(in a: u32) {
+	exit a;
 }

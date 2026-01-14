@@ -373,10 +373,7 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
                 instructions.push(AssemblyInstruction::Exit(reg_a.0));
             }
             Instruction::Call(asm_name, args, _out) => {
-                println!("backing up caller, regmap: {:?}", architecture.register_map.clone());
                 instructions.append(&mut architecture.backup_caller_saved_regs());
-                println!("backed up caller, prodcuing reg map: {:?}", architecture.register_map.clone());
-                println!("instructions: {:?}", instructions);
 
                 for arg in args.clone().iter().enumerate() {
                     let i = arg.0;

@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use clap::{Arg};
 use std::process::Command;
 use crate::ArgumentList;
@@ -11,6 +12,7 @@ use crate::compiler::backend::arch::aarch64_mac_os;
 use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::line_map::LineMap;
 use std::rc::Rc;
+use crate::compiler::parser::tree::node::{CodeBlockArray, Node};
 
 pub fn compile(code: String, args: ArgumentList) {
     let mut line_map: LineMap = LineMap::new();
@@ -24,12 +26,17 @@ pub fn compile(code: String, args: ArgumentList) {
 
     let mut object_types = Rc::new(ObjectType::generate_built_ins());
 
-    let parsed = parse(tokens.clone(), &mut line_map, &mut object_types);
+    let mut parsed = parse(tokens.clone(), &mut line_map, &mut object_types).unwrap();
     let mut context = Context::clear(line_map);
     object_types.iter().for_each(|object_type| {
        context.datatypes.insert(object_type.type_uuid, object_type.clone());
     });
-    let flattened = flatten(parsed.clone().unwrap(), &mut context);
+
+    let mut parsed_clone: CodeBlockArray = parsed.downcast_rc::<CodeBlockArray>().unwrap().deref().clone();
+    parsed_clone.perform_early_context_changes(&mut context);
+    parsed = Rc::new(parsed_clone);
+
+    let flattened = flatten(parsed, &mut context);
     let arch = aarch64_mac_os::generate();
     let assembly = assembly::generate_assembly_instructions(flattened, arch.clone());
 

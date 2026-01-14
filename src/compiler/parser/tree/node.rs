@@ -62,6 +62,26 @@ pub trait Node: Debug + Downcast {
     /// by choice (when the value can't be re-used anyway) or if it needs to be preserved
     /// unless the user is specific about changing it (e.g. in an assignment).
     fn output_is_randomly_mutable(&self) -> Option<bool>;
+
+
+    /// ### Performs Early Context Changes
+    ///
+    /// This shouldn't be touched if:
+    /// 1. The context changes are only required in later parsing.
+    /// 2. The context changes need to be available outside the scope of the arguments
+    ///
+    /// The context changes in here get performed before
+    /// [generate_instructions](Self::generate_instructions) gets executed.
+    ///
+    /// However, it should always be overridden when subnodes are contained as they
+    /// need to perform it.
+    fn perform_early_context_changes(&mut self, context: &mut Context) {
+        if !self.get_sub_nodes().is_empty() {
+            todo!("Missing implementation of perform_early_context_changes in type of: {:#?}. Please read for the documentation comment for this trait function and create an implementation.", self)
+        }
+    }
+
+
 }
 
 impl_downcast!(Node);
@@ -666,6 +686,20 @@ impl Node for CodeBlockNode {
         todo!()
     }
 
+    fn perform_early_context_changes(&mut self, context: &mut Context) {
+        for i in 0..self.code.iter().len() {
+            let mut clone = self.code[i].clone().downcast_rc::<FunctionDeclarationNode>();
+
+            if clone.is_err() {
+                continue;
+            }
+
+            let mut clone = clone.unwrap().deref().clone();
+            clone.perform_early_context_changes(context);
+            self.code[i] = Rc::new(clone);
+        }
+    }
+
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         let name: String = {if let Some(label) = self.label.clone().deref() { label.clone() } else { context.label_count += 1; String::from("LB") + (context.label_count - 1).to_string().as_str() }};
         
@@ -784,17 +818,37 @@ impl Node for FunctionCallNode {
         let mut instructions: Vec<Instruction> = vec![];
         let mut moves: Vec<(Uuid, Uuid)> = vec![];
 
+        if self.arguments.iter().count() != function_meta.arguments.len() {
+            let display_info = DisplayCodeInfo::new(
+                self.position.0 as u32,
+                self.position.1.start as u32,
+                (self.position.1.start + self.position.1.length) as i32,
+                vec![],
+                DisplayCodeKind::InitialError
+            );
+
+            let name = function_meta.code_name.clone();
+            let expected_args = function_meta.arguments.len();
+            let actual_args = self.arguments.len();
+
+            let notification = NotificationInfo::new(
+                "Wrong Amount of Arguments".to_string(),
+                format!("Function '{}' expected {} argument(s) but received {}.", name, expected_args, actual_args),
+                vec![display_info]
+            );
+
+            context.line_map.display_error(notification);
+        }
+
         for arg in self.arguments.iter() {
             let arg_result = arg.generate_instructions(context);
 
             instructions.append(&mut arg_result.0.clone());
 
             if arg.output_is_randomly_mutable() == Some(true) {
-                println!("added mutable: argument to function: {:?}", arg_result);
                 args.push(arg_result.1.unwrap());
             } else {
                 let arg_uuid = Uuid::new_v4();
-                println!("added mutable: argument to function: {:?}", arg_uuid);
                 args.push(arg_uuid);
                 moves.push((arg_uuid, arg_result.1.unwrap()));
             }
@@ -843,6 +897,12 @@ impl Node for CodeBlockArray {
         None
     }
 
+    fn perform_early_context_changes(&mut self, context: &mut Context) {
+        for i in 0..self.code_blocks.len() {
+            self.code_blocks[i].perform_early_context_changes(context);
+        }
+    }
+
     fn unpack(&self) -> Box<dyn Node> {
         Box::new((*self).clone())
     }
@@ -872,6 +932,10 @@ pub struct FunctionDeclarationNode {
     pub name: Rc<String>,
     pub block: Rc<CodeBlockNode>,
     pub parameters: Rc<Vec<ParameterDescriptor>>,
+
+    /// The generated parameters
+    #[new(default)]
+    parameter_function_args: Vec<FunctionArgument>
 }
 
 impl Node for FunctionDeclarationNode {
@@ -884,7 +948,7 @@ impl Node for FunctionDeclarationNode {
     }
     
     fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
-        vec![]
+        vec![self.block.clone()]
     }
     
     fn get_datatypes(&self, _all_types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
@@ -895,26 +959,10 @@ impl Node for FunctionDeclarationNode {
         Box::new((*self).clone())
     }
 
-    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+    fn perform_early_context_changes(&mut self, context: &mut Context) {
         let mut block = self.block.deref().clone();
         let asm_label = block.assign_label(context);
-        let parameters: Vec<FunctionArgument> = self.parameters.iter().map(|x|x.generate_function_argument()).collect();
-        let parameter_uuids = parameters.iter().map(|x|x.own_uuid);
-        let mut instructions: Vec<Instruction> = parameter_uuids.enumerate().map(|x|Instruction::ReceiveArgument(x.1, x.0 as u8)).collect();
-
-        // Update the context
-        for i in 0..self.parameters.len() {
-            if let Some(name) = self.parameters[i].internal_name.clone() {
-                let uuid = parameters[i].own_uuid;
-                let type_uuid = parameters[i].type_uuid;
-                (*context).objects.insert(uuid, type_uuid);
-                (*context).name_map.insert(name.clone(), uuid);
-                println!("inserted {} leading to: {:?}", name, uuid)
-            }
-        }
-
-        instructions.append(&mut block.generate_instructions(context).0.to_vec());
-
+        self.parameter_function_args = self.parameters.iter().map(|x|x.generate_function_argument()).collect();
 
         context.function_metas.push(
             FunctionMeta::new(
@@ -922,20 +970,37 @@ impl Node for FunctionDeclarationNode {
                 asm_label.deref().clone(),
                 FunctionStyle::C,
                 None,
-                parameters.clone()
+                self.parameter_function_args.clone()
             )
         );
+
+
+
+        block.perform_early_context_changes(context);
+        self.block = Rc::new(block);
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        let mut block = self.block.deref().clone();
+        let parameter_uuids = self.parameter_function_args.iter().map(|x|x.own_uuid);
+        let mut instructions: Vec<Instruction> = parameter_uuids.enumerate().map(|x|Instruction::ReceiveArgument(x.1, x.0 as u8)).collect();
+
+        // Update the context
+        for i in 0..self.parameters.len() {
+            if let Some(name) = self.parameters[i].internal_name.clone() {
+                let uuid = self.parameter_function_args[i].own_uuid;
+                let type_uuid = self.parameter_function_args[i].type_uuid;
+                (*context).objects.insert(uuid, type_uuid);
+                (*context).name_map.insert(name.clone(), uuid);
+            }
+        }
+
+        instructions.append(&mut block.generate_instructions(context).0.to_vec());
+
 
         instructions.push(
             Instruction::FunctionEnd
         );
-
-        println!("declaring function");
-
-
-
-        println!("Function {} produced instructions", self.name);
-
 
 
         (
