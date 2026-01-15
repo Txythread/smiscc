@@ -5,10 +5,9 @@ _stray:
 
 LB0:
 	sub	sp, sp, #16
-	mov	x1, #0
+	mov	x0, #0
 	str	x0, [sp, #0]
-	str	x1, [sp, #8]
-	ldr	x0, [sp, #8]
+	ldr	x0, [sp, #0]
 	bl	LB1
 	add	sp, sp, #16
 

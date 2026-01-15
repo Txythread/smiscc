@@ -1,7 +1,7 @@
-func start(a: u32) {
+func start() {
 	was_geht(0);
 }
 
-func was_geht(in a: u32) {
+func was_geht(a: u32) {
 	exit a;
 }

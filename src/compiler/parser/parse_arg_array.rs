@@ -14,12 +14,10 @@ pub fn parse_arg_array<T>(tokens: Rc<Vec<Token>>, cursor: &mut usize, datatypes:
     *cursor += 1;
 
 
-    println!("parsing arg array");
     let mut data: Vec<T> = vec![];
 
     'data_loop: loop {
-        // Find whatever is expected
-        data.push(parse_fn(tokens.clone(), cursor, line_map, datatypes.clone()));
+
 
         // Look for a ',' or a ')'
         match tokens[*cursor].clone() {
@@ -34,7 +32,8 @@ pub fn parse_arg_array<T>(tokens: Rc<Vec<Token>>, cursor: &mut usize, datatypes:
             }
 
             _ => {
-                todo!("Unexpected token in argument array")
+                // Find whatever is expected
+                data.push(parse_fn(tokens.clone(), cursor, line_map, datatypes.clone()));
             }
         }
     }
