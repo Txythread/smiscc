@@ -1,4 +1,4 @@
-func start() {
+extern "C" "_start" func start() {
 	was_geht(0);
 }
 

@@ -3,15 +3,15 @@
 
 _stray:
 
-LB0:
+_start:
 	sub	sp, sp, #16
 	mov	x0, #0
 	str	x0, [sp, #0]
 	ldr	x0, [sp, #0]
-	bl	LB1
+	bl	_was_geht
 	add	sp, sp, #16
 
-LB1:
+_was_geht:
 	sub	sp, sp, #0
 	mov	x16, #1
 	mov	x0, x0

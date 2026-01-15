@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use std::rc::Rc;
+use crate::compiler::parser::modifier::Modifier;
 use crate::compiler::parser::parse::ExpressionKind;
 use crate::compiler::parser::tree::node::Node;
 use crate::config::tokenization_options::Keyword;
@@ -37,5 +38,7 @@ pub trait Statement: Debug {
     /// This includes both header and body.  
     /// **Note:** The affiliated keyword starting this statement is not expected to
     /// be transmitted.
-    fn generate_entire_node(&self, arguments: Vec<Rc<dyn Node>>) -> Option<Rc<dyn Node>>;
+    /// 
+    /// When a modifier gets used, it needs to be removed from the vector
+    fn generate_entire_node(&self, arguments: Vec<Rc<dyn Node>>, modifiers: &mut Vec<Modifier>) -> Option<Rc<dyn Node>>;
 }

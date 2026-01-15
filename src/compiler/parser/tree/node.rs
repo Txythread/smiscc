@@ -643,7 +643,7 @@ impl Node for LetNode {
 #[derive(Clone, Debug, new)]
 pub struct CodeBlockNode {
     position: (usize, TokenPosition),
-    label: Rc<Option<String>>,
+    pub label: Option<Rc<String>>,
     code: Vec<Rc<dyn Node>>,
 }
 
@@ -657,11 +657,11 @@ impl CodeBlockNode {
     }
 
     pub fn assign_label(&mut self, context: &mut Context) -> Rc<String> {
-        let name: String = {if let Some(label) = self.label.clone().deref() { label.clone() } else { context.label_count += 1; String::from("LB") + (context.label_count - 1).to_string().as_str() }};
+        let name: Rc<String> = {if let Some(label) = self.label.clone() { label.clone() } else { context.label_count += 1; Rc::new(String::from("LB") + (context.label_count - 1).to_string().as_str()) }};
 
-        self.label = Rc::new(Some(name.clone()));
+        self.label = Some(name.clone());
 
-        Rc::new(name.clone())
+        name
     }
 }
 
@@ -701,11 +701,12 @@ impl Node for CodeBlockNode {
     }
 
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
-        let name: String = {if let Some(label) = self.label.clone().deref() { label.clone() } else { context.label_count += 1; String::from("LB") + (context.label_count - 1).to_string().as_str() }};
+        let mut copy = self.clone();
+        let name: Rc<String> = copy.assign_label(context);
         
         let mut instructions: Vec<Instruction> = vec![];
 
-        instructions.push(Instruction::Label(Rc::new(name), false));
+        instructions.push(Instruction::Label(name, false));
 
         for code in self.code.iter() {
             instructions.append(code.generate_instructions(context).0.as_mut());
@@ -802,6 +803,7 @@ impl Node for FunctionCallNode {
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         let function_metas = context.function_metas.clone();
 
+        println!("function_metas {:?}", function_metas);
         let function_meta = function_metas.iter().find(|&x|x.code_name.as_str()==self.name.as_str()).unwrap();
         let asm_fn_name = function_meta.assembly_name.clone();
 
@@ -1047,5 +1049,42 @@ impl<T: 'static + Debug + Clone> Node for ArgumentsNode<T> {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         None
+    }
+}
+
+
+#[derive(Clone, Debug, new)]
+pub struct StringLiteralNode {
+    pub position: (usize, TokenPosition),
+    pub string: Rc<String>
+}
+
+impl Node for StringLiteralNode {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        current
+    }
+
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        vec![]
+    }
+
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+        Some(vec![all_types.iter().find(|&x| x.traits.contains(&Trait::new(Trait::BASIC_STRING.to_string())))?.clone()])
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        Box::new((*self).clone())
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        todo!()
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        Some(true)
     }
 }

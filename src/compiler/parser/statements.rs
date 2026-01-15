@@ -1,11 +1,14 @@
+use std::ops::Deref;
 use std::rc::Rc;
+use downcast_rs::Downcast;
 use strum_macros::EnumIter;
 use crate::compiler::line_map::TokenPosition;
+use crate::compiler::parser::modifier::Modifier;
 use crate::config::tokenization_options::Keyword;
 use crate::compiler::parser::parse::ExpressionKind;
 use crate::compiler::parser::parse_datatype::ParameterDescriptor;
 use crate::compiler::parser::statement::Statement;
-use crate::compiler::parser::tree::node::{ArgumentsNode, CodeBlockNode, ExitNode, FunctionDeclarationNode, IdentifierNode, LetNode, Node};
+use crate::compiler::parser::tree::node::{ArgumentsNode, CodeBlockNode, ExitNode, FunctionDeclarationNode, IdentifierNode, LetNode, Node, StringLiteralNode};
 
 #[derive(Clone, Debug, EnumIter)]
 pub enum Statements {
@@ -115,7 +118,7 @@ impl Statement for Statements {
         todo!()
     }
 
-    fn generate_entire_node(&self, arguments: Vec<Rc<dyn Node>>) -> Option<Rc<dyn Node>> {
+    fn generate_entire_node(&self, arguments: Vec<Rc<dyn Node>>, modifiers: &mut Vec<Modifier>) -> Option<Rc<dyn Node>> {
         match self {
             Statements::ExitStatement => {
                 let arg = arguments[0].clone();
@@ -131,20 +134,36 @@ impl Statement for Statements {
                 let identifier = identifier_node.identifier.clone();
 
                 let block = arguments.last().unwrap().clone();
-                let block = block.downcast_rc::<CodeBlockNode>().unwrap();
+                let mut block = block.downcast_rc::<CodeBlockNode>().unwrap().deref().clone();
+
 
 
                 let argument_node = arguments[1].clone().downcast_rc::<ArgumentsNode<ParameterDescriptor>>().unwrap();
                 let parameters = argument_node.args.clone();
 
+                // Go through the parameters
+                // 1. Find extern
+                if let Some(extern_index) = modifiers.iter().position(|x|x.base == Keyword::Extern) {
+                    if extern_index != modifiers.iter().count() - 1 {
+                        todo!("Throw an error: extern expect as last modifier")
+                    }
+
+                    let extern_modifier = modifiers[extern_index].clone();
+                    modifiers.remove(extern_index);
+
+                    let name_node = extern_modifier.arguments[1].clone().downcast_rc::<StringLiteralNode>().unwrap();
+                    let asm_name = name_node.string.clone();
+
+                    block.label = Some(asm_name);
+                }
+
                 let function_node = FunctionDeclarationNode::new(
                     (0, TokenPosition::new(0, 0)),
                     Rc::new(identifier),
-                    block.clone(),
+                    Rc::new(block).clone(),
                     parameters.clone()
                 );
 
-                println!("Function node got args: {:#?}", arguments);
 
 
                 return Some(Rc::new(function_node));

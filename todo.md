@@ -15,6 +15,9 @@ Example: `pub` `extern "C" "_start"`
 1. Update line map
 2. Create error messages
 
+## Unimplement crossterm
+I just need colors, fat and non-fat text. It's overkill.
+
 ## Functions
 1. Function declarations (`func was_geht(x: u32) -> u32 {}`)
 

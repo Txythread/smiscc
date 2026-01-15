@@ -1,3 +1,4 @@
+use derive_new::new;
 use uuid::Uuid;
 use crate::compiler::data_types::boolean::Boolean;
 use crate::compiler::data_types::data_types::Buildable;
@@ -238,7 +239,7 @@ impl ObjectType {
 
 /// Something that might be applied to an [object](Object) to give
 /// it some properties (like arithmetic, etc.)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, new)]
 pub struct Trait{
     name: String,
 }
@@ -251,6 +252,13 @@ impl Trait{
 
     /// Means that the object the trait belongs to is a direct value, not a reference.
     pub const VALUE_TYPE: &str = "direct_value";
+    
+    
+    /// A String With a Basic Memory Layout
+    /// 
+    /// This means that the address of the string points to its length<b> (... in bytes)
+    /// and all further characters until (address + length<b>) are UTF-8 characters.
+    pub const BASIC_STRING: &str = "basic_string";
 
     /// Means that the type can be interpreted as containing a boolean value.
     ///

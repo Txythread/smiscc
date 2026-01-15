@@ -1,10 +1,12 @@
 use std::rc::Rc;
 use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::line_map::{LineMap, TokenPosition};
+use crate::compiler::parser::modifier::Modifier;
 use crate::compiler::parser::parse::ExpressionKind;
 use crate::compiler::parser::parse_arg_array::parse_arg_array;
 use crate::compiler::parser::parse_arithmetic_expression::parse_arithmetic_expression;
 use crate::compiler::parser::parse_datatype::{parse_parameter_descriptor, ParameterDescriptor};
+use crate::compiler::parser::parse_expression_kind::parse_multiple_expression_kinds;
 use crate::compiler::parser::statement::Statement;
 use crate::compiler::parser::statements::Statements;
 use crate::compiler::parser::tree::node::{ArgumentsNode, AssignmentNode, AssignmentSymbolNode, CodeBlockNode, IdentifierNode, Node};
@@ -22,12 +24,36 @@ use crate::compiler::tokenization::token::Token;
 /// within the **logical** line. Meaning something like a "func"-statement can be fully
 /// parsed while this function gets invoked only once.
 pub fn parse_line(tokens: Rc<Vec<Token>>, cursor: &mut usize, line_map: &mut LineMap, statements: Rc<Vec<Statements>>, file_number: usize, blocks: &mut Vec<CodeBlockNode>, current_block_idx: usize, code_block_depth: &mut u32, datatypes: Rc<Vec<ObjectType>>) {
-    let first_token: Token = tokens[*cursor].clone();
     let line_start = *cursor;
-    *cursor += 1;
     let initial_block_depth = *code_block_depth;
 
-    println!("Started line parsing process with first token: {:?}", first_token.clone());
+    // Parse the modifiers
+    let mut modifiers: Vec<Modifier> = vec![];
+
+    loop {
+        if let Some(modifier) = Modifier::modifier_from(
+            tokens.clone(),
+            file_number as u32,
+            cursor,
+            line_map,
+            statements.clone(),
+            datatypes.clone(),
+            blocks,
+            code_block_depth,
+        ) {
+            println!("Returned, cursor points to: {:?}", tokens[*cursor].clone());
+            modifiers.push(modifier);
+        } else {
+            break;
+        }
+    }
+
+    println!("modifiers: {:?}, cursor: {:?}", modifiers, tokens[*cursor].clone());
+
+    let first_token: Token = tokens[*cursor].clone();
+    *cursor += 1;
+
+    // Parse the rest
     match first_token.clone() {
         Token::KeywordType(keyword, _) => {
             for statement in statements.iter() {
@@ -37,100 +63,25 @@ pub fn parse_line(tokens: Rc<Vec<Token>>, cursor: &mut usize, line_map: &mut Lin
 
                     // The statement is the statement in question.
                     // Generate its arguments (starting with the header).
-                    let mut arguments: Vec<Rc<dyn Node>> = vec![];
                     let argument_types = vec![statement.get_header_format(), statement.get_body_format()].concat();
 
-                    println!("argument_types: {:?}", argument_types);
+                    let arguments = parse_multiple_expression_kinds(
+                        tokens.clone(),
+                        file_number as u32,
+                        cursor,
+                        line_map,
+                        argument_types,
+                        code_block_depth,
+                        blocks,
+                        statements.clone(),
+                        datatypes.clone(),
+                    );
 
-                    for type_ in argument_types {
-                        let is_required = type_.1;
-                        let kind = type_.0;
-
-
-
-                        match kind {
-                            ExpressionKind::Value => {
-                                println!("token at {} is {:?}", *cursor, tokens.clone()[*cursor]);
-
-                                // Parse an arithmetic expression
-                                if let Some(result) = parse_arithmetic_expression(tokens.clone(), file_number as u32, line_map.clone(), 0, cursor, true) {
-                                    arguments.push(result);
-                                } else {
-                                    if is_required {
-                                        // Throw an error. Something was required that wasn't given in the current statement.
-                                        todo!()
-                                    }
-                                }
-                            }
-                            ExpressionKind::Assignment => {
-                                match tokens[*cursor].clone() {
-                                    Token::Assignment(pos) => arguments.push(Rc::new(AssignmentSymbolNode::new((file_number, pos)))),
-                                    _ => {
-                                        // Throw an error.
-                                        todo!()
-                                    }
-                                }
-
-                                *cursor += 1;
-                            }
-                            ExpressionKind::Keyword(_) => {
-                                *cursor += 1;
-                            }
-                            ExpressionKind::Identifier(_) => {
-                                match tokens[*cursor].clone() {
-                                    Token::Identifier(id, pos) => {
-                                        arguments.push(Rc::new(IdentifierNode::new(id, None, (file_number, pos))))
-                                    }
-
-                                    _ => {
-                                        // Throw an error.
-                                        todo!()
-                                    }
-                                }
-                                *cursor += 1;
-                            }
-                            ExpressionKind::CodeBlock => {
-                                // Locate the opening
-                                if !matches!(tokens[*cursor].clone(), Token::CodeBlockParenthesisOpen(_)) {
-                                    todo!("expected bracket to start code block")
-                                }
-                                *cursor += 1;
-                                *code_block_depth += 1;
-
-                                // Create a new code block
-                                let block = CodeBlockNode::new((file_number, TokenPosition::new(0, 0)), Rc::new(None), vec![]);
-                                blocks.push(block);
-
-                                while *code_block_depth > initial_block_depth {
-                                    parse_line(tokens.clone(), cursor, line_map, statements.clone(), file_number, blocks, blocks.len() - 1, code_block_depth, datatypes.clone());
-                                }
-
-                                let block = blocks.pop().unwrap();
-
-
-                                arguments.push(Rc::new(block));
-                            }
-                            ExpressionKind::ParameterDescriptorArray => {
-                                arguments.push(Rc::new(
-                                    ArgumentsNode::<ParameterDescriptor>::new(
-                                        (0, TokenPosition::new(0, 0)),
-                                        Rc::new(
-                                        parse_arg_array::<ParameterDescriptor>(tokens.clone(), cursor, datatypes.clone(), line_map,
-                                                                               &|tokens, cursor, line_map, data_types|
-                                                                                   parse_parameter_descriptor(tokens, cursor, datatypes.clone(), line_map, true))
-                                    )
-                                )
-                                ));
-                            }
-                        }
-                    }
-
-
-                    let statement_node = statement.generate_entire_node(arguments);
+                    let statement_node = statement.generate_entire_node(arguments, &mut modifiers);
                     if let Some(statement_node) = statement_node {
                         blocks[current_block_idx].push_code(statement_node);
                     } else {
-                        eprintln!("Statement didn't generate node")
+                        panic!("Statement didn't generate node")
                     }
                 }
             }
@@ -138,8 +89,6 @@ pub fn parse_line(tokens: Rc<Vec<Token>>, cursor: &mut usize, line_map: &mut Lin
 
         Token::Identifier(name, pos) => {
             let id_node = IdentifierNode::new(name.clone(), None, (file_number, pos.clone()));
-
-            println!("found identifier: {:?}", name.clone());
 
             *cursor = line_start;
             match tokens[*cursor + 1].clone() {

@@ -170,6 +170,16 @@ pub mod tokenization_options {
         /// languages.
         #[strum(serialize = "func")]
         Function,
+
+
+        /// ### Modify Assembly Output
+        ///
+        /// This is similar to Rust's `extern` to the extent that it allows for
+        /// an ABI to be chosen, but it also expects the assembly name.
+        ///
+        /// For example: `extern "C" "_start"`
+        #[strum(serialize = "extern")]
+        Extern,
     }
 
 

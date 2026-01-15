@@ -14,7 +14,7 @@ pub fn parse(files: Vec<Vec<Token>>, line_map: &mut LineMap, object_types: &mut 
     let statements = Statements::iter().collect::<Vec<_>>();
     let mut lines_in_block: Vec<Rc<dyn Node>> = vec![];
 
-    let code = CodeBlockNode::new((0, TokenPosition::new(0, 0)), Rc::new(Some("_stray".to_string())), lines_in_block);
+    let code = CodeBlockNode::new((0, TokenPosition::new(0, 0)), Some(Rc::new("_stray".to_string())), lines_in_block);
     let mut blocks: Vec<CodeBlockNode> = vec![code];
 
 
@@ -63,7 +63,9 @@ pub enum ExpressionKind {
 
     CodeBlock,
 
-    ParameterDescriptorArray
+    ParameterDescriptorArray,
+
+    StringLiteral,
 }
 
 

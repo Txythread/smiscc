@@ -71,7 +71,7 @@ pub fn split(code: String, file_name: String, line_map: &mut LineMap) -> Vec<Str
 
         if STRING_MARKERS.1 == char && block_escaped {
             tokens.push(current_token.clone());
-            line_map.files[1].tokens_positions.push(TokenPosition::new(0, 0));
+            line_map.files[0].tokens_positions.push(TokenPosition::new(0, 0));
             tokens.push(char.to_string());
 
             current_token = String::new();
