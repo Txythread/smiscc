@@ -802,7 +802,6 @@ impl Node for FunctionCallNode {
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         let function_metas = context.function_metas.clone();
 
-        println!("function_metas {:?}", function_metas);
         let function_meta = function_metas.iter().find(|&x|x.code_name.as_str()==self.name.as_str()).unwrap();
         let asm_fn_name = function_meta.assembly_name.clone();
 

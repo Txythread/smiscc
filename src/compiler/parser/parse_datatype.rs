@@ -44,7 +44,6 @@ pub fn parse_parameter_descriptor(tokens: Rc<Vec<Token>>, cursor: &mut usize, ty
         Token::Identifier(name_, _) => {
             internal_name = Some(name_);
 
-            println!("token: {:?}", tokens[*cursor]);
 
             if !matches!(tokens[*cursor].clone(), Token::Colon(_)) {
                 todo!("Expected ':' in parameter descriptor")

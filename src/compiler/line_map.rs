@@ -3,7 +3,7 @@ use termimad;
 
 #[derive(Clone, Debug)]
 pub struct LineMap {
-    pub files: Vec<Line>,
+    pub files: Vec<LmFile>,
     pub warning_count: u32,
     pub error_count: u32,
 }
@@ -92,6 +92,11 @@ impl LineMap{
         TokenPosition::new(start_token_start, total_length)
     }
 
+    #[cfg(test)]
+    pub fn add_file(&mut self, line: LmFile) {
+        self.files.push(line);
+    }
+
 
     /// Generates a line map with several lines that
     /// with tokens that should be long enough for most
@@ -101,7 +106,7 @@ impl LineMap{
         let mut map = Self::new();
 
         for _ in 0..100 {
-            map.add_line(Line::test_line());
+            map.add_file(LmFile::test_line());
         }
 
         map
@@ -114,7 +119,7 @@ impl LineMap{
 /// This information does not include whether it's an error or warning itself as that is determined
 /// by the line map's functions (display error/warning).
 /// 
-/// Multiple display code infos can be stored to higlight multiple parts of the code.
+/// Multiple display code infos can be stored to highlight multiple parts of the code.
 pub struct NotificationInfo {
     pub title: String,
     pub message: String,
@@ -265,7 +270,7 @@ pub enum DisplayCodeKind{
 /// Holds all relevant information about a line for displaying it in a notification (warning/error)
 /// later.
 #[derive(Clone, Debug)]
-pub struct Line{
+pub struct LmFile {
     pub trimmed_contents: String,
     #[allow(dead_code)]
     pub indent: u16,
@@ -274,9 +279,9 @@ pub struct Line{
     pub tokens_positions: Vec<TokenPosition>,
 }
 
-impl Line {
+impl LmFile {
     pub fn new(source_file_name: String, line_number: u32, tokens_positions: Vec<TokenPosition>, indent: u16, trimmed_contents: String) -> Self {
-        Line { source_file_name, line_number, tokens_positions, indent, trimmed_contents }
+        LmFile { source_file_name, line_number, tokens_positions, indent, trimmed_contents }
     }
 
     /// Generates a long line (100 tokens) for testing purposes

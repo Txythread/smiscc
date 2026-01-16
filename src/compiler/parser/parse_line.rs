@@ -35,7 +35,6 @@ pub fn parse_line(meta_state: &mut ParserMetaState) {
     // Parse the rest
     match first_token.clone() {
         Token::KeywordType(keyword, _) => {
-            println!("statements: {:?}", meta_state.statements);
             for statement in meta_state.statements.clone().iter() {
                 if let Some(statement_keyword) = statement.get_affiliated_keyword() {
                     if statement_keyword != keyword { continue; }
@@ -50,7 +49,6 @@ pub fn parse_line(meta_state: &mut ParserMetaState) {
                         argument_types,
                     );
 
-                    println!("args: {:#?} for: {:?}", arguments, keyword);
 
                     let statement_node = statement.generate_node(arguments, &mut modifiers);
                     if let Some(statement_node) = statement_node {

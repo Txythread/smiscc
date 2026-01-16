@@ -308,8 +308,6 @@ mod tests {
 
         let u32_type = u32_.build_type();
 
-        println!("{:?}", u32_type);
-
         let ambiguous_subjects = [
             Token::UnspecifiedString("hello".to_string(), TokenPosition::test_value()),
             Token::UnspecifiedString("36".to_string(), TokenPosition::test_value()),
@@ -371,8 +369,6 @@ mod tests {
             assert_eq!(result.result.is_ok(), expected_answer.is_some());
 
             if result.result.is_ok() {
-                println!("{:?}", result.clone().result.unwrap());
-
                 let result = result.result.unwrap().initial_content;
 
 

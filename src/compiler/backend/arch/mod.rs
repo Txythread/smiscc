@@ -98,7 +98,6 @@ impl Architecture {
 
         // Store the register's contents if needed
         if let Some(reg_contents) = self.register_map.registers.clone().iter().find(|x| x.0==register) {
-            println!("Reg currently contains: {:?} expected: {:?}", reg_contents, object);
             if reg_contents.1 == Some(object) {
                 return instructions;
             }
@@ -183,12 +182,9 @@ impl Architecture {
             AssemblyInstruction::AddImm(self.get_stack_pointer(), stack_offset),
         ];
 
-        println!("backup map: {:?}", self.register_map.backup_reg_map.iter().map(|x| x.0.name.clone()).collect::<Vec<String>>());
 
         trailer.append(&mut self.restore_backup_map());
-        println!("restored");
         self.prepare_new_function();
-        println!("prepared");
 
         (header, trailer)
     }
@@ -228,8 +224,6 @@ impl Architecture {
             }
         }
 
-        println!("restore/backup map: {:?}", self.register_map.backup_reg_map.iter().map(|x| x.0.name.clone()).collect::<Vec<String>>());
-
         let mut correctly_placed_uuids: Vec<Uuid> = Vec::new();
         while let Some(item) = self.register_map.backup_reg_map.pop() {
             let object = item.1.unwrap();
@@ -262,10 +256,8 @@ impl Architecture {
             if register.0.saving_behaviour != RegisterSavingBehaviour::CallerSaved { continue; }
 
             if let Some(object) = register.1 {
-                println!("tryna backup {:?} from register: {}", object, register.0.name);
                 // Look for an empty reg to put stuff in or put it on the stack
                 if let Some(mut empty_register) = self.conditionally_provide_empty_register(vec![]) {
-                    println!("empty register: {} to backup {:?} provided", empty_register.0.name, object);
                     // Put the register in the register
                     instructions.append(empty_register.1.as_mut());
                     instructions.push(AssemblyInstruction::MoveReg(empty_register.0.clone(), register.0.clone()));
@@ -276,8 +268,6 @@ impl Architecture {
                 } else {
                     // Put the data in the stack
                     let mut movement = self.push_object_to_stack(object);
-
-                    println!("pushed object to stack: {:?}, making the stack: {:#?}", object, self.register_map.stack);
 
                     instructions.append(movement.as_mut().unwrap())
                 }

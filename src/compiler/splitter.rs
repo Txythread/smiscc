@@ -1,4 +1,4 @@
-use crate::compiler::line_map::{Line, LineMap, TokenPosition};
+use crate::compiler::line_map::{LmFile, LineMap, TokenPosition};
 use crate::config::tokenization_options::*;
 
 /// ### Splits code into lines and lines into token-like parts.
@@ -48,7 +48,7 @@ pub fn split(code: String, file_name: String, line_map: &mut LineMap) -> Vec<Str
     }
 
     let code = clean_code;
-    line_map.files.push(Line::new(file_name, 0, vec![], 0, code.clone()));
+    line_map.files.push(LmFile::new(file_name, 0, vec![], 0, code.clone()));
 
     block_escaped = false;
 
