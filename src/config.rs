@@ -38,37 +38,6 @@ pub mod tokenization_options {
     pub const UNIGNORED_SPLIT_CHARACTERS: [&str; 23] = ["{", "}", "(", ")", "[", "]", "<", ">", "?", "!", ".", ",", "\"", "\'", "=", "+", "-", "*", "/", "#", "\n", ";", ":"];
 
 
-    /// ### Characters that prevent split characters from creating new tokens until their counterpart is met.
-    ///
-    /// This can be, for example, used for strings and characters.
-    /// *So far, this is the only use coming to my mind, but more use cases might appear in the future.*
-    ///
-    /// **For Example:**
-    /// `hello "world, what's up"` => `["hello", "\"", "world, what's up", "\""]` *when this list
-    /// **does** include " as a such character*
-    /// `hello "world, what's up"` => `["hello", "\"", "world", ",", "what", "\'", "s", "up", "\""]`
-    /// **when this list **does not** include " as a such character*
-    ///
-    /// The list contains tuples (start_character, end_character).
-    /// When .0 is found, the mode described above should be entered, when .1 is found,
-    /// it should exit it when it is in that mode.
-    ///
-    /// This is used in the splitter
-    pub const ESCAPE_PREVENTING_CHARACTERS: [(char, char); 2] = [STRING_MARKERS, ('\'', '\'')];
-
-
-    /// ### Characters that will trigger a new logical line
-    ///
-    /// **Note**: Do not add newlines here. Those get handled separately and will always cause a new logical line.
-    /// If you wish to change that behaviour, please take a look at [splitter.rs](crate::compiler::splitter::split) a
-    /// nd figure that out yourself.
-    ///
-    /// **Note**: Characters listed here won't be part of the splitter's result
-    /// in either of the lines (except if defined otherwise by other config constants,
-    /// though you should not add the same character to the ignored splitting characters.).
-    pub const NEW_LOGICAL_LINE_CHARACTERS: [&str; 3] = [";", "{", "}"];
-    
-    
     /// ### Character that separetes stuff
     /// 
     /// The character that separates things like function arguments, array items, etc.

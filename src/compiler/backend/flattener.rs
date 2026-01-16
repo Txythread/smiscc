@@ -1,10 +1,6 @@
 use std::rc::Rc;
 use uuid::Uuid;
 use crate::compiler::backend::context::Context;
-use crate::compiler::data_types::data_types::Buildable;
-use crate::compiler::data_types::integer::IntegerType;
-use crate::compiler::data_types::boolean::Boolean;
-use crate::compiler::parser::function_meta::{FunctionArgument, FunctionMeta, FunctionStyle};
 use crate::compiler::parser::tree::node::Node;
 
 pub fn flatten(line: Rc<dyn Node>, context: &mut Context) -> Vec<Instruction> {
@@ -64,8 +60,8 @@ pub enum Instruction {
     Mod(Uuid, Uuid),
     
     /// Load (size of (datatype (2))) bytes of object at (1) into (0)
-    Load(Uuid, Uuid, Uuid),
-    Store(Uuid, Uuid, Uuid),
+    Load(Uuid, Uuid, u8),
+    Store(Uuid, Uuid, u8),
 
     /// Removes an object from the list of objects that need to be
     /// maintained. This will not clean the heap if this is a pointer.

@@ -213,7 +213,7 @@ impl Architecture {
     /// deletes all the other UUIDs.
     pub fn restore_backup_map(&mut self) -> Vec<AssemblyInstruction> {
         let mut instructions: Vec<AssemblyInstruction> = Vec::new();
-        let mut backup_uuids: Vec<Uuid> = self.register_map.backup_reg_map.iter().map(|x|x.1.unwrap()).collect();
+        let backup_uuids: Vec<Uuid> = self.register_map.backup_reg_map.iter().map(|x|x.1.unwrap()).collect();
 
         // Delete all unlisted objects in the registers
         for object in self.register_map.clone().registers.iter().map(|x|x.1).filter(|x|x.is_some()).map(|x|x.unwrap()) {

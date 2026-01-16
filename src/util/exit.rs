@@ -30,8 +30,11 @@ pub fn exit_with_variant(message: String, exit_code: ExitCode, variant: u8) {
 
 
 pub enum ExitCode {
+    #[cfg(Debug)]
     BadArgument,                // A CLI argument is not as expected
+    #[cfg(debug)]
     ReadWriteError,             // Can't read from or write to the disk. Storage full? Permissions?
+    #[cfg(debug)]
     Other,                      // Miscellaneous error
     Internal                    // Internal malfunction with no further explanation
 }
@@ -39,8 +42,11 @@ pub enum ExitCode {
 impl ExitCode {
     pub fn get_code(&self) -> u8 {
         match self {
+            #[cfg(debug)]
             ExitCode::BadArgument => 0, // This will be formated as x00 where x is non-zero
+            #[cfg(debug)]
             ExitCode::ReadWriteError => 4,
+            #[cfg(debug)]
             ExitCode::Other => 98,
             ExitCode::Internal => 99,
         }

@@ -4,7 +4,7 @@ use crate::config::tokenization_options::BASES;
 /// Tries to decode a value from decimal, hexadecimal, octal or
 /// binary depending on the prefix (or no prefix for decimal).
 pub fn convert_to_int(input: String) -> Option<Result<i128, ConversionError>> {
-    let mut input = input.trim();
+    let input = input.trim();
 
     // Ignore characters if needed
     // Usually this will be a "_"

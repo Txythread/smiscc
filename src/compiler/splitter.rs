@@ -1,5 +1,4 @@
-use colorize::AnsiColor;
-use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, Line, LineMap, NotificationInfo, TokenPosition};
+use crate::compiler::line_map::{Line, LineMap, TokenPosition};
 use crate::config::tokenization_options::*;
 
 /// ### Splits code into lines and lines into token-like parts.

@@ -1,6 +1,5 @@
 use std::ops::Deref;
 use std::rc::Rc;
-use downcast_rs::Downcast;
 use strum_macros::EnumIter;
 use crate::compiler::line_map::TokenPosition;
 use crate::compiler::parser::modifier::Modifier;

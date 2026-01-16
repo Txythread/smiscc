@@ -1,19 +1,17 @@
 use std::rc::Rc;
 use crate::compiler::line_map::{LineMap, TokenPosition};
-use crate::compiler::parser::statement::Statement;
 use crate::compiler::parser::statements::Statements;
 use crate::compiler::tokenization::token::Token;
 use crate::compiler::parser::tree::node::*;
 use crate::config::tokenization_options::Keyword;
 use strum::IntoEnumIterator;
 use crate::compiler::data_types::object::ObjectType;
-use crate::compiler::parser::parse_arithmetic_expression::parse_arithmetic_expression;
 use crate::compiler::parser::parse_line::parse_line;
 use crate::compiler::parser::parser_meta::ParserMetaState;
 
 pub fn parse(files: Vec<Vec<Token>>, line_map: &mut LineMap, object_types: &mut Rc<Vec<ObjectType>>) -> Option<Rc<dyn Node>> {
     let statements = Rc::new(Statements::iter().collect::<Vec<_>>());
-    let mut lines_in_block: Vec<Rc<dyn Node>> = vec![];
+    let lines_in_block: Vec<Rc<dyn Node>> = vec![];
 
     let code = CodeBlockNode::new((0, TokenPosition::new(0, 0)), Some(Rc::new("_stray".to_string())), lines_in_block);
     let mut blocks: Vec<CodeBlockNode> = vec![code];
@@ -83,7 +81,7 @@ mod tests {
     use crate::compiler::data_types::integer::IntegerType;
     use crate::compiler::data_types::object::ObjectType;
     use crate::compiler::line_map::{LineMap, TokenPosition};
-    use crate::compiler::parser::parse::parse_arithmetic_expression;
+    use crate::compiler::parser::parse_arithmetic_expression::parse_arithmetic_expression;
     use crate::compiler::parser::parse_token::parse_token;
     use crate::compiler::parser::parser_meta::ParserMetaState;
     use crate::compiler::parser::statements::Statements;

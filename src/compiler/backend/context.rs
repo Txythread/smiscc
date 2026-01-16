@@ -29,9 +29,6 @@ pub struct Context {
     pub datatypes: HashMap<Uuid, ObjectType>,
 
 
-    /// The stack offset in the current block
-    pub stack_size: usize,
-    
     /// All the meta information about all functions, or at least the
     /// ones currently in scope.
     pub function_metas: Vec<FunctionMeta>,
@@ -44,6 +41,6 @@ pub struct Context {
 
 impl Context {
     pub fn clear(line_map: LineMap) -> Context {
-        Context { objects: HashMap::new(), mutable_objects: Vec::new(), line_map, name_map: HashMap::new(), datatypes: HashMap::new(), stack_size: 0, function_metas: Vec::new(), label_count: 0 }
+        Context { objects: HashMap::new(), mutable_objects: Vec::new(), line_map, name_map: HashMap::new(), datatypes: HashMap::new(), function_metas: Vec::new(), label_count: 0 }
     }
 }

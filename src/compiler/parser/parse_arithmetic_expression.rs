@@ -1,6 +1,6 @@
 use std::ops::Deref;
 use std::rc::Rc;
-use crate::compiler::line_map::{LineMap, TokenPosition};
+use crate::compiler::line_map::TokenPosition;
 use crate::compiler::parser::parse_token::parse_token;
 use crate::compiler::parser::parser_meta::ParserMetaState;
 use crate::compiler::parser::tree::node::{ArithmeticNode, FunctionCallNode, Node, ValueNode};
@@ -27,7 +27,7 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
     // How many nests the current token is in.
     // Whenever a bracket is closed and this reaches 0, a new node
     // should be created by using this function recursively.
-    let mut parenthesis_depth = 0;
+    let parenthesis_depth = 0;
 
     let mut calculated_nodes: Vec<Rc<dyn Node>> = Vec::new();
 

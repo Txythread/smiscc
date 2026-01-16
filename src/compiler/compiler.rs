@@ -15,7 +15,7 @@ use crate::compiler::parser::tree::node::{CodeBlockArray, Node};
 
 pub fn compile(code: String, args: ArgumentList) {
     let mut line_map: LineMap = LineMap::new();
-    let mut splitted = split(code, String::from("test*.txt"), &mut line_map);
+    let splitted = split(code, String::from("test*.txt"), &mut line_map);
     let tokens = tokenize(vec![splitted.clone()], &mut line_map);
     if args.show_tokens {
         for line in tokens.iter().enumerate() {

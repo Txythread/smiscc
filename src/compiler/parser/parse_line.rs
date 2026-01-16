@@ -1,16 +1,10 @@
 use std::rc::Rc;
-use crate::compiler::data_types::object::ObjectType;
-use crate::compiler::line_map::{LineMap, TokenPosition};
 use crate::compiler::parser::modifier::Modifier;
-use crate::compiler::parser::parse::ExpressionKind;
-use crate::compiler::parser::parse_arg_array::parse_arg_array;
 use crate::compiler::parser::parse_arithmetic_expression::parse_arithmetic_expression;
-use crate::compiler::parser::parse_datatype::{parse_parameter_descriptor, ParameterDescriptor};
 use crate::compiler::parser::parse_expression_kind::parse_multiple_expression_kinds;
 use crate::compiler::parser::parser_meta::ParserMetaState;
 use crate::compiler::parser::statement::Statement;
-use crate::compiler::parser::statements::Statements;
-use crate::compiler::parser::tree::node::{ArgumentsNode, AssignmentNode, AssignmentSymbolNode, CodeBlockNode, IdentifierNode, Node};
+use crate::compiler::parser::tree::node::{AssignmentNode, IdentifierNode};
 use crate::compiler::tokenization::token::Token;
 
 /// Generates nodes for one logical line or statement.
@@ -64,7 +58,7 @@ pub fn parse_line(meta_state: &mut ParserMetaState) {
 
                     let statement_node = statement.generate_entire_node(arguments, &mut modifiers);
                     if let Some(statement_node) = statement_node {
-                        let position = meta_state.current_block_idx.clone();
+                        let _position = meta_state.current_block_idx.clone();
                         meta_state.blocks[*meta_state.current_block_idx].push_code(statement_node);
                     } else {
                         panic!("Statement didn't generate node")

@@ -4,7 +4,6 @@ use std::rc::Rc;
 use derive_new::*;
 use downcast_rs::{Downcast, impl_downcast};
 use uuid::Uuid;
-use crate::compiler::backend::context;
 use crate::compiler::backend::context::Context;
 use crate::compiler::backend::flattener::Instruction;
 use crate::compiler::data_types::data_types::Buildable;
@@ -75,7 +74,7 @@ pub trait Node: Debug + Downcast {
     ///
     /// However, it should always be overridden when subnodes are contained as they
     /// need to perform it.
-    fn perform_early_context_changes(&mut self, context: &mut Context) {
+    fn perform_early_context_changes(&mut self, _context: &mut Context) {
         if !self.get_sub_nodes().is_empty() {
             todo!("Missing implementation of perform_early_context_changes in type of: {:#?}. Please read for the documentation comment for this trait function and create an implementation.", self)
         }
@@ -688,7 +687,7 @@ impl Node for CodeBlockNode {
 
     fn perform_early_context_changes(&mut self, context: &mut Context) {
         for i in 0..self.code.iter().len() {
-            let mut clone = self.code[i].clone().downcast_rc::<FunctionDeclarationNode>();
+            let clone = self.code[i].clone().downcast_rc::<FunctionDeclarationNode>();
 
             if clone.is_err() {
                 continue;
@@ -983,7 +982,7 @@ impl Node for FunctionDeclarationNode {
     }
 
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
-        let mut block = self.block.deref().clone();
+        let block = self.block.deref().clone();
         let parameter_uuids = self.parameter_function_args.iter().map(|x|x.own_uuid);
         let mut instructions: Vec<Instruction> = parameter_uuids.enumerate().map(|x|Instruction::ReceiveArgument(x.1, x.0 as u8)).collect();
 
@@ -1072,7 +1071,7 @@ impl Node for StringLiteralNode {
         vec![]
     }
 
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
         Some(vec![all_types.iter().find(|&x| x.traits.contains(&Trait::new(Trait::BASIC_STRING.to_string())))?.clone()])
     }
 
@@ -1080,7 +1079,7 @@ impl Node for StringLiteralNode {
         Box::new((*self).clone())
     }
 
-    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+    fn generate_instructions(&self, _context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         todo!()
     }
 

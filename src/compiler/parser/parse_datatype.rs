@@ -3,7 +3,7 @@ use uuid::Uuid;
 use derive_new::new;
 use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::line_map::LineMap;
-use crate::compiler::parser::function_meta::{FunctionArgument, FunctionMeta};
+use crate::compiler::parser::function_meta::FunctionArgument;
 use crate::compiler::tokenization::token::Token;
 
 /// Gets a datatype from the list of types and returns its uuid.

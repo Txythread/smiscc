@@ -15,9 +15,9 @@ pub enum AssemblyInstruction {
     MoveImm(Register, i64),
     
     /// Load (2) bytes of data at address at register (1) into register (0)
-    Load(Register, Register, Register),
+    Load(Register, Register, u8),
     /// Store (2) bytes of data from register (0) into the address at register (1)
-    Store(Register, Register, Register),
+    Store(Register, Register, u8),
     
     /// Adds the contents of the second register to the first register's contents
     AddReg(Register, Register),
@@ -160,7 +160,7 @@ impl AssemblyInstruction {
                     ),
                     (
                         String::from("$c"),
-                        c.name.clone()
+                        c.to_string()
                     )
 
                 ]
@@ -177,7 +177,7 @@ impl AssemblyInstruction {
                     ),
                     (
                         String::from("$c"),
-                        c.name.clone()
+                        c.to_string()
                     )
                 ]
             }
@@ -392,7 +392,7 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
                 }
 
             },
-            Instruction::Label(asm_name, global) => {
+            Instruction::Label(asm_name, _global) => {
                 instructions.push(AssemblyInstruction::Label(asm_name));
                 label_idx = instructions.len();
             }
