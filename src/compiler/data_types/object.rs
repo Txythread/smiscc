@@ -256,8 +256,8 @@ impl Trait{
     
     /// A String With a Basic Memory Layout
     /// 
-    /// This means that the address of the string points to its length<b> (... in bytes)
-    /// and all further characters until (address + length<b>) are UTF-8 characters.
+    /// This means that the address of the string points to its `length<b>` (... in bytes)
+    /// and all further characters until `(address + length<b>)` are UTF-8 characters.
     pub const BASIC_STRING: &str = "basic_string";
 
     /// Means that the type can be interpreted as containing a boolean value.

@@ -1,0 +1,9 @@
+func main() {
+	exit 0;
+}
+
+func other() {
+	exit 3;
+}
+
+exit 1;

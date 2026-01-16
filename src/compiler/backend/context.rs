@@ -15,13 +15,13 @@ pub struct Context {
 
     /// The list of all objects that are marked as mutable. Given
     /// by the same Uuid with which they are identified in the
-    /// (objects hash map)[objects].
+    /// [objects hash map](Self::objects).
     pub mutable_objects: Vec<Uuid>,
 
     pub line_map: LineMap,
     
     /// The objects, mapped by their full name. The Uuid refers
-    /// to the key in [the objects hash map](objects)
+    /// to the key in [the objects hash map](Self::objects)
     pub name_map: HashMap<String, Uuid>,
 
     /// All datatypes, including primitive ones

@@ -122,4 +122,11 @@ impl Token {
             _ => false
         }
     }
+    
+    pub fn is_hard_line_terminator(&self) -> bool {
+        match self {
+            Token::HardNewline(_) => true,
+            _ => false,
+        }
+    }
 }

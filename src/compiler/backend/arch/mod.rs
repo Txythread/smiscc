@@ -354,7 +354,7 @@ impl Architecture {
         scratch
     }
 
-    /// Provides an empty register using [this function](provide_empty_register) IF
+    /// Provides an empty register using [this function](Self::provide_empty_register) IF
     /// it can be achieved with an empty register. Returns None if there is no register
     /// free and the data should potentially be stored on the stack instead.
     pub fn conditionally_provide_empty_register(&mut self, ignoring: Vec<Uuid>) -> Option<(Register, Vec<AssemblyInstruction>)> {
@@ -438,7 +438,7 @@ pub struct RegisterMap {
 
     backup_reg_map: Vec<(Register, Option<Uuid>)>,
 
-    /// The index of the scratch register in the [registers map](registers)
+    /// The index of the scratch register in the [registers map](Self::registers)
     scratch_register: usize,
 
     /// The stack offset. Must be reset at function start.
@@ -447,7 +447,7 @@ pub struct RegisterMap {
     /// The contents of the stack and the offset in comparison to the stack pointer.
     stack: HashMap</* object- */Uuid, /*stack offset: */usize>,
 
-    /// The index of the stack pointer register in the [registers map](registers)
+    /// The index of the stack pointer register in the [registers map](Self::registers)
     stack_pointer_register: usize,
 
     /// A map of where all the arguments go in a C-Style call

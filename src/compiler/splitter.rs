@@ -35,11 +35,11 @@ pub fn split(code: String, file_name: String, line_map: &mut LineMap) -> Vec<Str
 
     let mut current_token: String = String::new();
 
-    let ignored_single_char_matches = IGNORED_SPLIT_CHARACTERS.iter().filter(|&x| x.len() == 1).map(|&x|x.clone().chars().collect()).collect::<Vec<Vec<char>>>();
-    let ignored_double_char_matches = IGNORED_SPLIT_CHARACTERS.iter().filter(|&x| x.len() == 2).map(|&x|x.clone().chars().collect()).collect::<Vec<Vec<char>>>();
+    let ignored_single_char_matches = IGNORED_SPLIT_CHARACTERS.iter().filter(|&x| x.len() == 1).map(|&x|x.chars().collect()).collect::<Vec<Vec<char>>>();
+    let ignored_double_char_matches = IGNORED_SPLIT_CHARACTERS.iter().filter(|&x| x.len() == 2).map(|&x|x.chars().collect()).collect::<Vec<Vec<char>>>();
 
-    let unignored_single_char_matches = UNIGNORED_SPLIT_CHARACTERS.iter().filter(|&x| x.len() == 1).map(|&x|x.clone().chars().collect()).collect::<Vec<Vec<char>>>();
-    let unignored_double_char_matches = UNIGNORED_SPLIT_CHARACTERS.iter().filter(|&x| x.len() == 2).map(|&x|x.clone().chars().collect()).collect::<Vec<Vec<char>>>();
+    let unignored_single_char_matches = UNIGNORED_SPLIT_CHARACTERS.iter().filter(|&x| x.len() == 1).map(|&x|x.chars().collect()).collect::<Vec<Vec<char>>>();
+    let unignored_double_char_matches = UNIGNORED_SPLIT_CHARACTERS.iter().filter(|&x| x.len() == 2).map(|&x|x.chars().collect()).collect::<Vec<Vec<char>>>();
 
 
     let mut clean_code = String::new();

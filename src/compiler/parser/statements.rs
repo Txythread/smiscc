@@ -136,6 +136,8 @@ impl Statement for Statements {
                 let block = arguments.last().unwrap().clone();
                 let mut block = block.downcast_rc::<CodeBlockNode>().unwrap().deref().clone();
 
+                println!("Generated block: {:?}", block);
+
 
 
                 let argument_node = arguments[1].clone().downcast_rc::<ArgumentsNode<ParameterDescriptor>>().unwrap();

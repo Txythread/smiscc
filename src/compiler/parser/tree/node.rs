@@ -44,8 +44,8 @@ pub trait Node: Debug + Downcast {
     ///
     /// If the node is a shell (a node that contains only one subnode and
     /// no data that is not contained in its core as well, e.g. how
-    /// [ValueNode](ValueNode) is to [ArithmeticNode](ArithmeticNode) and
-    /// [LiteralValueNode](LiteralValueNode)).
+    /// [ValueNode] is to [ArithmeticNode] and
+    /// [LiteralValueNode].
     ///
     /// Shell nodes get unpacked by unpacking their contents and returning that.
     /// Non-Shell nodes don't unpack themselves. They return themselves.

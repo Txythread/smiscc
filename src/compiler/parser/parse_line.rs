@@ -7,6 +7,7 @@ use crate::compiler::parser::parse_arg_array::parse_arg_array;
 use crate::compiler::parser::parse_arithmetic_expression::parse_arithmetic_expression;
 use crate::compiler::parser::parse_datatype::{parse_parameter_descriptor, ParameterDescriptor};
 use crate::compiler::parser::parse_expression_kind::parse_multiple_expression_kinds;
+use crate::compiler::parser::parser_meta::ParserMetaState;
 use crate::compiler::parser::statement::Statement;
 use crate::compiler::parser::statements::Statements;
 use crate::compiler::parser::tree::node::{ArgumentsNode, AssignmentNode, AssignmentSymbolNode, CodeBlockNode, IdentifierNode, Node};
@@ -23,40 +24,29 @@ use crate::compiler::tokenization::token::Token;
 /// line. It can handle multiple code blocks as long as those were themselves started
 /// within the **logical** line. Meaning something like a "func"-statement can be fully
 /// parsed while this function gets invoked only once.
-pub fn parse_line(tokens: Rc<Vec<Token>>, cursor: &mut usize, line_map: &mut LineMap, statements: Rc<Vec<Statements>>, file_number: usize, blocks: &mut Vec<CodeBlockNode>, current_block_idx: usize, code_block_depth: &mut u32, datatypes: Rc<Vec<ObjectType>>) {
-    let line_start = *cursor;
-    let initial_block_depth = *code_block_depth;
+pub fn parse_line(meta_state: &mut ParserMetaState) {
+    let line_start = *meta_state.cursor;
+    let initial_block_depth = *meta_state.code_block_depth;
 
     // Parse the modifiers
     let mut modifiers: Vec<Modifier> = vec![];
 
     loop {
-        if let Some(modifier) = Modifier::modifier_from(
-            tokens.clone(),
-            file_number as u32,
-            cursor,
-            line_map,
-            statements.clone(),
-            datatypes.clone(),
-            blocks,
-            code_block_depth,
-        ) {
-            println!("Returned, cursor points to: {:?}", tokens[*cursor].clone());
+        if let Some(modifier) = Modifier::modifier_from(meta_state) {
             modifiers.push(modifier);
         } else {
             break;
         }
     }
 
-    println!("modifiers: {:?}, cursor: {:?}", modifiers, tokens[*cursor].clone());
-
-    let first_token: Token = tokens[*cursor].clone();
-    *cursor += 1;
+    let first_token: Token = meta_state.tokens[*meta_state.cursor].clone();
+    *meta_state.cursor += 1;
 
     // Parse the rest
     match first_token.clone() {
         Token::KeywordType(keyword, _) => {
-            for statement in statements.iter() {
+            println!("statements: {:?}", meta_state.statements);
+            for statement in meta_state.statements.clone().iter() {
                 if let Some(statement_keyword) = statement.get_affiliated_keyword() {
                     if statement_keyword != keyword { continue; }
 
@@ -66,20 +56,16 @@ pub fn parse_line(tokens: Rc<Vec<Token>>, cursor: &mut usize, line_map: &mut Lin
                     let argument_types = vec![statement.get_header_format(), statement.get_body_format()].concat();
 
                     let arguments = parse_multiple_expression_kinds(
-                        tokens.clone(),
-                        file_number as u32,
-                        cursor,
-                        line_map,
+                        meta_state,
                         argument_types,
-                        code_block_depth,
-                        blocks,
-                        statements.clone(),
-                        datatypes.clone(),
                     );
+
+                    println!("args: {:#?} for: {:?}", arguments, keyword);
 
                     let statement_node = statement.generate_entire_node(arguments, &mut modifiers);
                     if let Some(statement_node) = statement_node {
-                        blocks[current_block_idx].push_code(statement_node);
+                        let position = meta_state.current_block_idx.clone();
+                        meta_state.blocks[*meta_state.current_block_idx].push_code(statement_node);
                     } else {
                         panic!("Statement didn't generate node")
                     }
@@ -88,32 +74,32 @@ pub fn parse_line(tokens: Rc<Vec<Token>>, cursor: &mut usize, line_map: &mut Lin
         }
 
         Token::Identifier(name, pos) => {
-            let id_node = IdentifierNode::new(name.clone(), None, (file_number, pos.clone()));
+            let id_node = IdentifierNode::new(name.clone(), None, (*meta_state.file_number, pos.clone()));
 
-            *cursor = line_start;
-            match tokens[*cursor + 1].clone() {
+            *meta_state.cursor = line_start;
+            match meta_state.tokens[*meta_state.cursor + 1].clone() {
                 Token::Assignment(_) => {},
                 _ => {
-                    let value = parse_arithmetic_expression(tokens.clone(), file_number as u32, line_map.clone(), 0, cursor, false).unwrap();
+                    let value = parse_arithmetic_expression(meta_state, 0, false).unwrap();
 
-                    blocks[current_block_idx].push_code(value);
+                    meta_state.blocks[*meta_state.current_block_idx].push_code(value);
 
                     return;
                 }
             }
 
-            *cursor = line_start + 2;
-            let value = parse_arithmetic_expression(tokens.clone(), file_number as u32, line_map.clone(), 0, cursor, false).unwrap();
+            *meta_state.cursor = line_start + 2;
+            let value = parse_arithmetic_expression(meta_state, 0, false).unwrap();
 
-            let assignment_node = AssignmentNode::new(Rc::new(id_node), value, (file_number, pos));
+            let assignment_node = AssignmentNode::new(Rc::new(id_node), value, (*meta_state.file_number, pos));
 
-            blocks[current_block_idx].push_code(Rc::new(assignment_node));
+            meta_state.blocks[*meta_state.current_block_idx].push_code(Rc::new(assignment_node));
         }
 
         Token::CodeBlockParenthesisClose(_) => {
-            *code_block_depth -= 1;
+            *meta_state.code_block_depth -= 1;
 
-            if *code_block_depth < initial_block_depth {
+            if *meta_state.code_block_depth < initial_block_depth {
                 return;
             }
         }
@@ -123,17 +109,17 @@ pub fn parse_line(tokens: Rc<Vec<Token>>, cursor: &mut usize, line_map: &mut Lin
 
     // Skip all newlines
     loop {
-        if tokens.len() <= *cursor {
+        if meta_state.tokens.len() <= *meta_state.cursor {
             return;
         }
 
-        match tokens[*cursor] {
-            Token::SoftNewline(_) | Token::HardNewline(_) => {*cursor += 1}
-            Token::CodeBlockParenthesisClose(_) => { *code_block_depth -= 1; *cursor += 1 }
+        match meta_state.tokens[*meta_state.cursor] {
+            Token::SoftNewline(_) | Token::HardNewline(_) => {*meta_state.cursor += 1}
+            Token::CodeBlockParenthesisClose(_) => { *meta_state.code_block_depth -= 1; *meta_state.cursor += 1 }
             _ => {return;}
         }
 
-        if *code_block_depth < initial_block_depth {
+        if *meta_state.code_block_depth < initial_block_depth {
             return;
         }
     }

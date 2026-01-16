@@ -4,6 +4,7 @@ use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::line_map::LineMap;
 use crate::compiler::parser::parse::ExpressionKind;
 use crate::compiler::parser::parse_expression_kind::parse_multiple_expression_kinds;
+use crate::compiler::parser::parser_meta::ParserMetaState;
 use crate::compiler::parser::statements::Statements;
 use crate::compiler::parser::tree::node::{CodeBlockNode, Node};
 use crate::compiler::tokenization::token::Token;
@@ -23,27 +24,17 @@ impl Modifier {
         }
     }
 
-    pub fn modifier_from(tokens: Rc<Vec<Token>>, file_number: u32, cursor: &mut usize, line_map: &mut LineMap, statements: Rc<Vec<Statements>>, datatypes: Rc<Vec<ObjectType>>, blocks: &mut Vec<CodeBlockNode>, code_block_depth: &mut u32) -> Option<Modifier> {
-        let Token::KeywordType(keyword, _) = tokens[*cursor].clone() else { return None };
+    pub fn modifier_from(state: &mut ParserMetaState) -> Option<Modifier> {
+        let Token::KeywordType(keyword, _) = state.tokens[*state.cursor].clone() else { return None };
         if !Self::keyword_is_modifier(keyword.clone()) { return None };
-        *cursor += 1;
+        *state.cursor += 1;
 
         let mut modifier = Modifier::new(keyword, vec![]);
 
         modifier.arguments = parse_multiple_expression_kinds(
-            tokens.clone(),
-            file_number,
-            cursor,
-            line_map,
-            modifier.get_format(),
-            code_block_depth,
-            blocks,
-            statements,
-            datatypes
+            state,
+            modifier.get_format()
         );
-
-        println!("returning, cursor points to: {:?}", tokens[*cursor].clone());
-
 
         Some(modifier)
     }
