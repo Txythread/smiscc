@@ -7,10 +7,6 @@
 2. *if* - Statement
 3. *switch* - Statement
 
-## Modifiers
-Create modifiers that get passed before the "first token". Those are allowed to also absorb some data.
-Example: `pub` `extern "C" "_start"`
-
 ## Error Handling
 1. Update line map
 2. Create error messages

@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use crate::compiler::data_types::data_types::{BuildResult, Buildable, ObjectBuildingError};
+use crate::compiler::data_types::datatypes_general::{BuildResult, Buildable, ObjectBuildingError};
 use crate::compiler::data_types::object::{Object, ObjectType, Trait};
 use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, LineMap, NotificationInfo};
 use crate::compiler::tokenization::token::Token;
@@ -229,7 +229,7 @@ impl Buildable for IntegerType {
             return BuildResult::new(Err(standard_error), ambiguous);
         }
 
-        let token = tokens.iter().nth(0).unwrap();
+        let token = tokens.first().unwrap();
 
         match token {
             Token::UnspecifiedString(token_content, _) => {
@@ -248,9 +248,7 @@ impl Buildable for IntegerType {
 
                 let value = value.unwrap();
 
-                if value.is_err() {
-                    let err = value.unwrap_err();
-
+                if let Err(err) = value {
                     let error = ObjectBuildingError::new(self.display_name(), err.message());
 
                     return BuildResult::new(Err(error), ambiguous);
@@ -299,7 +297,7 @@ impl Buildable for IntegerType {
 
 #[cfg(test)]
 mod tests {
-    use crate::compiler::data_types::data_types::{Buildable};
+    use crate::compiler::data_types::datatypes_general::{Buildable};
     use crate::compiler::data_types::integer::*;
     use crate::compiler::line_map::TokenPosition;
     use crate::compiler::tokenization::token::Token;

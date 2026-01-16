@@ -101,32 +101,21 @@ impl Token {
     /// Whether this is a reasonable token to expect in an arithmetic operation.
     /// If it's not, it might interrupt/stop tokens from being parsed in the parser.
     pub fn is_expected_in_arithmetic(&self) -> bool {
-        match self {
-            Token::KeywordType(_, _) => false,
-            Token::Assignment(_) => false,
-            Token::SoftNewline(_) => false,
-            Token::HardNewline(_) => false,
-            Token::Colon(_) => false,
-
-            _ => true
-        }
+        matches!(
+            self,
+            Token::KeywordType(_, _) |
+            Token::Assignment(_) |
+            Token::SoftNewline(_) |
+            Token::HardNewline(_) |
+            Token::Colon(_)
+        )
     }
 
     pub fn is_line_delimiting(&self) -> bool {
-        match self {
-            Token::HardNewline(_) => true,
-            Token::SoftNewline(_) => true,
-            Token::CodeBlockParenthesisOpen(_) => true,
-            Token::CodeBlockParenthesisClose(_) => true,
-
-            _ => false
-        }
+        matches!(self, Token::CodeBlockParenthesisOpen(_) | Token::CodeBlockParenthesisClose(_) | Token::HardNewline(_) | Token::SoftNewline(_))
     }
-    
+
     pub fn is_hard_line_terminator(&self) -> bool {
-        match self {
-            Token::HardNewline(_) => true,
-            _ => false,
-        }
+        matches!(self, Token::HardNewline(_))
     }
 }

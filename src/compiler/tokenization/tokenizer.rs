@@ -31,7 +31,7 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
 
         // The line number in the line map, not in the
         // original file.
-        let line_number = x.0.clone();
+        let line_number = x.0;
 
 
         // Set to "None" whenever no string is being built.
@@ -51,7 +51,7 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
 
         'token_loop: for y in line.iter().enumerate() {
             let token = y.1.clone();
-            let token_number = y.0.clone();
+            let token_number = y.0;
             let current_token_pos = line_map.get_position_of_tokens(line_number as u32, token_number as u16, token_number as i16);
 
 

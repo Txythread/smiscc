@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::compiler::data_types::data_types::{Buildable};
+    use crate::compiler::data_types::datatypes_general::{Buildable};
     use crate::compiler::data_types::integer::IntegerType;
     use crate::compiler::line_map::{LineMap, TokenPosition};
     use crate::compiler::data_types::object::{Object, ObjectType};

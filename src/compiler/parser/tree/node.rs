@@ -6,7 +6,7 @@ use downcast_rs::{Downcast, impl_downcast};
 use uuid::Uuid;
 use crate::compiler::backend::context::Context;
 use crate::compiler::backend::flattener::Instruction;
-use crate::compiler::data_types::data_types::Buildable;
+use crate::compiler::data_types::datatypes_general::Buildable;
 use crate::compiler::data_types::integer::IntegerType;
 use crate::compiler::data_types::object::{ObjectType, Trait};
 use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, NotificationInfo, TokenPosition};
@@ -184,7 +184,7 @@ impl Node for IdentifierNode {
     fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         let object_uuid = context.name_map.get(&self.identifier);
 
-        (vec![], object_uuid.map(|uuid| uuid.clone()))
+        (vec![], object_uuid.copied())
     }
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
@@ -412,7 +412,7 @@ impl Node for ArithmeticNode {
 
         if self.argument_b.output_is_randomly_mutable() == Some(true) && self.operation.is_commutative() && self.argument_a.output_is_randomly_mutable() != Some(true) {
             return (
-                vec![
+                [
                     a.0,
                     b.0,
                     vec![],
@@ -435,7 +435,7 @@ impl Node for ArithmeticNode {
         }
 
         (
-            vec![
+            [
                 a.0,
                 b.0,
                 if x!= a.1.unwrap() {vec![
@@ -495,7 +495,7 @@ impl Node for AssignmentNode {
         let mut right_side = self.right_side.generate_instructions(context);
 
         instructions.append(left_side.0.as_mut());
-        instructions.append(&mut right_side.0.as_mut());
+        instructions.append(right_side.0.as_mut());
 
         // Look if the left side is in the list of mutable objects
         if !context.mutable_objects.contains(&left_side.1.unwrap()) {
@@ -621,11 +621,11 @@ impl Node for LetNode {
             result_uuid = Some(Uuid::new_v4());
         }
 
-        (*context).objects.insert(result_uuid.unwrap(), self.assigned_value.clone().unwrap().get_datatypes(context.datatypes.values().map(|x|x.clone()).collect(), context.clone()).unwrap()[0].type_uuid);
-        (*context).name_map.insert(self.identifier.clone(), result_uuid.unwrap());
+        context.objects.insert(result_uuid.unwrap(), self.assigned_value.clone().unwrap().get_datatypes(context.datatypes.values().cloned().collect(), context.clone()).unwrap()[0].type_uuid);
+        context.name_map.insert(self.identifier.clone(), result_uuid.unwrap());
 
         if self.is_mutable {
-            (*context).mutable_objects.push(result_uuid.unwrap());
+            context.mutable_objects.push(result_uuid.unwrap());
         }
 
 
@@ -819,7 +819,7 @@ impl Node for FunctionCallNode {
         let mut instructions: Vec<Instruction> = vec![];
         let mut moves: Vec<(Uuid, Uuid)> = vec![];
 
-        if self.arguments.iter().count() != function_meta.arguments.len() {
+        if self.arguments.len() != function_meta.arguments.len() {
             let display_info = DisplayCodeInfo::new(
                 self.position.0 as u32,
                 self.position.1.start as u32,
@@ -861,7 +861,7 @@ impl Node for FunctionCallNode {
 
 
         (
-            vec![
+            [
                 instructions,
                 vec![Instruction::Call(asm_fn_name, args, return_uuids)],
             ].concat()
@@ -991,8 +991,8 @@ impl Node for FunctionDeclarationNode {
             if let Some(name) = self.parameters[i].internal_name.clone() {
                 let uuid = self.parameter_function_args[i].own_uuid;
                 let type_uuid = self.parameter_function_args[i].type_uuid;
-                (*context).objects.insert(uuid, type_uuid);
-                (*context).name_map.insert(name.clone(), uuid);
+                context.objects.insert(uuid, type_uuid);
+                context.name_map.insert(name.clone(), uuid);
             }
         }
 

@@ -11,25 +11,25 @@ use crate::compiler::parser::tree::node::{ArgumentsNode, CodeBlockNode, ExitNode
 
 #[derive(Clone, Debug, EnumIter)]
 pub enum Statements {
-    LetStatement,
-    VarStatement,
-    ExitStatement,
-    FunctionStatement,
+    Let,
+    Var,
+    Exit,
+    Function,
 }
 
 impl Statement for Statements {
     fn get_affiliated_keyword(&self) -> Option<Keyword> {
         match self {
-            Statements::LetStatement => Some(Keyword::Let),
-            Statements::VarStatement => Some(Keyword::Var),
-            Statements::ExitStatement => Some(Keyword::Exit),
-            Statements::FunctionStatement => Some(Keyword::Function),
+            Statements::Let => Some(Keyword::Let),
+            Statements::Var => Some(Keyword::Var),
+            Statements::Exit => Some(Keyword::Exit),
+            Statements::Function => Some(Keyword::Function),
         }
     }
 
     fn get_header_format(&self) -> Vec<(ExpressionKind, bool)> {
         match self { 
-            Statements::LetStatement => {
+            Statements::Let => {
                 vec![
                     (
                         ExpressionKind::Identifier(None),
@@ -37,7 +37,7 @@ impl Statement for Statements {
                     )
                 ]
             }
-            Statements::VarStatement => {
+            Statements::Var => {
                 vec![
                     (
                         ExpressionKind::Identifier(None),
@@ -45,12 +45,12 @@ impl Statement for Statements {
                     )
                 ]
             }
-            Statements::ExitStatement => {
+            Statements::Exit => {
                 vec![
                 ]
             }
 
-            Statements::FunctionStatement => {
+            Statements::Function => {
                 vec![
                     (
                         ExpressionKind::Identifier(None),
@@ -68,7 +68,7 @@ impl Statement for Statements {
 
     fn get_body_format(&self) -> Vec<(ExpressionKind, bool)> {
         match self {
-            Statements::LetStatement => {
+            Statements::Let => {
                 vec![
                     (
                         ExpressionKind::Assignment,
@@ -81,7 +81,7 @@ impl Statement for Statements {
                     )
                 ]
             }
-            Statements::VarStatement => {
+            Statements::Var => {
                 vec![
                     (
                         ExpressionKind::Assignment,
@@ -94,7 +94,7 @@ impl Statement for Statements {
                     )
                 ]
             }
-            Statements::ExitStatement => {
+            Statements::Exit => {
                 vec![
                     (
                         ExpressionKind::Value,
@@ -102,7 +102,7 @@ impl Statement for Statements {
                     )
                 ]
             }
-            Statements::FunctionStatement => {
+            Statements::Function => {
                 vec![
                     (
                         ExpressionKind::CodeBlock,
@@ -113,13 +113,9 @@ impl Statement for Statements {
         }
     }
 
-    fn generate_header_node(&self, _arguments: Vec<Rc<dyn Node>>) -> Option<Rc<dyn Node>> {
-        todo!()
-    }
-
-    fn generate_entire_node(&self, arguments: Vec<Rc<dyn Node>>, modifiers: &mut Vec<Modifier>) -> Option<Rc<dyn Node>> {
+    fn generate_node(&self, arguments: Vec<Rc<dyn Node>>, modifiers: &mut Vec<Modifier>) -> Option<Rc<dyn Node>> {
         match self {
-            Statements::ExitStatement => {
+            Statements::Exit => {
                 let arg = arguments[0].clone();
 
                 let node = ExitNode::new(arg, (0, TokenPosition::new(0, 0)));
@@ -127,7 +123,7 @@ impl Statement for Statements {
                 return Some(Rc::new(node));
             },
 
-            Statements::FunctionStatement => {
+            Statements::Function => {
                 let identifier_arg = arguments[0].clone();
                 let identifier_node = identifier_arg.downcast_rc::<IdentifierNode>().unwrap();
                 let identifier = identifier_node.identifier.clone();
@@ -145,7 +141,7 @@ impl Statement for Statements {
                 // Go through the parameters
                 // 1. Find extern
                 if let Some(extern_index) = modifiers.iter().position(|x|x.base == Keyword::Extern) {
-                    if extern_index != modifiers.iter().count() - 1 {
+                    if extern_index != modifiers.len() - 1 {
                         todo!("Throw an error: extern expect as last modifier")
                     }
 
@@ -178,7 +174,7 @@ impl Statement for Statements {
         
         let assigned_value = arguments[2].clone();
         
-        let is_mutable = matches!(self, Statements::VarStatement);
+        let is_mutable = matches!(self, Statements::Var);
         
         let node = LetNode::new(identifier, Some(assigned_value), is_mutable, (0, TokenPosition::new(0, 0)));
         

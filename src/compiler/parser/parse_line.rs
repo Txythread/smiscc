@@ -25,12 +25,8 @@ pub fn parse_line(meta_state: &mut ParserMetaState) {
     // Parse the modifiers
     let mut modifiers: Vec<Modifier> = vec![];
 
-    loop {
-        if let Some(modifier) = Modifier::modifier_from(meta_state) {
-            modifiers.push(modifier);
-        } else {
-            break;
-        }
+    while let Some(modifier) = Modifier::modifier_from(meta_state) {
+        modifiers.push(modifier);
     }
 
     let first_token: Token = meta_state.tokens[*meta_state.cursor].clone();
@@ -47,7 +43,7 @@ pub fn parse_line(meta_state: &mut ParserMetaState) {
 
                     // The statement is the statement in question.
                     // Generate its arguments (starting with the header).
-                    let argument_types = vec![statement.get_header_format(), statement.get_body_format()].concat();
+                    let argument_types = [statement.get_header_format(), statement.get_body_format()].concat();
 
                     let arguments = parse_multiple_expression_kinds(
                         meta_state,
@@ -56,9 +52,9 @@ pub fn parse_line(meta_state: &mut ParserMetaState) {
 
                     println!("args: {:#?} for: {:?}", arguments, keyword);
 
-                    let statement_node = statement.generate_entire_node(arguments, &mut modifiers);
+                    let statement_node = statement.generate_node(arguments, &mut modifiers);
                     if let Some(statement_node) = statement_node {
-                        let _position = meta_state.current_block_idx.clone();
+                        let _position = *meta_state.current_block_idx;
                         meta_state.blocks[*meta_state.current_block_idx].push_code(statement_node);
                     } else {
                         panic!("Statement didn't generate node")

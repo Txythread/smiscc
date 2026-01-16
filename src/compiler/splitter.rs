@@ -91,8 +91,8 @@ pub fn split(code: String, file_name: String, line_map: &mut LineMap) -> Vec<Str
             match_is_included = true;
         }
 
-        if match_.is_empty() {
-            if let Some(previous_char) = current_token.chars().last() {
+        if match_.is_empty()
+            && let Some(previous_char) = current_token.chars().last() {
                 match_is_included = false;
 
                 // Find a double-character token that matches the previous and teh last token
@@ -110,7 +110,6 @@ pub fn split(code: String, file_name: String, line_map: &mut LineMap) -> Vec<Str
                     }
                 }
             }
-        }
 
 
         if match_.is_empty() {

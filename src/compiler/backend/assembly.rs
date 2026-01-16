@@ -282,13 +282,13 @@ pub fn generate_assembly(code: Vec<AssemblyInstruction>, arch: Architecture, out
 
     let mut file = fs::File::create(&output_name).unwrap();
 
-    file.write(arch.leading_boilerplate.as_bytes()).expect("");
+    file.write_all(arch.leading_boilerplate.as_bytes()).expect("");
 
     for instruction in code {
-        file.write(instruction.make_string(arch.clone()).as_bytes()).expect("");
+        file.write_all(instruction.make_string(arch.clone()).as_bytes()).expect("");
     }
     
-    file.write(arch.trailing_boilerplate.as_bytes()).expect("");
+    file.write_all(arch.trailing_boilerplate.as_bytes()).expect("");
 
     file.flush().expect("");
 }
@@ -380,7 +380,7 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
                     let arg = arg.1;
 
                     let reg = architecture.get_register_for_argument(i, FunctionStyle::C);
-                    let mut move_instructions = architecture.move_into_reg(arg.clone(), reg.unwrap(), args.clone());
+                    let mut move_instructions = architecture.move_into_reg(*arg, reg.unwrap(), args.clone());
 
                     instructions.append(move_instructions.as_mut());
                 }

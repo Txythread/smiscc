@@ -9,11 +9,10 @@ use crate::util::operator::Operation;
 
 pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_importance: u8, stop_at_unexpected_token: bool) -> Option<Rc<dyn Node>> {
     // If there is only one token, the principle is quite simple
-    if (meta_state.tokens.len() as isize) -(*meta_state.cursor as isize) == 1 {
-        if let Some(node) = parse_token(meta_state.tokens[*meta_state.cursor].clone(), *meta_state.file_number, meta_state.line_map.clone()) {
+    if (meta_state.tokens.len() as isize) -(*meta_state.cursor as isize) == 1
+        && let Some(node) = parse_token(meta_state.tokens[*meta_state.cursor].clone(), *meta_state.file_number, meta_state.line_map.clone()) {
             return Some(node)
         }
-    }
 
     println!("tokens: {:?}", *meta_state.tokens);
 
@@ -57,10 +56,10 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
         match token.clone() {
             Token::ArithmeticParenthesisOpen(_) => {
                 // Detect function calls
-                if current_operation.is_none() {
-                    if let Some(last_node) = calculated_nodes.last() {
-                        if let Some(identifier_node) = last_node.clone().downcast_rc::<ValueNode>().ok() {
-                            if let ValueNode::Identifier(identifier_node) = identifier_node.deref() {
+                if current_operation.is_none()
+                    && let Some(last_node) = calculated_nodes.last()
+                        && let Ok(identifier_node) = last_node.clone().downcast_rc::<ValueNode>()
+                            && let ValueNode::Identifier(identifier_node) = identifier_node.deref() {
                                 // This parenthesis belongs to a function call
                                 let function_name = identifier_node.identifier.clone();
 
@@ -78,7 +77,7 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
                                     *meta_state.cursor -= 1;
 
                                     // Look for either "," to indicate another argument or ")" to indicate the end of the function call
-                                    if let Some(token) = meta_state.tokens.iter().nth(*meta_state.cursor as usize) {
+                                    if let Some(token) = meta_state.tokens.get(*meta_state.cursor ) {
                                         *meta_state.cursor += 1;
                                         match token {
                                             Token::ArithmeticParenthesisClose(_) => {break;},
@@ -100,12 +99,7 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
                                 calculated_nodes.push(Rc::new(function_node));
 
                                 break;
-                            } else {
-
                             }
-                        }
-                    }
-                }
 
                 println!("starting arithmetic");
                 //*meta_state.cursor += 1;
@@ -149,7 +143,7 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
                             let start_pos = calculated_nodes[0].get_position().1.start;
                             let end_pos = calculated_nodes[1].get_position().1.start + calculated_nodes[1].get_position().1.length;
                             let length = end_pos - start_pos;
-                            let resulting_node = ValueNode::Arithmetic(ArithmeticNode::new(previous_operation, Rc::from(calculated_nodes.remove(0)), Rc::from(calculated_nodes.remove(0)), (*meta_state.file_number, TokenPosition::new(start_pos, length))));
+                            let resulting_node = ValueNode::Arithmetic(ArithmeticNode::new(previous_operation, calculated_nodes.remove(0), calculated_nodes.remove(0), (*meta_state.file_number, TokenPosition::new(start_pos, length))));
                             calculated_nodes = vec![Rc::new(resulting_node)];
 
                             current_operation = Some(operation.clone());
@@ -160,7 +154,7 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
                         let start_pos = calculated_nodes.last().unwrap().get_position().1.start;
                         let end_pos = resulting_node.get_position().1.start + calculated_nodes[1].get_position().1.length;
                         let length = end_pos - start_pos;
-                        let multiplication = ValueNode::Arithmetic(ArithmeticNode::new(operation.clone(), Rc::from(calculated_nodes.remove(calculated_nodes.len() - 1)), resulting_node, (*meta_state.file_number, TokenPosition::new(start_pos, length))));
+                        let multiplication = ValueNode::Arithmetic(ArithmeticNode::new(operation.clone(), calculated_nodes.remove(calculated_nodes.len() - 1), resulting_node, (*meta_state.file_number, TokenPosition::new(start_pos, length))));
 
                         calculated_nodes.push(Rc::new(multiplication));
                         println!("what: {:?}", calculated_nodes.last().unwrap());
@@ -195,13 +189,13 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
         let start_pos = calculated_nodes[0].get_position().1.start;
         let end_pos = calculated_nodes[1].get_position().1.start + calculated_nodes[1].get_position().1.length;
         let length = end_pos - start_pos;
-        let resulting_node = ValueNode::Arithmetic(ArithmeticNode::new(current_operation, Rc::from(calculated_nodes.remove(0)), Rc::from(calculated_nodes.remove(0)), (*meta_state.file_number, TokenPosition::new(start_pos, length))));
+        let resulting_node = ValueNode::Arithmetic(ArithmeticNode::new(current_operation, calculated_nodes.remove(0), calculated_nodes.remove(0), (*meta_state.file_number, TokenPosition::new(start_pos, length))));
         calculated_nodes = vec![Rc::new(resulting_node)];
     }
 
-    println!("Returning fr with: {:?} and pointing at: {:?}", calculated_nodes.iter().nth(0)?, meta_state.tokens[*meta_state.cursor]);
+    println!("Returning fr with: {:?} and pointing at: {:?}", calculated_nodes.first()?, meta_state.tokens[*meta_state.cursor]);
 
-    Some(calculated_nodes.iter().nth(0)?.clone())
+    Some(calculated_nodes.first()?.clone())
 
 
 

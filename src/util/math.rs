@@ -58,7 +58,7 @@ impl Base {
         }
 
         if let Some(value) = stripped_value {
-            return if let Some(value) = i128::from_str_radix(value, self.base as u32).ok() {
+            return if let Ok(value) = i128::from_str_radix(value, self.base as u32) {
                 Some(Ok(value))
             } else {
                 // If no prefix is expected, nothing should be returned instead

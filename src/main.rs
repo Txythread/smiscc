@@ -1,11 +1,14 @@
-use crate::compiler::compiler::compile;
+#![warn(unused_extern_crates)]
+
+use crate::compiler::compile;
 use clap::Parser;
-use crate::help::help::print_help;
+use crate::help::print_help;
 
 mod compiler;
 mod config;
 mod util;
 mod help;
+
 
 #[derive(Clone, Debug, PartialEq, Parser)]
 pub struct ArgumentList{

@@ -19,11 +19,9 @@ pub fn parse_expression_kind(meta_state: &mut ParserMetaState, kind: ExpressionK
             // Parse an arithmetic expression
             if let Some(result) = parse_arithmetic_expression(meta_state, 0, true) {
                 arguments.push(result);
-            } else {
-                if required {
-                    // Throw an error. Something was required that wasn't given in the current statement.
-                    todo!()
-                }
+            } else if required {
+                // Throw an error. Something was required that wasn't given in the current statement.
+                todo!()
             }
         }
         ExpressionKind::Assignment => {

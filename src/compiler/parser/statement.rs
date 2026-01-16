@@ -27,11 +27,6 @@ pub trait Statement: Debug {
     /// the header. The header is defined [here](Self::get_header_format).
     fn get_body_format(&self) -> Vec<(ExpressionKind, bool)>;
     
-    /// ### Generates a node using the header
-    /// 
-    /// **Note:** The affiliated keyword starting this statement is not expected to
-    /// be transmitted.
-    fn generate_header_node(&self, arguments: Vec<Rc<dyn Node>>) -> Option<Rc<dyn Node>>;
 
     /// ### Generates a node for the entire statement
     /// 
@@ -40,5 +35,5 @@ pub trait Statement: Debug {
     /// be transmitted.
     /// 
     /// When a modifier gets used, it needs to be removed from the vector
-    fn generate_entire_node(&self, arguments: Vec<Rc<dyn Node>>, modifiers: &mut Vec<Modifier>) -> Option<Rc<dyn Node>>;
+    fn generate_node(&self, arguments: Vec<Rc<dyn Node>>, modifiers: &mut Vec<Modifier>) -> Option<Rc<dyn Node>>;
 }

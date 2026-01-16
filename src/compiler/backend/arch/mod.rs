@@ -36,11 +36,10 @@ impl Architecture {
 
         // Check if a register has the object in question
         for register in self.register_map.registers.clone() {
-            if let Some(contents) = register.1 {
-                if contents == object {
+            if let Some(contents) = register.1
+                && contents == object {
                     return (register.0, vec![])
                 }
-            }
         }
 
         // Make room for it in the registers as it's needed regardless of the value being on stack or not.
@@ -148,7 +147,7 @@ impl Architecture {
     pub fn get_register_for_argument(&self, argument_index: usize, calling_convention: FunctionStyle) -> Option<Register> {
         match calling_convention {
             FunctionStyle::C => {
-                Some(self.register_map.registers.iter().nth(self.register_map.c_style_arg_map[argument_index])?.0.clone())
+                Some(self.register_map.registers.get(self.register_map.c_style_arg_map[argument_index])?.0.clone())
             }
             FunctionStyle::Smisc => todo!(),
         }
@@ -203,7 +202,7 @@ impl Architecture {
 
             if matches!(register.saving_behaviour, RegisterSavingBehaviour::CalleeSaved) {
                 let uuid = Some(Uuid::new_v4());
-                self.register_map.registers[i].1 = uuid.clone();
+                self.register_map.registers[i].1 = uuid;
                 self.register_map.backup_reg_map.push((register, uuid));
             }
         }
@@ -216,26 +215,24 @@ impl Architecture {
         let backup_uuids: Vec<Uuid> = self.register_map.backup_reg_map.iter().map(|x|x.1.unwrap()).collect();
 
         // Delete all unlisted objects in the registers
-        for object in self.register_map.clone().registers.iter().map(|x|x.1).filter(|x|x.is_some()).map(|x|x.unwrap()) {
+        for object in self.register_map.clone().registers.iter().filter_map(|x|x.1) {
             if !backup_uuids.contains(&object) {
-                self.delete_object(object.clone());
+                self.delete_object(object);
             }
         }
 
         // Delete all unlisted objects in the stack
         for object in self.register_map.clone().stack.keys() {
-            if !backup_uuids.contains(&object) {
-                self.delete_object(object.clone());
+            if !backup_uuids.contains(object) {
+                self.delete_object(*object);
             }
         }
 
         println!("restore/backup map: {:?}", self.register_map.backup_reg_map.iter().map(|x| x.0.name.clone()).collect::<Vec<String>>());
 
         let mut correctly_placed_uuids: Vec<Uuid> = Vec::new();
-        while !self.register_map.backup_reg_map.is_empty() {
-            let item = self.register_map.backup_reg_map.pop().unwrap();
-            let object = item.1.unwrap().clone();
-            println!("item: {:?}", item.0.name);
+        while let Some(item) = self.register_map.backup_reg_map.pop() {
+            let object = item.1.unwrap();
             instructions.append(&mut self.move_into_reg(object, item.0, correctly_placed_uuids.clone()));
             correctly_placed_uuids.push(object);
         }
@@ -406,9 +403,9 @@ impl Architecture {
                 // Found a general purpose register
                 // If it's been stored on the stack already, re-use this position.
 
-                if !allow_reg(register.0.clone()) { continue;}
+                if !allow_reg(register.0.clone()) { continue; }
 
-                let stack_pos = self.register_map.stack.iter().find(|x|x.0.clone() == register.1.unwrap());
+                let stack_pos = self.register_map.stack.iter().find(|x|*x.0 == register.1.unwrap());
 
                 let mut move_function: Vec<AssemblyInstruction> = Vec::new();
 

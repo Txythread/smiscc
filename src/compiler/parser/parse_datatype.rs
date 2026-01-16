@@ -19,9 +19,9 @@ pub fn parse_datatype(tokens: Rc<Vec<Token>>, cursor: &mut usize, types: Rc<Vec<
 
 /// Generates a parameter with external and (if applicable) internal name
 pub fn parse_parameter_descriptor(tokens: Rc<Vec<Token>>, cursor: &mut usize, types: Rc<Vec<ObjectType>>, line_map: &mut LineMap, parse_internal: bool) -> ParameterDescriptor {
-    let mut name: Option<String> = None;
+    let name: Option<String>;
     let mut internal_name: Option<String> = None;
-    let mut datatype: Option<Uuid> = None;
+    let datatype: Option<Uuid>;
 
     if let Token::Identifier(name_, _) = tokens[*cursor].clone() {
         *cursor += 1;

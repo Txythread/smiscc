@@ -1,4 +1,4 @@
-use crate::compiler::data_types::data_types::{BuildResult, Buildable};
+use crate::compiler::data_types::datatypes_general::{BuildResult, Buildable};
 use crate::compiler::data_types::object::{ObjectType, Trait};
 use crate::compiler::tokenization::token::Token;
 

@@ -99,7 +99,7 @@ impl Instruction {
             Instruction::Drop(a) => vec![*a],
             Instruction::MoveData(a, _) => vec![*a],
             Instruction::Exit(a) => vec![*a],
-            Instruction::Call(_, args, outs) => vec![args.clone(), outs.clone()].concat(),
+            Instruction::Call(_, args, outs) => [args.clone(), outs.clone()].concat(),
             Instruction::Label(_, _) | Instruction::FunctionEnd => vec![],
             Instruction::ReceiveArgument(_, _) => { vec![] }
         }

@@ -10,10 +10,6 @@ pub struct LineMap {
 
 
 impl LineMap{
-    pub fn add_line(&mut self, line: Line){
-        self.files.push(line.clone());
-    }
-
     pub fn display_warning(&mut self, info: NotificationInfo){
         self.warning_count += 1;
 

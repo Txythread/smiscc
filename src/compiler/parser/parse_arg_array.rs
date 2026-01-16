@@ -4,10 +4,12 @@ use crate::compiler::line_map::LineMap;
 use crate::compiler::parser::parser_meta::ParserMetaState;
 use crate::compiler::tokenization::token::Token;
 
+type ArrayParsingSubfunction<T> = dyn Fn(Rc<Vec<Token>>, &mut usize, &mut LineMap, Rc<Vec<ObjectType>>) -> T;
+
 /// Parses an argument array using another parse function.
 /// The array should be comma separated and be constrained by
 /// arithmetic parentheses
-pub fn parse_arg_array<T>(state: &mut ParserMetaState, parse_fn: &dyn Fn(Rc<Vec<Token>>, &mut usize, &mut LineMap, Rc<Vec<ObjectType>>) -> T) -> Vec<T> {
+pub fn parse_arg_array<T>(state: &mut ParserMetaState, parse_fn: &ArrayParsingSubfunction<T>) -> Vec<T> {
     // Look for the "("
     if !matches!(state.tokens[*state.cursor], Token::ArithmeticParenthesisOpen(_)) {
         todo!("didnt find the thing '('")

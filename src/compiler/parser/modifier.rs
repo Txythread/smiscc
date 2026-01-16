@@ -15,10 +15,7 @@ pub struct Modifier {
 
 impl Modifier {
     pub fn keyword_is_modifier(keyword: Keyword) -> bool {
-        match keyword {
-            Keyword::Extern => true,
-            _ => false,
-        }
+        matches!(keyword, Keyword::Extern)
     }
 
     pub fn modifier_from(state: &mut ParserMetaState) -> Option<Modifier> {

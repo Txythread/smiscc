@@ -38,10 +38,7 @@ impl Operation {
     /// Whether the resulting value is of boolean type.
     /// If not, it should be the type of the object this is performed on.
     pub fn is_boolean(&self) -> bool {
-        match self {
-            Operation::Equals => true,
-            _ => false,
-        }
+        matches!(self, Self::Equals)
     }
 
     /// A value determining the importance of the operation (like PEMDAS).

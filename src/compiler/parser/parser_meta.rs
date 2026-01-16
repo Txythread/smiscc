@@ -12,7 +12,8 @@ use crate::compiler::tokenization::token::Token;
 /// Some parse_xyz(...) functions might expect more arguments,
 /// but this structure contains most of the commonly required
 /// information.
-#[derive(Debug, new)]
+#[derive(Debug)]
+#[derive(new)]
 pub struct ParserMetaState<'a> {
     /// The tokens of the file currently being parsed.
     /// Those stem from the tokenizer.
