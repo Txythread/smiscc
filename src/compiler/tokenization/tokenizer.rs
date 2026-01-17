@@ -24,6 +24,11 @@ use crate::util::operator;
 /// to perform the next step.
 pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<Token>> {
     let mut lines: Vec<Vec<Token>> = Vec::new();
+    let mut new_map = line_map.clone();
+    // The difference in the amount of tokens between the new map and the original line map.
+    // When a string is created, the original map has '"', 'text_contents' and '"' as separate
+    // tokens. The resulting one only has one. Therefore, this has to be decreased by two.
+    let mut nm_offset = 0;
 
 
     for x in separated.iter().enumerate() {
@@ -63,7 +68,13 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
                     let start_token_number = current_string_start.unwrap_or((token_number - 1) as u16 /*Fallback, one token before current*/);
                     let new_position = line_map.get_position_of_tokens(line_number as u32, start_token_number, token_number as i16);
 
-                    let token = Token::StringLiteral(string, new_position);
+                    println!("Combining from {} to {}", start_token_number as usize + nm_offset, token_number + nm_offset);
+                    new_map.combine_token_positions(0, start_token_number as usize + nm_offset, token_number + nm_offset);
+
+
+                    nm_offset -= 2;
+
+                    let token = StringLiteral(string, new_position);
                     line_tokens.push(token);
 
                     current_string_start = None;
@@ -100,7 +111,6 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
             const FALSE_KEYWORD: &str = BOOL_STATE_NAMES.1;
             const ARITHMETIC_PARENTHESIS_OPEN: &str = ARITHMETIC_PARENTHESES.0;
             const ARITHMETIC_PARENTHESIS_CLOSE: &str = ARITHMETIC_PARENTHESES.1;
-            const CODE_BLOCK_PARENTHESIS_OPEN: &str = CODE_BLOCK_PARENTHESES.1;
             const CODE_BLOCK_PARENTHESIS_CLOSE: &str = CODE_BLOCK_PARENTHESES.1;
             const OTHER: &str = CODE_BLOCK_PARENTHESES.0;
             match token.as_str() {
@@ -230,6 +240,8 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
 
         lines.push(line_tokens);
     }
+
+    *line_map = new_map;
 
     lines
 }

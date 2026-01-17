@@ -4,8 +4,8 @@
 1. Tell `==` apart from `=`
 
 ## Control Flow
-2. *if* - Statement
-3. *switch* - Statement
+1. *if* - Statement
+2. *switch* - Statement
 
 ## Error Handling
 1. Update line map
@@ -16,7 +16,6 @@ I just need colors, fat and non-fat text. It's overkill.
 
 ## Functions
 1. Add Return Types
-
 
 ## Variables & Constants
 1. Type Specification

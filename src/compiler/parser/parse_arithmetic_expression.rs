@@ -15,6 +15,7 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
         }
 
 
+    let original_cursor_pos = *meta_state.cursor;
 
 
     // Find logical parentheses and calculate stuff for them first
@@ -32,10 +33,11 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
     let mut current_operation: Option<Operation> = None;
 
     let tokens = meta_state.tokens.clone();
+
     'outerloop: loop {
 
         let token = tokens[*meta_state.cursor].clone();
-
+        let loop_start_cursor_pos = *meta_state.cursor;
 
 
         *meta_state.cursor += 1;
@@ -49,7 +51,7 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
 
 
         match token.clone() {
-            Token::ArithmeticParenthesisOpen(_) => {
+            Token::ArithmeticParenthesisOpen(pos) => {
                 // Detect function calls
                 if current_operation.is_none()
                     && let Some(last_node) = calculated_nodes.last()
@@ -57,6 +59,8 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
                             && let ValueNode::Identifier(identifier_node) = identifier_node.deref() {
                                 // This parenthesis belongs to a function call
                                 let function_name = identifier_node.identifier.clone();
+
+                                let start_pos = identifier_node.get_position();
 
                                 // Gather all the arguments
                                 let mut args: Vec<Rc<dyn Node>> = Vec::new();
@@ -86,10 +90,11 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
                                     }
                                 }
 
+
                                 let function_node = FunctionCallNode::new(
                                     Rc::new(function_name),
                                     args,
-                                    (*meta_state.file_number, TokenPosition::new(0, 0))
+                                    (*meta_state.file_number, TokenPosition::new(start_pos.1.start, 0))
                                 );
 
                                 calculated_nodes.remove(calculated_nodes.len() - 1);
@@ -159,7 +164,8 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
                 if parenthesis_depth > 0 {
                     tokens_in_parenthesis.push(token.clone());
                 } else {
-                    calculated_nodes.push(parse_token(token.clone(), *meta_state.file_number, meta_state.line_map.clone())?);
+                    let token_node = parse_token(token.clone(), *meta_state.file_number, meta_state.line_map.clone())?;
+                    calculated_nodes.push(token_node);
                 }
             }
         }

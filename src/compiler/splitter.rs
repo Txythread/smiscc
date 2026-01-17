@@ -33,6 +33,7 @@ pub fn split(code: String, file_name: String, line_map: &mut LineMap) -> Vec<Str
     let mut block_escaped: bool = false;
 
     let mut current_token: String = String::new();
+    let mut token_start_idx: usize = 0;
 
     let ignored_single_char_matches = IGNORED_SPLIT_CHARACTERS.iter().filter(|&x| x.len() == 1).map(|&x|x.chars().collect()).collect::<Vec<Vec<char>>>();
     let ignored_double_char_matches = IGNORED_SPLIT_CHARACTERS.iter().filter(|&x| x.len() == 2).map(|&x|x.chars().collect()).collect::<Vec<Vec<char>>>();
@@ -52,26 +53,32 @@ pub fn split(code: String, file_name: String, line_map: &mut LineMap) -> Vec<Str
 
     block_escaped = false;
 
-    for char in code.chars() {
-        let mut match_: String = String::new();
+    for char in code.chars().enumerate() {
+        let idx = char.0;
+        let length_to_idx = idx - token_start_idx;
+        let char = char.1;
+        let mut match_: String;
         let mut match_is_included = false;
 
         if STRING_MARKERS.0 == char && !block_escaped {
             if !current_token.is_empty() {
                 tokens.push(current_token.clone());
+                line_map.files[0].tokens_positions.push(TokenPosition::new(token_start_idx, length_to_idx));
                 current_token = String::new();
             }
-            line_map.files[0].tokens_positions.push(TokenPosition::new(0, 0));
             tokens.push(char.to_string());
-            line_map.files[0].tokens_positions.push(TokenPosition::new(0, 0));
+            line_map.files[0].tokens_positions.push(TokenPosition::new(idx, 1));
+            token_start_idx = idx+1;
             block_escaped = true;
             continue;
         }
 
         if STRING_MARKERS.1 == char && block_escaped {
             tokens.push(current_token.clone());
-            line_map.files[0].tokens_positions.push(TokenPosition::new(0, 0));
+            line_map.files[0].tokens_positions.push(TokenPosition::new(token_start_idx, length_to_idx));
+            token_start_idx = idx+1;
             tokens.push(char.to_string());
+            line_map.files[0].tokens_positions.push(TokenPosition::new(idx, 1));
 
             current_token = String::new();
             block_escaped = false;
@@ -118,19 +125,25 @@ pub fn split(code: String, file_name: String, line_map: &mut LineMap) -> Vec<Str
             if match_.len() == 1 {
                 if !current_token.is_empty() {
                     tokens.push(current_token.clone());
+                    line_map.files[0].tokens_positions.push(TokenPosition::new(token_start_idx, length_to_idx));
+                    token_start_idx = idx+1;
                 }
-                line_map.files[0].tokens_positions.push(TokenPosition::new(0, 0));
             } else {
                 current_token.remove(current_token.len() - 1);
                 if !current_token.is_empty() {
                     tokens.push(current_token.clone());
+                    line_map.files[0].tokens_positions.push(TokenPosition::new(token_start_idx, length_to_idx));
+                    token_start_idx = idx+1;
                 }
             }
 
             if match_is_included {
                 tokens.push(match_.clone());
-                line_map.files[0].tokens_positions.push(TokenPosition::new(0, 0));
+                let match_length = idx - match_.len();
+                let match_start = idx - match_length;
+                line_map.files[0].tokens_positions.push(TokenPosition::new(match_start, match_length));
             }
+            token_start_idx = idx+1;
 
             current_token = String::new();
         }

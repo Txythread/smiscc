@@ -1,4 +1,5 @@
 use colorize::AnsiColor;
+use derive_new::new;
 use termimad;
 
 #[derive(Clone, Debug)]
@@ -23,6 +24,18 @@ impl LineMap{
 
         println!("{}", info.message);
         println!()
+    }
+
+    pub fn combine_token_positions(&mut self, file: usize, start_idx: usize, end_idx: usize) {
+        let new_token: TokenPosition = self.get_position_of_tokens(file as u32, start_idx as u16, end_idx as i16);
+
+        let length = end_idx - start_idx;
+
+        for _ in 0..length {
+            self.files[file].tokens_positions.remove(start_idx);
+        }
+
+        self.files[file].tokens_positions.insert(start_idx, new_token);
     }
 
     pub fn copy_meta_data(&mut self) -> Self {
@@ -165,6 +178,7 @@ impl DisplayCodeInfo {
 
     /// Write the information to the screen given a line map (which contains the code).
     pub fn print(&mut self, line_map: LineMap){
+        println!("Printing error starting at: {} with a length of: {}", self.start_token, self.end_token);
         let line = line_map.files[self.line_number_in_map as usize].clone();
         
         let line_number_string = format!("{} |", line.line_number);
@@ -306,17 +320,13 @@ pub struct Position {
 }
 
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, new)]
 pub struct TokenPosition{
-    pub start: u16,
-    pub length: u16,
+    pub start: usize,
+    pub length: usize,
 }
 
 impl TokenPosition {
-    pub fn new(start: u16, length: u16) -> Self {
-        TokenPosition { start, length }
-    }
-
     /// Creates a token for when it doesn't really matter in test cases
     #[cfg(test)]
     pub fn test_value() -> Self {

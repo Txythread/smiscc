@@ -26,6 +26,9 @@ pub struct ArgumentList{
     #[clap(short, long, num_args = 0..=1)]
     pub get_micro_operation: Option<Option<String>>,// --get-micro-operation
 
+    #[clap(long)]
+    pub show_splitted: bool,                        // --show-splitted
+
     #[clap(short, long)]
     pub generate_instruction_table: bool,           // --generate-instructions-table
 

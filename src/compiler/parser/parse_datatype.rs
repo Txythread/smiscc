@@ -2,7 +2,7 @@ use std::rc::Rc;
 use uuid::Uuid;
 use derive_new::new;
 use crate::compiler::data_types::object::ObjectType;
-use crate::compiler::line_map::LineMap;
+use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, LineMap, NotificationInfo};
 use crate::compiler::parser::function_meta::FunctionArgument;
 use crate::compiler::tokenization::token::Token;
 
@@ -31,6 +31,23 @@ pub fn parse_parameter_descriptor(tokens: Rc<Vec<Token>>, cursor: &mut usize, ty
             internal_name = name.clone();
         }
     } else {
+        let error = DisplayCodeInfo::new(
+            0,
+            (*cursor + 1) as u32,
+            (*cursor + 1) as i32,
+            vec![],
+            DisplayCodeKind::InitialError
+        );
+
+        let notification = NotificationInfo::new(
+            format!("Expected Identifier, Got: '{:?}'", tokens[*cursor].clone()),
+            "The identifier for an argument was expected, but not provided".to_string(),
+            vec![error]
+        );
+
+        line_map.display_error(notification);
+
+
         todo!("Expected parameter name")
     }
 
