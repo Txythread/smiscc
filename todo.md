@@ -7,10 +7,6 @@
 1. *if* - Statement
 2. *switch* - Statement
 
-## Error Handling
-1. Update line map
-2. Create error messages
-
 ## Unimplement crossterm
 I just need colors, fat and non-fat text. It's overkill.
 
@@ -22,3 +18,7 @@ I just need colors, fat and non-fat text. It's overkill.
 2. Arrays
 3. `nil`/`null` handling
 4. Memory Management
+
+## Error Handling
+1. Update line map
+2. Create error messages

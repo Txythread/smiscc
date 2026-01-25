@@ -149,6 +149,22 @@ pub mod tokenization_options {
         /// For example: `extern "C" "_start"`
         #[strum(serialize = "extern")]
         Extern,
+
+        /// ### Control Execution Flow
+        ///
+        /// This is just a normal fucking if statement as you might see it in any
+        /// other language.
+        ///
+        /// *Technical Info:*
+        /// Any code within the if-clause is basically a part of the if-block, as
+        /// in its stack and its value are part of said block.
+        /// Lines within the header of the statement must produce boolean outputs
+        /// and are connected using either **`&&`**, **`||`** or **`^^`**.
+        /// The last two of those have the same priority but the '&&' has a higher
+        /// one. When there are two items of the same priority, those can are processed
+        /// from left to right.
+        #[strum(serialize = "if")]
+        If,
     }
 
 

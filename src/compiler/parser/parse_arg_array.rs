@@ -19,26 +19,46 @@ pub fn parse_arg_array<T>(state: &mut ParserMetaState, parse_fn: &ArrayParsingSu
 
     let mut data: Vec<T> = vec![];
 
+    let mut expected_item = true;
+
+    println!("Starting, pointing to {:?}", state.tokens[*state.cursor]);
+
     'data_loop: loop {
 
+        println!("Processing token: {:?}", state.tokens[*state.cursor]);
 
         // Look for a ',' or a ')'
         match state.tokens[*state.cursor].clone() {
-            Token::Colon(_) => {
+            Token::ArgumentSeparator(_) => {
+                if expected_item {
+                    panic!("expected item, received a colon.")
+                }
+
                 *state.cursor += 1;
+                expected_item = true;
+
                 continue 'data_loop;
             }
 
             Token::ArithmeticParenthesisClose(_) => {
+                if expected_item {
+                    println!("just info, remove this panic to continue.")
+                }
+
                 *state.cursor += 1;
                 break 'data_loop;
             }
 
             _ => {
+                if !expected_item {
+                    panic!("expected , or :")
+                }
+
                 // Find whatever is expected
                 let mut map = state.line_map.clone();
                 data.push(parse_fn(state.tokens.clone(), state.cursor, &mut map, state.datatypes.clone()));
                 *state.line_map = map;
+                expected_item = false;
             }
         }
     }

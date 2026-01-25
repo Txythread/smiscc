@@ -135,6 +135,8 @@ impl Statement for Statements {
                 let argument_node = arguments[1].clone().downcast_rc::<ArgumentsNode<ParameterDescriptor>>().unwrap();
                 let parameters = argument_node.args.clone();
 
+                println!("parameters: {:?}", parameters);
+
                 // Go through the parameters
                 // 1. Find extern
                 if let Some(extern_index) = modifiers.iter().position(|x|x.base == Keyword::Extern) {

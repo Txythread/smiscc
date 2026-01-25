@@ -139,7 +139,7 @@ pub fn split(code: String, file_name: String, line_map: &mut LineMap) -> Vec<Str
 
             if match_is_included {
                 tokens.push(match_.clone());
-                let match_length = idx - match_.len();
+                let match_length = idx - (match_.len() - 1);
                 let match_start = idx - match_length;
                 line_map.files[0].tokens_positions.push(TokenPosition::new(match_start, match_length));
             }

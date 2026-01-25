@@ -67,7 +67,7 @@ pub trait Node: Debug + Downcast {
     ///
     /// This shouldn't be touched if:
     /// 1. The context changes are only required in later parsing.
-    /// 2. The context changes need to be available outside the scope of the arguments
+    /// 2. The context changes do not need to be available outside the scope of the arguments
     ///
     /// The context changes in here get performed before
     /// [generate_instructions](Self::generate_instructions) gets executed.
@@ -121,6 +121,7 @@ impl Node for ValueNode {
     }
 
     fn get_datatypes(&self, all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+        println!("getting thing on subnode: {:?}", self.get_sub_node());
         self.get_sub_node().get_datatypes(all_types, context)
     }
 
@@ -171,8 +172,13 @@ impl Node for IdentifierNode {
         }
 
         let object_uuid = context.name_map.get(&self.identifier);
+
+        println!("uuid: {object_uuid:?}");
+
+
         let type_uuid = context.objects.get(object_uuid?);
         let type_ = context.datatypes.get(type_uuid?);
+
 
         Some(vec![type_?.clone()])
     }
@@ -621,7 +627,12 @@ impl Node for LetNode {
             result_uuid = Some(Uuid::new_v4());
         }
 
-        context.objects.insert(result_uuid.unwrap(), self.assigned_value.clone().unwrap().get_datatypes(context.datatypes.values().cloned().collect(), context.clone()).unwrap()[0].type_uuid);
+        let value = self.assigned_value.clone().unwrap();
+        let datatypes = value.get_datatypes(context.datatypes.values().cloned().collect(), context.clone());
+
+        println!("value: {:#?}, datatpyes: {datatypes:#?}", value);
+
+        context.objects.insert(result_uuid.unwrap(), datatypes.unwrap()[0].type_uuid);
         context.name_map.insert(self.identifier.clone(), result_uuid.unwrap());
 
         if self.is_mutable {
@@ -990,8 +1001,12 @@ impl Node for FunctionDeclarationNode {
             if let Some(name) = self.parameters[i].internal_name.clone() {
                 let uuid = self.parameter_function_args[i].own_uuid;
                 let type_uuid = self.parameter_function_args[i].type_uuid;
+
+
                 context.objects.insert(uuid, type_uuid);
                 context.name_map.insert(name.clone(), uuid);
+
+                println!("inserted object named {name} with uuid {uuid} as having the type: {type_uuid}")
             }
         }
 

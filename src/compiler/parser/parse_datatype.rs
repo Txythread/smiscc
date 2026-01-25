@@ -74,6 +74,8 @@ pub fn parse_parameter_descriptor(tokens: Rc<Vec<Token>>, cursor: &mut usize, ty
         _ => todo!("Not expected in parameter descriptor"),
     }
 
+    println!("Produced parameter descriptor; pointing to {:?}", tokens[*cursor]);
+
     ParameterDescriptor::new(name, internal_name, datatype.unwrap())
 
 }
@@ -93,6 +95,6 @@ pub struct ParameterDescriptor {
 
 impl ParameterDescriptor {
     pub fn generate_function_argument(&self) -> FunctionArgument {
-        FunctionArgument::new(self.name.clone(), self.datatype, Uuid::new_v4())
+        FunctionArgument::new(self.name.clone(), Uuid::new_v4(), self.datatype)
     }
 }

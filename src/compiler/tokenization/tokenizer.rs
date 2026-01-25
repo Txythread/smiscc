@@ -28,7 +28,7 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
     // The difference in the amount of tokens between the new map and the original line map.
     // When a string is created, the original map has '"', 'text_contents' and '"' as separate
     // tokens. The resulting one only has one. Therefore, this has to be decreased by two.
-    let mut nm_offset = 0;
+    let mut nm_offset: isize = 0;
 
 
     for x in separated.iter().enumerate() {
@@ -68,8 +68,7 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
                     let start_token_number = current_string_start.unwrap_or((token_number - 1) as u16 /*Fallback, one token before current*/);
                     let new_position = line_map.get_position_of_tokens(line_number as u32, start_token_number, token_number as i16);
 
-                    println!("Combining from {} to {}", start_token_number as usize + nm_offset, token_number + nm_offset);
-                    new_map.combine_token_positions(0, start_token_number as usize + nm_offset, token_number + nm_offset);
+                    new_map.combine_token_positions(0, (start_token_number as isize + nm_offset) as usize, (token_number as isize + nm_offset) as usize);
 
 
                     nm_offset -= 2;
@@ -234,7 +233,7 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
             }
 
             // As it's no other option, it can only be an identifier.
-            let identifier = Token::Identifier(token.clone(), current_token_pos.clone());
+            let identifier = Identifier(token.clone(), current_token_pos.clone());
             line_tokens.push(identifier);
         }
 
