@@ -76,18 +76,23 @@ pub fn parse_expression_kind(meta_state: &mut ParserMetaState, kind: ExpressionK
             *meta_state.current_block_idx = initial_block_idx;
             arguments.push(Rc::new(block));
         }
-        ExpressionKind::ParameterDescriptorArray => {
-            arguments.push(Rc::new(
-                ArgumentsNode::<ParameterDescriptor>::new(
-                    (0, TokenPosition::new(0, 0)),
-                    Rc::new(
-                        parse_arg_array::<ParameterDescriptor>(meta_state,
-                                                               &|tokens, cursor, line_map, datatypes|
-                                                                   parse_parameter_descriptor(tokens, cursor, datatypes, line_map, true))
+        ExpressionKind::Array(inner) => {
+            if matches!(inner.as_ref(), ExpressionKind::Parameter) {
+                arguments.push(Rc::new(
+                    ArgumentsNode::<ParameterDescriptor>::new(
+                        (0, TokenPosition::new(0, 0)),
+                        Rc::new(
+                            parse_arg_array::<ParameterDescriptor>(meta_state,
+                                                                   &|tokens, cursor, line_map, datatypes|
+                                                                       parse_parameter_descriptor(tokens, cursor, datatypes, line_map, true))
+                        )
                     )
-                )
-            ));
+                ));
+            } else {
+                todo!("Arrays can only contain parameters rn, should be easy to change tho.")
+            }
         }
+
         ExpressionKind::StringLiteral => {
             if let Token::StringLiteral(string, pos) = meta_state.tokens[*meta_state.cursor].clone() {
                 arguments.push(Rc::new(StringLiteralNode::new((*meta_state.file_number, pos), Rc::new(string))))
@@ -96,6 +101,9 @@ pub fn parse_expression_kind(meta_state: &mut ParserMetaState, kind: ExpressionK
             }
 
             *meta_state.cursor += 1;
+        }
+        ExpressionKind::Parameter => {
+            todo!("Parameters can only be parsed in arrays now, should be easy to implement tho.")
         }
     }
 

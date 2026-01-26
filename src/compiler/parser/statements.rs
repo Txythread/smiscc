@@ -58,7 +58,7 @@ impl Statement for Statements {
                     ),
 
                     (
-                        ExpressionKind::ParameterDescriptorArray,
+                        ExpressionKind::Array(Box::new(ExpressionKind::Parameter)),
                         true
                     )
                 ]

@@ -1,5 +1,6 @@
 use std::ops::Deref;
 use std::rc::Rc;
+use clap::Parser;
 use crate::compiler::line_map::TokenPosition;
 use crate::compiler::parser::parse_token::parse_token;
 use crate::compiler::parser::parser_meta::ParserMetaState;
@@ -42,7 +43,16 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
 
         *meta_state.cursor += 1;
 
-        if stop_at_unexpected_token && !token.is_expected_in_arithmetic() { *meta_state.cursor -= 1; break;}
+        if stop_at_unexpected_token && !token.is_expected_in_arithmetic() {
+            *meta_state.cursor -= 1;
+            skip_newlines(meta_state);
+            break;
+        }
+
+        if matches!(token, Token::ArgumentSeparator(_)) {
+            skip_newlines(meta_state);
+            break;
+        }
 
         if token.is_line_delimiting() {
             *meta_state.cursor -= 1;
@@ -66,29 +76,35 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
                                 let mut args: Vec<Rc<dyn Node>> = Vec::new();
 
                                 loop {
+                                    println!("current token (pae/f): {:?}", meta_state.tokens[*meta_state.cursor]);
+
                                     if let Some(new_node) = parse_arithmetic_expression(meta_state, 0, true) {
+                                        println!("did produce: {new_node:?}");
                                         args.push(new_node);
                                     } else {
+                                        println!("did not produce");
                                         // Just here for the note:
                                         // no arg was passed at all.
                                     }
 
-
-
                                     *meta_state.cursor -= 1;
 
+
+                                    println!("current token (pae/f): {:?}", meta_state.tokens[*meta_state.cursor]);
                                     // Look for either "," to indicate another argument or ")" to indicate the end of the function call
                                     if let Some(token) = meta_state.tokens.get(*meta_state.cursor ) {
                                         *meta_state.cursor += 1;
                                         match token {
                                             Token::ArithmeticParenthesisClose(_) => {break;},
-                                            Token::ArgumentSeparator(_) => {continue},
+                                            Token::ArgumentSeparator(_) => {println!("argument separated, args: {args:?}"); continue},
                                             _ => {todo!("Unexpected token in function call: {:?}", token)}
                                         }
                                     } else {
                                         todo!("Error: Unexpected line ending in function call");
                                     }
                                 }
+
+                    println!("ended, args: {args:?}");
 
 
                                 let function_node = FunctionCallNode::new(
@@ -160,11 +176,13 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
 
 
             _ => {
-
+                print!("custom parsing token");
                 if parenthesis_depth > 0 {
+                    println!();
                     tokens_in_parenthesis.push(token.clone());
                 } else {
                     let token_node = parse_token(token.clone(), *meta_state.file_number, meta_state.line_map.clone())?;
+                    println!(", produced: {token_node:?}");
                     calculated_nodes.push(token_node);
                 }
             }
@@ -182,4 +200,15 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
 
 
     Some(calculated_nodes.first()?.clone())
+}
+
+
+pub fn skip_newlines(meta_state: &mut ParserMetaState) {
+    while let Some(token) = meta_state.tokens.get(*meta_state.cursor) {
+        if matches!(token, Token::HardNewline(_) | Token::SoftNewline(_)) {
+            *meta_state.cursor += 1;
+        } else {
+            break;
+        }
+    }
 }

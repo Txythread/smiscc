@@ -4,12 +4,19 @@
 _stray:
 
 _start:
-	sub	sp, sp, #16
-	mov	x0, #0
+	sub	sp, sp, #32
+	mov	x0, #5
+	mov	x1, #6
 	str	x0, [sp, #0]
+	str	x1, [sp, #8]
 	ldr	x0, [sp, #0]
+	ldr	x1, [sp, #8]
+	bl	LB0
+	mov	x0, #0
+	str	x0, [sp, #16]
+	ldr	x0, [sp, #16]
 	bl	LB1
-	add	sp, sp, #16
+	add	sp, sp, #32
 
 LB0:
 	sub	sp, sp, #0

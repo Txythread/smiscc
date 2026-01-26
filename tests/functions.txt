@@ -1,5 +1,5 @@
 extern "C" "_start" func start() {
-//	let c = add(5, 6);
+	/*let c = */add(5, 6);
 	was_geht(0);
 }
 

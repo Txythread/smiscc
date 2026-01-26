@@ -609,6 +609,7 @@ impl Node for LetNode {
 
         if let Some(assigned_value) = self.assigned_value.clone() {
             let assignment_result = assigned_value.clone().generate_instructions(context).clone();
+            println!("assigned value: {assigned_value:?} created: {assignment_result:?}");
 
 
             let mut assignment_instructions = assignment_result.0;
@@ -844,7 +845,7 @@ impl Node for FunctionCallNode {
 
             let notification = NotificationInfo::new(
                 "Wrong Amount of Arguments".to_string(),
-                format!("Function '{}' expected {} argument(s) but received {}.", name, expected_args, actual_args),
+                format!("Function '{}' expected {} argument(s), but received {}.", name, expected_args, actual_args),
                 vec![display_info]
             );
 

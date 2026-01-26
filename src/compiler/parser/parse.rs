@@ -68,7 +68,12 @@ pub enum ExpressionKind {
 
     CodeBlock,
 
-    ParameterDescriptorArray,
+    /// An expression kind repeated multiple times.
+    /// Example: `(10, 10, 10)` would be an array of [values](Self::Value)
+    Array(Box<ExpressionKind>),
+    
+    /// Something with a name and a type (e.g. `a: u32`)
+    Parameter,
 
     StringLiteral,
 }
