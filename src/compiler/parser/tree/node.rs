@@ -5,7 +5,7 @@ use derive_new::*;
 use downcast_rs::{Downcast, impl_downcast};
 use uuid::Uuid;
 use crate::compiler::backend::context::Context;
-use crate::compiler::backend::flattener::Instruction;
+use crate::compiler::backend::flattener::{Instruction, JumpComparisonType, JumpCondition};
 use crate::compiler::data_types::datatypes_general::Buildable;
 use crate::compiler::data_types::integer::IntegerType;
 use crate::compiler::data_types::object::{ObjectType, Trait};
@@ -668,7 +668,7 @@ impl CodeBlockNode {
     }
 
     pub fn assign_label(&mut self, context: &mut Context) -> Rc<String> {
-        let name: Rc<String> = {if let Some(label) = self.label.clone() { label.clone() } else { context.label_count += 1; Rc::new(String::from("LB") + (context.label_count - 1).to_string().as_str()) }};
+        let name: Rc<String> = {if let Some(label) = self.label.clone() { label.clone() } else { context.generate_label() }};
 
         self.label = Some(name.clone());
 
@@ -1100,5 +1100,85 @@ impl Node for StringLiteralNode {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         Some(true)
+    }
+}
+
+#[derive(Debug, new)]
+pub struct IfNode {
+    pub position: (usize, TokenPosition),
+    pub condition: Rc<dyn Node>,
+    pub then_branch: Rc<CodeBlockNode>,
+    pub else_branch: Option<Rc<CodeBlockNode>>,
+}
+
+impl Node for IfNode {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        current
+    }
+
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        vec![]
+    }
+
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+        None
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        todo!("Not implemented yet")
+        //Box::new((*self).clone())
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        let condition = self.condition.generate_instructions(context);
+        let condition_instructions = condition.0;
+        let condition_value = condition.1;
+        let then_branch_instructions = self.then_branch.generate_instructions(context).0;
+        let else_branch_instructions = if let Some(else_b) = self.else_branch.clone() { else_b.generate_instructions(context).0 } else { vec![] };
+
+        let then_label_name = context.generate_label();
+        let else_label_name = context.generate_label();
+        let after_if_label_name = context.generate_label();
+        
+        let zero = Uuid::new_v4();
+
+        context.label_count += 1;
+
+        let instructions = [
+            condition_instructions,
+            vec![
+                Instruction::MoveData(zero, 0),
+                Instruction::JumpConditional(
+                    JumpCondition::new(
+                        condition_value,
+                        Some(zero),
+                        JumpComparisonType::NotEqual
+                    ),
+                    else_label_name.clone()
+                )
+            ],
+            
+            then_branch_instructions,
+
+            vec![
+                Instruction::Jump(after_if_label_name.clone()),
+                Instruction::Label(else_label_name, false),
+            ],
+            else_branch_instructions,
+
+            vec![
+                Instruction::Label(after_if_label_name, false),
+            ]
+        ].concat();
+
+        (instructions, None)
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        None
     }
 }

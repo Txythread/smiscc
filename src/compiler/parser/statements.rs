@@ -7,7 +7,7 @@ use crate::config::tokenization_options::Keyword;
 use crate::compiler::parser::parse::ExpressionKind;
 use crate::compiler::parser::parse_datatype::ParameterDescriptor;
 use crate::compiler::parser::statement::Statement;
-use crate::compiler::parser::tree::node::{ArgumentsNode, CodeBlockNode, ExitNode, FunctionDeclarationNode, IdentifierNode, LetNode, Node, StringLiteralNode};
+use crate::compiler::parser::tree::node::{ArgumentsNode, CodeBlockNode, ExitNode, FunctionDeclarationNode, IdentifierNode, IfNode, LetNode, Node, StringLiteralNode};
 
 #[derive(Clone, Debug, EnumIter)]
 pub enum Statements {
@@ -15,6 +15,7 @@ pub enum Statements {
     Var,
     Exit,
     Function,
+    If,
 }
 
 impl Statement for Statements {
@@ -24,6 +25,7 @@ impl Statement for Statements {
             Statements::Var => Some(Keyword::Var),
             Statements::Exit => Some(Keyword::Exit),
             Statements::Function => Some(Keyword::Function),
+            Statements::If => Some(Keyword::If),
         }
     }
 
@@ -59,6 +61,15 @@ impl Statement for Statements {
 
                     (
                         ExpressionKind::Array(Box::new(ExpressionKind::Parameter)),
+                        true
+                    )
+                ]
+            }
+
+            Statements::If => {
+                vec![
+                    (
+                        ExpressionKind::Value,
                         true
                     )
                 ]
@@ -103,6 +114,15 @@ impl Statement for Statements {
                 ]
             }
             Statements::Function => {
+                vec![
+                    (
+                        ExpressionKind::CodeBlock,
+                        true
+                    )
+                ]
+            }
+
+            Statements::If => {
                 vec![
                     (
                         ExpressionKind::CodeBlock,
@@ -163,6 +183,19 @@ impl Statement for Statements {
 
 
                 return Some(Rc::new(function_node));
+            }
+
+            Statements::If => {
+                let condition = arguments[0].clone();
+                let code_block = arguments[1].clone().downcast_rc::<CodeBlockNode>().unwrap();
+                let if_node = IfNode::new(
+                    (0, TokenPosition::new(0, 0)),
+                    condition,
+                    code_block.clone(),
+                    None
+                );
+
+                return Some(Rc::new(if_node));
             }
             _ => {}
         }

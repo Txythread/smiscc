@@ -20,6 +20,10 @@ pub fn generate() -> Architecture {
     instructions.insert(InstructionMeta::Label, String::from("\n$a:\n"));
     instructions.insert(InstructionMeta::AddImm, String::from("\tadd\t$a, $a, #$b\n"));
     instructions.insert(InstructionMeta::SubImm, String::from("\tsub\t$a, $a, #$b\n"));
+    instructions.insert(InstructionMeta::Jump, String::from("\tb\t$a\n"));
+    instructions.insert(InstructionMeta::JumpNotEqual, String::from("\tbne\t$a\n"));
+    instructions.insert(InstructionMeta::JumpEqual, String::from("\tbe\t$a\n"));
+    instructions.insert(InstructionMeta::Compare, String::from("\tcmp\t$a, $b\n"));
 
     Architecture::new(
         "aarch64_macOS".to_string(),

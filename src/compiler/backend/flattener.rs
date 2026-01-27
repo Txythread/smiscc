@@ -1,6 +1,8 @@
 use std::rc::Rc;
+use derive_new::new;
 use uuid::Uuid;
 use crate::compiler::backend::context::Context;
+use crate::compiler::data_types::object::Object;
 use crate::compiler::parser::tree::node::Node;
 
 pub fn flatten(line: Rc<dyn Node>, context: &mut Context) -> Vec<Instruction> {
@@ -83,7 +85,48 @@ pub enum Instruction {
     ReceiveArgument(Uuid, u8),
     
     FunctionEnd,
+    
+    JumpConditional(JumpCondition, Rc<String>),
+    
+    Jump(Rc<String>),
 }
+
+#[derive(new, Clone, Debug)]
+pub struct JumpCondition {
+    pub a: Option<Uuid>,
+    pub b: Option<Uuid>,
+    
+    pub comparison: JumpComparisonType,
+}
+
+impl JumpCondition {
+    pub fn get_objects(&self) -> Vec<Uuid> {
+        if let Some(a) = self.a {
+            if let Some(b) = self.b { vec![a, b] } else { vec![a] }
+        } else {
+            if let Some(b) = self.b { vec![b] } else { vec![] }
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum JumpComparisonType {
+    Equal,
+    NotEqual,
+    Greater,
+    GreaterOrEqual,
+    Less,
+    LessOrEqual,
+    Carry,
+    NotCarry,
+}
+
+impl JumpComparisonType {
+    pub fn requires_args(&self) -> bool {
+        !matches!(self, JumpComparisonType::Carry | JumpComparisonType::NotCarry)
+    }
+}
+
 
 impl Instruction {
     pub fn get_objects(&self) -> Vec<Uuid> {
@@ -102,6 +145,8 @@ impl Instruction {
             Instruction::Call(_, args, outs) => [args.clone(), outs.clone()].concat(),
             Instruction::Label(_, _) | Instruction::FunctionEnd => vec![],
             Instruction::ReceiveArgument(_, _) => { vec![] }
+            Instruction::JumpConditional(condition, _) => condition.get_objects(),
+            Instruction::Jump(_) => vec![],
         }
     }
 
@@ -143,5 +188,11 @@ pub enum InstructionMeta {
 
     Call,
 
-    Label
+    Label,
+    
+    Jump,
+    JumpEqual,
+    JumpNotEqual,
+    
+    Compare,
 }

@@ -1,6 +1,8 @@
 use std::collections::HashMap;
+use clap::builder::Str;
 use derive_new::new;
 use uuid::Uuid;
+use std::rc::Rc;
 use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::line_map::LineMap;
 use crate::compiler::parser::function_meta::FunctionMeta;
@@ -42,5 +44,10 @@ pub struct Context {
 impl Context {
     pub fn clear(line_map: LineMap) -> Context {
         Context { objects: HashMap::new(), mutable_objects: Vec::new(), line_map, name_map: HashMap::new(), datatypes: HashMap::new(), function_metas: Vec::new(), label_count: 0 }
+    }
+    
+    pub fn generate_label(&mut self) -> Rc<String>{
+        self.label_count += 1;
+        Rc::new(String::from("LB") + (self.label_count - 1).to_string().as_str())   
     }
 }

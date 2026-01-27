@@ -3,7 +3,8 @@ use std::io::Write;
 use std::ops::Deref;
 use std::rc::Rc;
 use crate::compiler::backend::arch::{Architecture, Register};
-use crate::compiler::backend::flattener::{Instruction, InstructionMeta};
+use crate::compiler::backend::flattener::{Instruction, InstructionMeta, JumpComparisonType};
+use crate::compiler::backend::flattener::InstructionMeta::Jump;
 use crate::compiler::parser::function_meta::FunctionStyle;
 
 #[derive(Debug)]
@@ -46,6 +47,12 @@ pub enum AssemblyInstruction {
     Call(String),
     
     Label(Rc<String>),
+
+    Compare(Register, Register),
+
+    Jump(Rc<String>),
+    JumpEqual(Rc<String>),
+    JumpNotEqual(Rc<String>),
 }
 
 impl AssemblyInstruction {
@@ -66,6 +73,10 @@ impl AssemblyInstruction {
             AssemblyInstruction::Exit(_) => InstructionMeta::Exit,
             AssemblyInstruction::Call(_) => InstructionMeta::Call,
             AssemblyInstruction::Label(_) => InstructionMeta::Label,
+            AssemblyInstruction::JumpEqual(_) => InstructionMeta::JumpEqual,
+            AssemblyInstruction::JumpNotEqual(_) => InstructionMeta::JumpNotEqual,
+            AssemblyInstruction::Compare(_, _) => InstructionMeta::Compare,
+            AssemblyInstruction::Jump(_) => Jump
         }
     }
 
@@ -220,7 +231,7 @@ impl AssemblyInstruction {
             }
 
 
-            AssemblyInstruction::DivReg(a, b) => {
+            AssemblyInstruction::DivReg(a, b) | AssemblyInstruction::Compare(a, b ) => {
                 vec![
                     (
                         String::from("$a"),
@@ -249,7 +260,7 @@ impl AssemblyInstruction {
                     )
                 ]
             }
-            AssemblyInstruction::Label(label) => {
+            AssemblyInstruction::Label(label) | AssemblyInstruction::JumpEqual(label) | AssemblyInstruction::JumpNotEqual(label) | AssemblyInstruction::Jump(label) => {
                 vec![
                     (
                         String::from("$a"),
@@ -261,6 +272,7 @@ impl AssemblyInstruction {
     }
 
     pub fn make_string(&self, arch: Rc<Architecture>) -> String {
+        println!("Getting instruction: {self:?}");
         let mut meta = arch.instructions.get(&self.get_instruction_meta()).unwrap().clone();
         let params = self.get_arguments();
 
@@ -407,6 +419,41 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
                 } else {
                     todo!("No register for argument found")
                 }
+            }
+            Instruction::JumpConditional(condition, label) => {
+                let mut reg_a: Option<Register> = None;
+                let mut reg_b: Option<Register> = None;
+
+                if condition.comparison.requires_args() {
+                    let mut register_a = architecture.get_object(condition.a.unwrap(), vec![]);
+                    let mut register_b = architecture.get_object(condition.b.unwrap(), vec![]);
+
+                    instructions.append(&mut register_a.1.as_mut());
+                    instructions.append(&mut register_b.1.as_mut());
+
+                    instructions.push(AssemblyInstruction::Compare(
+                        register_a.0.clone(),
+                        register_b.0.clone(),
+                    ));
+
+                    reg_a = Some(register_a.0);
+                    reg_b = Some(register_b.0);
+                }
+
+                match condition.comparison {
+                    JumpComparisonType::Equal => {
+                        instructions.push(AssemblyInstruction::JumpEqual(label));
+                    }
+
+                    JumpComparisonType::NotEqual => {
+                        instructions.push(AssemblyInstruction::JumpNotEqual(label));
+                    }
+
+                    _ => { todo!() }
+                }
+            }
+            Instruction::Jump(label) => {
+                instructions.push(AssemblyInstruction::Jump(label))
             }
         }
     }
