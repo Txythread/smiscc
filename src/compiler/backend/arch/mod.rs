@@ -1,12 +1,11 @@
 pub mod aarch64_mac_os;
-pub mod smiscc_none;
 mod register;
 
 use std::cmp::PartialEq;
 use std::collections::HashMap;
 use derive_new::new;
 use uuid::Uuid;
-use crate::compiler::backend::arch::register::{RegisterDataType, RegisterKind, RegisterSavingBehaviour};
+pub(crate) use crate::compiler::backend::arch::register::{Register, RegisterDataType, RegisterKind, RegisterMap, RegisterSavingBehaviour};
 use crate::compiler::backend::assembly::AssemblyInstruction;
 use crate::compiler::backend::flattener::InstructionMeta;
 use crate::compiler::parser::function_meta::FunctionStyle;
@@ -419,34 +418,3 @@ impl Architecture {
     }
 }
 
-#[derive(new, Debug, Clone, PartialEq)]
-pub struct RegisterMap {
-    registers: Vec<(Register, Option<Uuid>)>,
-
-    backup_reg_map: Vec<(Register, Option<Uuid>)>,
-
-    /// The index of the scratch register in the [registers map](Self::registers)
-    scratch_register: usize,
-
-    /// The stack offset. Must be reset at function start.
-    stack_offset: usize,
-
-    /// The contents of the stack and the offset in comparison to the stack pointer.
-    stack: HashMap</* object- */Uuid, /*stack offset: */usize>,
-
-    /// The index of the stack pointer register in the [registers map](Self::registers)
-    stack_pointer_register: usize,
-
-    /// A map of where all the arguments go in a C-Style call
-    /// The registers are given by their indexes in the registers.
-    c_style_arg_map: Vec<usize>
-}
-
-#[derive(new, Debug, Clone, PartialEq)]
-pub struct Register {
-    pub name: String,
-    pub kind: RegisterKind,
-    pub size_bytes: u8,
-    pub saving_behaviour: RegisterSavingBehaviour,
-    pub options: Vec<RegisterDataType>
-}

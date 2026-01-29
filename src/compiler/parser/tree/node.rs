@@ -1,3 +1,4 @@
+use std::arch::asm;
 use std::fmt::Debug;
 use std::ops::Deref;
 use std::rc::Rc;
@@ -1143,7 +1144,7 @@ impl Node for IfNode {
         let then_label_name = context.generate_label();
         let else_label_name = context.generate_label();
         let after_if_label_name = context.generate_label();
-        
+
         let zero = Uuid::new_v4();
 
         context.label_count += 1;
@@ -1161,7 +1162,7 @@ impl Node for IfNode {
                     else_label_name.clone()
                 )
             ],
-            
+
             then_branch_instructions,
 
             vec![

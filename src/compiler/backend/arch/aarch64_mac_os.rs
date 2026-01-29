@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use uuid::Uuid;
-use crate::compiler::backend::arch::{Architecture, Register, RegisterDataType, RegisterKind, RegisterMap, RegisterSavingBehaviour};
+use crate::compiler::backend::arch::{Architecture, RegisterDataType, RegisterKind, RegisterSavingBehaviour};
+use crate::compiler::backend::arch::register::{Register, RegisterMap};
 use crate::compiler::backend::flattener::InstructionMeta;
 
 

@@ -1,5 +1,6 @@
     .align 2
-    .global _start
+    	.align 2
+	.global _start
 
 _stray:
 
