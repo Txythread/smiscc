@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use uuid::Uuid;
 use crate::compiler::data_types::datatypes_general::{BuildResult, Buildable, ObjectBuildingError};
 use crate::compiler::data_types::object::{Object, ObjectType, Trait};
@@ -36,7 +37,7 @@ pub fn build_integer_types() -> Vec<(IntegerType, ObjectType)> {
 /// If no value could be generated, but it's clear that one should've been,
 /// a zero with an unspecified type will be returned. Error displaying is
 /// handled automatically.
-pub fn generate_integer(text: Token, types: Vec<(IntegerType, ObjectType)>, line_number: u32, token_number: u32, line_map: &mut LineMap) -> Option<(i128, Option<IntegerType>)> {
+pub fn generate_integer(text: Token, types: Rc<Vec<(IntegerType, ObjectType)>>, line_number: u32, token_number: u32, line_map: &mut LineMap) -> Option<(i128, Option<IntegerType>)> {
     let _unambiguous_result: Option<(i128, IntegerType)> = None;
 
     for kind in types.iter().enumerate() {

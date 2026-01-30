@@ -45,7 +45,7 @@ pub fn split(code: String, file_name: String, line_map: &mut LineMap) -> Vec<Str
     let mut clean_code = String::new();
 
     for line in code.lines() {
-        clean_code += trim(line.to_string(), &mut block_escaped).as_str();
+        clean_code += trim(line, &mut block_escaped).as_str();
     }
 
     let code = clean_code;
@@ -164,7 +164,7 @@ pub fn split(code: String, file_name: String, line_map: &mut LineMap) -> Vec<Str
 /// `"\t let a /* new value*/ = 3  "` => `"let a  = 3"`
 ///
 /// To remove multi-line block comments, the argument in_block_comment needs to be set to a false value initially and then be re-used every time a new line is passed to the function.
-pub fn trim(line: String, in_block_comment: &mut bool) -> String {
+pub fn trim(line: &str, in_block_comment: &mut bool) -> String {
     // In this function, the romanian flag is used for 
     // remains that should be removed in the end but make
     // the functions' syntax easier (to write, not to read :) )
@@ -241,7 +241,7 @@ mod tests {
         let mut in_block_comment = false;
 
         for line in lines {
-            output.push(trim(line.to_string(), &mut in_block_comment));
+            output.push(trim(line, &mut in_block_comment));
         }
 
         assert_eq!(expected.len(), output.len());

@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
     use crate::compiler::data_types::datatypes_general::{Buildable};
     use crate::compiler::data_types::integer::IntegerType;
     use crate::compiler::line_map::{LineMap, TokenPosition};
@@ -68,7 +69,7 @@ mod tests {
             None,
         ];
 
-        let integer_types = build_integer_types();
+        let integer_types = Rc::new(build_integer_types());
 
 
         for case in test_cases.iter().enumerate() {

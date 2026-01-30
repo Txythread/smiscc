@@ -1,6 +1,9 @@
+use std::rc::Rc;
+use clap::builder::Str;
 use strum::IntoEnumIterator;
 use crate::compiler::data_types::integer::*;
 use crate::compiler::line_map::LineMap;
+use crate::compiler::splitter::trim;
 use crate::compiler::tokenization::token::{Token, Token::* };
 use crate::config::tokenization_options::*;
 use crate::config::tokenization_options::Keyword;
@@ -52,7 +55,7 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
         // Build the integer types
         // Those are used for checking for specific types (like unsigned 32-bit
         // integer) later in code.
-        let integer_types = build_integer_types();
+        let integer_types = Rc::new(build_integer_types());
 
         'token_loop: for y in line.iter().enumerate() {
             let token = y.1.clone();
@@ -247,6 +250,23 @@ pub fn tokenize(separated: Vec<Vec<String>>, line_map: &mut LineMap) -> Vec<Vec<
 
 
 
+/*
+pub fn tokenize_file(contents: String) -> Vec<Token> {
+    // Remove the comments
 
+    let mut lines: Vec<String> = Vec::new();
 
+    {
+        let mut cursor_in_block_comment = false;
+        for line in contents.lines() {
+            let line_commentless = trim(line, &mut cursor_in_block_comment);
+
+            if !line.is_empty() {
+                lines.push(line_commentless)
+            }
+        }
+    }
+
+    ;
+}*/
 

@@ -1,0 +1,4 @@
+extern "C" "_start" func start() {
+	let a = 5;
+	let b = false;
+}

@@ -320,7 +320,7 @@ pub struct Position {
 }
 
 
-#[derive(Clone, Debug, PartialEq, new)]
+#[derive(Clone, Copy, Debug, PartialEq, new)]
 pub struct TokenPosition{
     pub start: usize,
     pub length: usize,

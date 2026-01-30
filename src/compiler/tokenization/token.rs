@@ -33,7 +33,7 @@ pub enum Token {
     /// This is like "=" in basically every (non-esoteric) programming language.
     Assignment(TokenPosition),
     
-    /// Something that seperates two arguments, e.g. in a function call or array.
+    /// Something that separates two arguments, e.g. in a function call or array.
     /// This correlates with a "," in most languages.
     ArgumentSeparator(TokenPosition),
 
@@ -62,6 +62,7 @@ pub enum Token {
     Colon(TokenPosition),
 
 }
+
 
 impl Token {
     pub fn get_position(&self) -> TokenPosition {
