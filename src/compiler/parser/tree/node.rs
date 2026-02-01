@@ -82,6 +82,10 @@ pub trait Node: Debug + Downcast {
     }
 
 
+    /// Resets the position of the node to the TokenPositon::test_position()
+    /// on the node itself and all subnodes
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self);
 }
 
 impl_downcast!(Node);
@@ -136,6 +140,15 @@ impl Node for ValueNode {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         self.get_sub_node().output_is_randomly_mutable()
+    }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        match self {
+            ValueNode::Arithmetic(node) => node.repeatedly_reset_position(),
+            ValueNode::Literal(node) => node.repeatedly_reset_position(),
+            ValueNode::Identifier(node) => node.repeatedly_reset_position(),
+        }
     }
 }
 
@@ -197,6 +210,11 @@ impl Node for IdentifierNode {
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         Some(false)
     }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        self.position = (0, TokenPosition::test_value());
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -242,6 +260,14 @@ impl Node for LiteralValueNode {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         Some(true)
+    }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        match self {
+            LiteralValueNode::Integer(node) => node.repeatedly_reset_position(),
+            LiteralValueNode::Boolean(node) => node.repeatedly_reset_position(),
+        }
     }
 }
 
@@ -293,6 +319,11 @@ impl Node for BoolLiteralNode {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         Some(true)
+    }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        self.position = (0, TokenPosition::test_value());
     }
 }
 
@@ -357,6 +388,11 @@ impl Node for IntegerLiteralNode {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         Some(true)
+    }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        self.position = (0, TokenPosition::test_value());
     }
 }
 
@@ -465,6 +501,30 @@ impl Node for ArithmeticNode {
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         Some(self.argument_a.output_is_randomly_mutable()? || self.argument_b.output_is_randomly_mutable()?)
     }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        self.position = (0, TokenPosition::test_value());
+        {
+            let other = self.argument_a.clone();
+            let other_2 = other.downcast_rc::<ValueNode>().unwrap();
+            let mut other_3 = other_2.deref().clone();
+
+            other_3.repeatedly_reset_position();
+            self.argument_a = Rc::new(other_3);
+        }
+
+        {
+            let other = self.argument_b.clone();
+            let other_2 = other.downcast_rc::<ValueNode>().unwrap();
+            let mut other_3 = other_2.deref().clone();
+
+            other_3.repeatedly_reset_position();
+            self.argument_b = Rc::new(other_3);
+        }
+
+
+    }
 }
 
 #[derive(Clone, Debug, new)]
@@ -537,6 +597,13 @@ impl Node for AssignmentNode {
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         None
     }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        self.position = (0, TokenPosition::test_value());
+        todo!();
+        self.right_side.repeatedly_reset_position();
+    }
 }
 
 #[derive(Clone, Debug, new)]
@@ -572,6 +639,11 @@ impl Node for AssignmentSymbolNode {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         None
+    }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        self.position = (0, TokenPosition::test_value());
     }
 }
 
@@ -647,6 +719,15 @@ impl Node for LetNode {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         None
+    }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        self.position = (0, TokenPosition::test_value());
+
+        if self.assigned_value.is_none() { return }
+        todo!()
+        //self.assigned_value.unwrap().repeatedly_reset_position();
     }
 }
 
@@ -730,6 +811,14 @@ impl Node for CodeBlockNode {
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         None
     }
+
+
+
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        self.position = (0, TokenPosition::test_value());
+    }
 }
 
 
@@ -775,6 +864,11 @@ impl Node for ExitNode {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         None
+    }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        self.position = (0, TokenPosition::test_value());
     }
 }
 
@@ -885,6 +979,11 @@ impl Node for FunctionCallNode {
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         None
     }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        self.position = (0, TokenPosition::test_value());
+    }
 }
 
 #[derive(Clone, Debug, new)]
@@ -935,6 +1034,11 @@ impl Node for CodeBlockArray {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         None
+    }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        todo!()
     }
 }
 
@@ -1029,6 +1133,11 @@ impl Node for FunctionDeclarationNode {
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         None
     }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        self.position = (0, TokenPosition::test_value());
+    }
 }
 
 #[derive(Clone, Debug, new)]
@@ -1064,6 +1173,11 @@ impl<T: 'static + Debug + Clone> Node for ArgumentsNode<T> {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         None
+    }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        self.position = (0, TokenPosition::test_value());
     }
 }
 
@@ -1101,6 +1215,11 @@ impl Node for StringLiteralNode {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         Some(true)
+    }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        self.position = (0, TokenPosition::test_value());
     }
 }
 
@@ -1181,5 +1300,11 @@ impl Node for IfNode {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         None
+    }
+
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        self.position = (0, TokenPosition::test_value());
     }
 }

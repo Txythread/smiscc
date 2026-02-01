@@ -120,3 +120,28 @@ impl Token {
         matches!(self, Token::HardNewline(_))
     }
 }
+
+#[cfg(test)]
+impl Token {
+    pub fn reset_position(&mut self) {
+        let new_pos = TokenPosition::test_value();
+        match self {
+            Token::UnspecifiedString(_, a) => { *a = new_pos }
+            Token::StringLiteral(_, a) => { *a = new_pos }
+            Token::IntegerLiteral(_, _, a) => {*a = new_pos }
+            Token::BoolLiteral(_, a) => { *a = new_pos }
+            Token::KeywordType(_, a) => {*a = new_pos }
+            Token::Identifier(_, a) => {*a = new_pos }
+            Token::Operator(_, a) => {*a = new_pos}
+            Token::Assignment(a) => {*a = new_pos}
+            Token::ArgumentSeparator(a) => {*a = new_pos}
+            Token::ArithmeticParenthesisOpen(a) => {*a = new_pos}
+            Token::ArithmeticParenthesisClose(a) => {*a = new_pos}
+            Token::SoftNewline(a) => {*a = new_pos}
+            Token::HardNewline(a) => {*a = new_pos}
+            Token::CodeBlockParenthesisOpen(a) => {*a = new_pos}
+            Token::CodeBlockParenthesisClose(a) => {*a = new_pos}
+            Token::Colon(a) => {*a = new_pos}
+        }
+    }
+}

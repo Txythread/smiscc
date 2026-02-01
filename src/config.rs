@@ -2,7 +2,7 @@
 
 /// ### Defines how code gets split into tokens and how those tokens are then classified.
 ///
-/// These infos are used in both: [the splitter](crate::compiler::splitter::split) and
+/// These infos are used in both: [the splitter](crate::compiler::trimmer::split) and
 /// [the tokenizer (/classifier)](crate::compiler::tokenization::tokenizer::tokenize).
 pub mod tokenization_options {
     use crate::util::math::Base;
@@ -103,7 +103,7 @@ pub mod tokenization_options {
 
 
     /// Holds all keywords that, when split by the
-    /// [splitter](crate::compiler::splitter::split) as a single string,
+    /// [splitter](crate::compiler::trimmer::split) as a single string,
     /// should be classified separately.
     /// #[derive(EnumString, AsRefStr, Debug)]
     ///

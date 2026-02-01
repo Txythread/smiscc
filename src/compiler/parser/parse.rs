@@ -81,9 +81,10 @@ pub enum ExpressionKind {
 
 #[cfg(test)]
 mod tests {
+    use std::ops::Deref;
     use std::rc::Rc;
     use strum::IntoEnumIterator;
-    use crate::compiler::data_types::integer::IntegerType;
+    use crate::compiler::data_types::integer::{build_integer_types, IntegerType};
     use crate::compiler::data_types::object::ObjectType;
     use crate::compiler::line_map::{LineMap, TokenPosition};
     use crate::compiler::parser::parse_arithmetic_expression::parse_arithmetic_expression;
@@ -92,8 +93,7 @@ mod tests {
     use crate::compiler::parser::statements::Statements;
     use crate::compiler::tokenization::token::Token;
     use crate::compiler::parser::tree::node::*;
-    use crate::compiler::splitter::split;
-    use crate::compiler::tokenization::tokenizer::tokenize;
+    use crate::compiler::tokenization::tokenizer::tokenize_file;
     use crate::util::operator::Operation;
 
     #[test]
@@ -148,8 +148,9 @@ mod tests {
 
     #[test]
     fn test_parse_multiplication() {
-        let tokens1 = tokenize(vec![split("6 + 7 * 67 - 420;".to_string(), String::from("test.txt"), &mut LineMap::test_map())], &mut LineMap::test_map());
-        let tokens2 = tokenize(vec![split("(6 + (7 * 67)) - 420;".to_string(), String::from("test.txt"), &mut LineMap::test_map())], &mut LineMap::test_map());
+        let integer_types = Rc::new(build_integer_types());
+        let tokens1 = tokenize_file("6 + 7 * 67 - 420;".to_string(), 0, integer_types.clone(), &mut LineMap::test_map(),);
+        let tokens2 = tokenize_file("(6 + (7 * 67)) - 420;".to_string(), 0, integer_types, &mut LineMap::test_map(),);
 
         let mut parsed1;
         let mut parsed2;
@@ -166,7 +167,7 @@ mod tests {
 
 
             let mut meta1 = ParserMetaState::new(
-                Rc::new(tokens1[0].clone()),
+                Rc::new(tokens1.clone()),
                 &mut cursor,
                 &mut line_map,
                 statements,
@@ -176,7 +177,14 @@ mod tests {
                 &mut code_block_depth,
                 &mut object_types
             );
-            parsed1 = parse_arithmetic_expression(&mut meta1, 0, true,);
+
+            let mut int = parse_arithmetic_expression(&mut meta1, 0, true,).unwrap();
+            let mut int_2 = int.downcast_rc::<ValueNode>().unwrap();
+            let mut int_3 = int_2.deref().clone();
+
+            int_3.repeatedly_reset_position();
+
+            parsed1 = int_3;
         }
 
         println!("-------------------------------------");
@@ -193,7 +201,7 @@ mod tests {
 
 
             let mut meta1 = ParserMetaState::new(
-                Rc::new(tokens2[0].clone()),
+                Rc::new(tokens2.clone()),
                 &mut cursor,
                 &mut line_map,
                 statements,
@@ -203,11 +211,20 @@ mod tests {
                 &mut code_block_depth,
                 &mut object_types
             );
-            parsed2 = parse_arithmetic_expression(&mut meta1, 0, true,);
+
+            let mut int = parse_arithmetic_expression(&mut meta1, 0, true,).unwrap();
+            let mut int_2 = int.downcast_rc::<ValueNode>().unwrap();
+            let mut int_3 = int_2.deref().clone();
+
+            int_3.repeatedly_reset_position();
+
+            parsed2 = int_3;
         }
 
 
 
-        assert_eq!(format!("{:#?}", parsed1), format!("{:#?}", parsed2));
+
+
+        assert_eq!(format!("{:?}", parsed1), format!("{:?}", parsed2));
     }
 }

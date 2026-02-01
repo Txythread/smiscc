@@ -12,7 +12,7 @@ type ArrayParsingSubfunction<T> = dyn Fn(Rc<Vec<Token>>, &mut usize, &mut LineMa
 pub fn parse_arg_array<T>(state: &mut ParserMetaState, parse_fn: &ArrayParsingSubfunction<T>) -> Vec<T> {
     // Look for the "("
     if !matches!(state.tokens[*state.cursor], Token::ArithmeticParenthesisOpen(_)) {
-        todo!("didnt find the thing '('")
+        todo!("didnt find the '(', got {:?} instead", state.tokens[*state.cursor])
     }
     *state.cursor += 1;
 

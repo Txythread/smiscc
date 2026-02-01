@@ -3,7 +3,7 @@ use crate::ArgumentList;
 mod compiler_coordinator;
 pub mod data_types;
 pub mod line_map;
-pub mod splitter;
+pub mod trimmer;
 pub mod tokenization;
 pub mod parser;
 mod backend;

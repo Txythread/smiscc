@@ -12,10 +12,13 @@ use crate::util::operator;
 #[derive(Clone, Copy, Debug, Logos, PartialEq)]
 #[logos(skip r"[ \t\f]+")]
 pub enum TokenPrototype {
+    /// A string literal in the original code.
+    /// At this stage, this still contains the leading and trailing delimiters.
     #[regex("\"[^\"]*\"")]
     StringLiteral,
 
-    #[regex("[0-9](x|d|o)?[0-9a-fA-F]*")]
+    /// An integer literal. Type might be specified in the corresponding &str.
+    #[regex("[0-9](x|d|o)?[0-9a-fA-Fu]*")]
     IntegerLiteral,
 
     #[token("true")]
@@ -24,22 +27,27 @@ pub enum TokenPrototype {
     #[token("false")]
     BoolLiteralFalse,
 
+    /// An assignment (=), not to be confused with an equal operator (==)
     #[token("=")]
     Assignment,
 
+    /// A newline with no ';'
     #[token("\n")]
     SoftNewline,
 
+    /// Any operator (+-*/%, etc.)
     #[regex(r"\+|-|\*|/|(<<?<?)|(>>?>?)|(==)")]
     Operation,
 
+    /// A newline that always terminates a line (';')
     #[token(";")]
     HardNewline,
 
     #[cfg(test)]
     #[token("test")]
     Test,
-    
+
+    /// A comma, separating values (or types) in tuples, arrays and such.
     #[token(",")]
     ArgumentSeparator,
 
@@ -58,7 +66,7 @@ pub enum TokenPrototype {
     #[token(":")]
     Colon,
 
-    #[regex("[a-zA-Z][a-zA-Z0-9]*")]
+    #[regex("[a-zA-Z_][a-zA-Z0-9_]*")]
     Identifier,
 }
 

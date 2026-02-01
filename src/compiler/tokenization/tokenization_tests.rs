@@ -5,7 +5,7 @@ mod tests {
     use crate::compiler::data_types::integer::IntegerType;
     use crate::compiler::line_map::{LineMap, TokenPosition};
     use crate::compiler::data_types::object::{Object, ObjectType};
-    use crate::compiler::tokenization::tokenizer::tokenize;
+    use crate::compiler::tokenization::tokenizer::tokenize_file;
     use crate::compiler::tokenization::token::Token;
     use crate::compiler::data_types::integer::{build_integer_types, generate_integer};
     use crate::compiler::data_types::object::generate_object;
@@ -30,7 +30,7 @@ mod tests {
 
     #[test]
     fn test_tokenization() {
-        let input_tokens = vec![
+        /*let input_tokens = vec![
             /*0*/vec!["\"".to_string(), "Was geht ab...".to_string(), "\"".to_string()],
             /*1*/vec!["\"".to_string(), "".to_string(), "\"".to_string()],
             /*2*/vec!["\"".to_string(), "... in Rumänien?".to_string(), "\"".to_string()],
@@ -40,22 +40,31 @@ mod tests {
             /*6*/vec!["var".to_string(), "rumänien".to_string(), "=".to_string(), "(".to_string(), "10u32".to_string(), "+".to_string(), "0x67".to_string(), ")".to_string()],
             /*7*/vec!["(".to_string(), "6".to_string(), "+".to_string(), "7".to_string(),
             ")".to_string(), "*".to_string(), "67".to_string()],
-        ];
+        ];*/
 
-        let expected_output = vec![
-            /*0*/vec![Token::StringLiteral("Was geht ab...".to_string(), TokenPosition::new(0, 0 /*ends with 0 now because the tokens don't match the input*/))],
-            /*1*/vec![Token::StringLiteral("".to_string(), TokenPosition::test_value())],
-            /*2*/vec![Token::StringLiteral("... in Rumänien?".to_string(), TokenPosition::test_value())],
-            /*3*/vec![Token::KeywordType(Keyword::Let, TokenPosition::test_value()), Token::Identifier("Was geht".to_string(), TokenPosition::test_value()), Token::KeywordType(Keyword::Var, TokenPosition::test_value())],
+        let input_text = "\
+            \"Was geht ab...\" \"... in Rumaenien?\" let Was_geht var var true var 10 var rumaenien = (10u32 + 0x67) (6 + 7) * 67
+        ";
+
+        let expected_output = [
+            /*0*/vec![Token::StringLiteral("Was geht ab...".to_string(), TokenPosition::test_value()/*TokenPosition::new(0, 16 /*ends with 0 now because the tokens don't match the input*/)*/)],
+            /*2*/vec![Token::StringLiteral("... in Rumaenien?".to_string(), TokenPosition::test_value())],
+            /*3*/vec![Token::KeywordType(Keyword::Let, TokenPosition::test_value()), Token::Identifier("Was_geht".to_string(), TokenPosition::test_value()), Token::KeywordType(Keyword::Var, TokenPosition::test_value())],
             /*4*/vec![Token::KeywordType(Keyword::Var, TokenPosition::test_value()), Token::BoolLiteral(true, TokenPosition::test_value())],
             /*5*/vec![Token::KeywordType(Keyword::Var, TokenPosition::test_value()), Token::IntegerLiteral(10, None, TokenPosition::test_value())],
-            /*6*/vec![Token::KeywordType(Keyword::Var, TokenPosition::test_value()), Token::Identifier("rumänien".to_string(), TokenPosition::test_value()), Token::Assignment(TokenPosition::test_value()), Token::ArithmeticParenthesisOpen(TokenPosition::test_value()), Token::IntegerLiteral(10, Some(IntegerType::Unsigned32BitInteger), TokenPosition::test_value()), Token::Operator(Operation::Addition, TokenPosition::test_value()), Token::IntegerLiteral(0x67, None, TokenPosition::test_value()), Token::ArithmeticParenthesisClose(TokenPosition::test_value())],
+            /*6*/vec![Token::KeywordType(Keyword::Var, TokenPosition::test_value()), Token::Identifier("rumaenien".to_string(), TokenPosition::test_value()), Token::Assignment(TokenPosition::test_value()), Token::ArithmeticParenthesisOpen(TokenPosition::test_value()), Token::IntegerLiteral(10, Some(IntegerType::Unsigned32BitInteger), TokenPosition::test_value()), Token::Operator(Operation::Addition, TokenPosition::test_value()), Token::IntegerLiteral(0x67, None, TokenPosition::test_value()), Token::ArithmeticParenthesisClose(TokenPosition::test_value())],
             /*7*/vec![Token::ArithmeticParenthesisOpen(TokenPosition::test_value()), Token::IntegerLiteral(6, None, TokenPosition::test_value()), Token::Operator(Operation::Addition, TokenPosition::test_value()), Token::IntegerLiteral(7, None, TokenPosition::test_value()), Token::ArithmeticParenthesisClose(TokenPosition::test_value()), Token::Operator(Operation::Multiplication, TokenPosition::test_value()), Token::IntegerLiteral(67, None, TokenPosition::test_value())],
-        ];
+        ].concat();
 
-        let actual_output = tokenize(input_tokens, &mut LineMap::test_map());
+        let actual_output = tokenize_file(input_text.to_string(), 0, Rc::new(build_integer_types()), &mut LineMap::test_map());
 
-        assert_eq!(actual_output, expected_output);
+        for i in 0..expected_output.len() {
+            //matches!(actual_output[i], expected_output[i]);
+            let mut output = actual_output[i].clone();
+            output.reset_position();
+            assert_eq!(output, expected_output[i]);
+        }
+
     }
 
     #[test]

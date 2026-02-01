@@ -4,26 +4,25 @@ use crate::ArgumentList;
 use crate::compiler::backend::assembly;
 use crate::compiler::backend::context::Context;
 use crate::compiler::backend::flattener::flatten;
-use crate::compiler::splitter::split;
-use crate::compiler::tokenization::tokenizer::tokenize;
+use crate::compiler::tokenization::tokenizer::tokenize_file;
 use crate::compiler::parser::parse::parse;
 use crate::compiler::backend::arch::aarch64_mac_os;
 use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::line_map::LineMap;
 use std::rc::Rc;
+use crate::compiler::data_types::integer::build_integer_types;
 use crate::compiler::parser::tree::node::{CodeBlockArray, Node};
 
 pub fn compile(code: String, args: ArgumentList) {
     let mut line_map: LineMap = LineMap::new();
-    let splitted = split(code, String::from("test*.txt"), &mut line_map);
-    if args.show_splitted {
-        println!("----- Splitted -----");
-        for line in splitted.iter().enumerate() {
-            println!("{}:\t{:?}\t[{:?}]", line.0 + 1, line.1, line_map.files[0].tokens_positions[line.0]);
-        }
-        println!("------------------");
-    }
-    let tokens = tokenize(vec![splitted.clone()], &mut line_map);
+
+    let tokens = tokenize_file(
+        code,
+        0usize,
+        Rc::new(build_integer_types()),
+        &mut line_map,
+    );
+
     if args.show_tokens {
         println!("----- Tokens -----");
         for line in tokens.iter().enumerate() {
@@ -34,7 +33,7 @@ pub fn compile(code: String, args: ArgumentList) {
 
     let mut object_types = Rc::new(ObjectType::generate_built_ins());
 
-    let mut parsed = parse(tokens.clone(), &mut line_map, &mut object_types).unwrap();
+    let mut parsed = parse(vec![tokens.clone()], &mut line_map, &mut object_types).unwrap();
     let mut context = Context::clear(line_map);
     object_types.iter().for_each(|object_type| {
        context.datatypes.insert(object_type.type_uuid, object_type.clone());
