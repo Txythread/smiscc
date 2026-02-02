@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use derive_new::new;
 use uuid::Uuid;
 
-#[derive(new, Debug, Clone, PartialEq)]
+#[derive(new, Debug, Clone, Eq, Hash, PartialEq)]
 pub struct Register {
     pub name: String,
     pub kind: RegisterKind,
@@ -34,13 +34,13 @@ pub struct RegisterMap {
     pub(crate) c_style_arg_map: Vec<usize>
 }
 
-#[derive(new, Debug, Clone, PartialEq)]
+#[derive(new, Debug, Clone, Eq, Hash, PartialEq)]
 pub enum RegisterKind {
     GeneralPurpose,
     StackPointer,
 }
 
-#[derive(new, Debug, Clone, PartialEq)]
+#[derive(new, Debug, Clone, Eq, Hash, PartialEq)]
 pub enum RegisterSavingBehaviour {
     /// Never use beyond the next function call
     Scratch,
@@ -54,7 +54,7 @@ pub enum RegisterSavingBehaviour {
     CalleeSaved,
 }
 
-#[derive(new, Debug, Clone, PartialEq)]
+#[derive(new, Debug, Clone, Eq, Hash, PartialEq)]
 pub enum RegisterDataType {
     Integer,
     Float,

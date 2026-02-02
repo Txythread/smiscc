@@ -1,8 +1,11 @@
 pub mod aarch64_mac_os;
 mod register;
+pub mod aarch64;
 
 use std::cmp::PartialEq;
 use std::collections::HashMap;
+use std::hash::Hash;
+use std::rc::Rc;
 use derive_new::new;
 use uuid::Uuid;
 pub(crate) use crate::compiler::backend::arch::register::{Register, RegisterDataType, RegisterKind, RegisterMap, RegisterSavingBehaviour};
@@ -10,16 +13,13 @@ use crate::compiler::backend::assembly::AssemblyInstruction;
 use crate::compiler::backend::flattener::InstructionMeta;
 use crate::compiler::parser::function_meta::FunctionStyle;
 
+pub trait Isa: Clone + Eq + Hash + From<AssemblyInstruction> {
+    fn to_string(&self) -> String;
+}
+
 #[derive(new, Debug, Clone, PartialEq)]
 pub struct Architecture {
     pub name: String,
-    /// The instructions. What the string is for is specified by the
-    /// (InstructionMeta)[InstructionMeta] provided. The associated string will get
-    /// some parts replaced.
-    /// 1. Regular arguments are provided as $a, $b, ...
-    /// 1. The stack pointer is provided as $sp.
-    /// 1. The scratch register is provided $scratch
-    pub instructions: HashMap<InstructionMeta, String>,
     pub register_map: RegisterMap,
     pub leading_boilerplate: &'static str,
     pub trailing_boilerplate: &'static str,
@@ -40,6 +40,8 @@ impl Architecture {
                     return (register.0, vec![])
                 }
         }
+
+
 
         // Make room for it in the registers as it's needed regardless of the value being on stack or not.
         let mut result_reg = self.provide_empty_register(preserving, &|_|true);

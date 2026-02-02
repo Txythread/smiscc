@@ -10,6 +10,7 @@ use crate::compiler::backend::arch::aarch64_mac_os;
 use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::line_map::LineMap;
 use std::rc::Rc;
+use crate::compiler::backend::arch::aarch64::Aarch64Asm;
 use crate::compiler::data_types::integer::build_integer_types;
 use crate::compiler::parser::tree::node::{CodeBlockArray, Node};
 
@@ -48,7 +49,7 @@ pub fn compile(code: String, args: ArgumentList) {
     let assembly = assembly::generate_assembly_instructions(flattened, arch.clone());
 
     if context.line_map.error_count == 0 {
-        assembly::generate_assembly(assembly, arch, "test.s".to_string())
+        assembly::generate_assembly::<Aarch64Asm>(assembly, arch, "test.s".to_string())
     }
 
     cc::Build::new()

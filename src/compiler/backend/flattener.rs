@@ -83,7 +83,8 @@ pub enum Instruction {
     
     
     ReceiveArgument(Uuid, u8),
-    
+
+    FunctionStart,
     FunctionEnd,
     
     JumpConditional(JumpCondition, Rc<String>),
@@ -143,7 +144,7 @@ impl Instruction {
             Instruction::MoveData(a, _) => vec![*a],
             Instruction::Exit(a) => vec![*a],
             Instruction::Call(_, args, outs) => [args.clone(), outs.clone()].concat(),
-            Instruction::Label(_, _) | Instruction::FunctionEnd => vec![],
+            Instruction::Label(_, _) | Instruction::FunctionEnd | Instruction::FunctionStart => vec![],
             Instruction::ReceiveArgument(_, _) => { vec![] }
             Instruction::JumpConditional(condition, _) => condition.get_objects(),
             Instruction::Jump(_) => vec![],

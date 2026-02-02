@@ -4,8 +4,14 @@
 _stray:
 
 _start:
-	sub	sp, sp, #0
-	add	sp, sp, #0
+	sub	sp, sp, #16
+	mov	x0, #7
+	mov	x1, #5
+	str	x0, [sp, #0]
+	str	x1, [sp, #8]
+	ldr	x0, [sp, #8]
+	bl	LB1
+	add	sp, sp, #16
 
 LB0:
 	sub	sp, sp, #0
@@ -13,11 +19,12 @@ LB0:
 	mov	x3, x1
 	mov	x4, x0
 	add	x4, x4, x1
-	mov	x1, x2
-	sub	x1, x1, x3
+	mov	x0, x2
+	sub	x0, x0, x3
 	add	sp, sp, #0
 
 LB1:
+	sub	sp, sp, #0
 	mov	x1, #0
 	cmp	x0, x1
 	bne	LB4
@@ -31,7 +38,6 @@ LB2:
 LB4:
 
 LB5:
-	sub	sp, sp, #0
 	mov	x0, #1
 	mov	x16, #1
 	mov	x0, x0

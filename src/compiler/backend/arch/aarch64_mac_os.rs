@@ -2,33 +2,11 @@ use std::collections::HashMap;
 use uuid::Uuid;
 use crate::compiler::backend::arch::{Architecture, RegisterDataType, RegisterKind, RegisterSavingBehaviour};
 use crate::compiler::backend::arch::register::{Register, RegisterMap};
-use crate::compiler::backend::flattener::InstructionMeta;
 
 
 pub fn generate() -> Architecture {
-    let mut instructions: HashMap<InstructionMeta, String> = HashMap::new();
-
-    instructions.insert(InstructionMeta::MoveReg, String::from("\tmov\t$a, $b\n"));
-    instructions.insert(InstructionMeta::MoveImm, String::from("\tmov\t$a, #$b\n"));
-    instructions.insert(InstructionMeta::AddReg, String::from("\tadd\t$a, $a, $b\n"));
-    instructions.insert(InstructionMeta::SubReg, String::from("\tsub\t$a, $a, $b\n"));
-    instructions.insert(InstructionMeta::MulReg, String::from("\tmul\t$a, $a, $b\n"));
-    instructions.insert(InstructionMeta::DivReg, String::from("\tsdiv\t$a, $a, $b\n"));
-    instructions.insert(InstructionMeta::StackStore, String::from("\tstr\t$a, [$sp, #$b]\n"));
-    instructions.insert(InstructionMeta::StackLoad, String::from("\tldr\t$a, [$sp, #$b]\n"));
-    instructions.insert(InstructionMeta::Exit, String::from("\tmov\tx16, #1\n\tmov\tx0, $a\n\tsvc\t#0x80\n"));
-    instructions.insert(InstructionMeta::Call, String::from("\tbl\t$a\n"));
-    instructions.insert(InstructionMeta::Label, String::from("\n$a:\n"));
-    instructions.insert(InstructionMeta::AddImm, String::from("\tadd\t$a, $a, #$b\n"));
-    instructions.insert(InstructionMeta::SubImm, String::from("\tsub\t$a, $a, #$b\n"));
-    instructions.insert(InstructionMeta::Jump, String::from("\tb\t$a\n"));
-    instructions.insert(InstructionMeta::JumpNotEqual, String::from("\tbne\t$a\n"));
-    instructions.insert(InstructionMeta::JumpEqual, String::from("\tbe\t$a\n"));
-    instructions.insert(InstructionMeta::Compare, String::from("\tcmp\t$a, $b\n"));
-
     Architecture::new(
         "aarch64_macOS".to_string(),
-        instructions,
         RegisterMap::new(
             vec![
                 (Register::new("x0".to_string(), RegisterKind::GeneralPurpose, 8, RegisterSavingBehaviour::CallerSaved, vec![RegisterDataType::Address, RegisterDataType::Integer]), None),

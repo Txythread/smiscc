@@ -1,13 +1,16 @@
 use std::fs;
-use std::io::Write;
+use std::hash::Hash;
+use std::io::{Error, ErrorKind, Write};
 use std::ops::Deref;
 use std::rc::Rc;
-use crate::compiler::backend::arch::{Architecture, Register};
+use std::slice::Iter;
+use crate::compiler::backend::arch::{Architecture, Isa, Register};
+use crate::compiler::backend::arch::aarch64::Aarch64Asm;
 use crate::compiler::backend::flattener::{Instruction, InstructionMeta, JumpComparisonType};
 use crate::compiler::backend::flattener::InstructionMeta::Jump;
 use crate::compiler::parser::function_meta::FunctionStyle;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum AssemblyInstruction {
     /// Copy the contents of one register into the other one.  
     /// The first register is the target, the second one contains the data.
@@ -271,9 +274,13 @@ impl AssemblyInstruction {
         }
     }
 
-    pub fn make_string(&self, arch: Rc<Architecture>) -> String {
+    pub fn in_isa<T: Isa>(&self) -> Option<T> {
+        Some(T::from((*self).clone()))
+    }
+
+/*    pub fn make_string<T: Isa>(&self, arch: Rc<Architecture<T>>) -> String {
         println!("Getting instruction: {self:?}");
-        let mut meta = arch.instructions.get(&self.get_instruction_meta()).unwrap().clone();
+        let mut meta = arch.instructions.get(&self.get_instruction_meta().into()).unwrap().clone();
         let params = self.get_arguments();
 
         for param in params {
@@ -284,22 +291,43 @@ impl AssemblyInstruction {
         meta = meta.replace("$scratch", arch.get_scratch_register().name.as_str());
 
         meta
-    }
+    }*/
 }
 
-pub fn generate_assembly(code: Vec<AssemblyInstruction>, arch: Architecture, output_name: String) {
+pub fn generate_assembly<T: Isa>(code: Vec<AssemblyInstruction>, arch: Architecture, output_name: String) {
     let arch = Rc::new(arch);
 
-    fs::remove_file(output_name.clone()).unwrap();
+    if let Some(err) = fs::remove_file(output_name.clone()).err() {
+        match err.kind() {
+            ErrorKind::NotFound => { /* This can be ignored as the file can get created later anyway */ }
+            ErrorKind::PermissionDenied => {}
+            ErrorKind::IsADirectory => {}
+            ErrorKind::DirectoryNotEmpty => {}
+            ErrorKind::ReadOnlyFilesystem => {}
+            ErrorKind::StorageFull => {}
+            ErrorKind::ResourceBusy => {}
+
+            _ => {
+
+            }
+        }
+    }
 
     let mut file = fs::File::create(&output_name).unwrap();
 
     file.write_all(arch.leading_boilerplate.as_bytes()).expect("");
 
+    // Turn the assembly instructions into architecture specific instructions
+    let mut arch_instructions: Vec<T> = Vec::with_capacity(code.len()); //code.iter().into::<T>().collect();
+
     for instruction in code {
-        file.write_all(instruction.make_string(arch.clone()).as_bytes()).expect("");
+        arch_instructions.push(instruction.into());
     }
-    
+
+    for instruction in arch_instructions {
+        file.write_all(instruction.to_string().as_bytes()).expect("");
+    }
+
     file.write_all(arch.trailing_boilerplate.as_bytes()).expect("");
 
     file.flush().expect("");
@@ -309,12 +337,14 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
     let mut architecture = architecture;
     let mut instructions: Vec<AssemblyInstruction> = Vec::new();
 
-    let mut label_idx: usize = 0;
+    let mut function_start_idx: usize = 0;
 
     architecture.prepare_new_function();
 
 
+    let mut i = 0;
     for instruction in code.clone() {
+        i += 1;
         let _instructions_length = instructions.len();
         println!("instruction: {:?}", instruction);
         match instruction {
@@ -406,12 +436,11 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
             },
             Instruction::Label(asm_name, _global) => {
                 instructions.push(AssemblyInstruction::Label(asm_name));
-                label_idx = instructions.len();
             }
             Instruction::FunctionEnd => {
                 let (header, mut trailer) = architecture.end_function();
                 instructions.append(&mut trailer);
-                instructions.splice(label_idx..label_idx, header);
+                instructions.splice(function_start_idx..function_start_idx, header);
             }
             Instruction::ReceiveArgument(arg_name, arg_index) => {
                 if let Some(position) = architecture.get_register_for_argument(arg_index as usize, FunctionStyle::C) {
@@ -454,6 +483,10 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
             }
             Instruction::Jump(label) => {
                 instructions.push(AssemblyInstruction::Jump(label))
+            }
+            Instruction::FunctionStart => {
+                println!("FunctionStart at {}", i);
+                function_start_idx = instructions.len();
             }
         }
     }

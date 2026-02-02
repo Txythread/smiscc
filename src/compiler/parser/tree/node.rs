@@ -1076,6 +1076,47 @@ impl Node for FunctionDeclarationNode {
         Box::new((*self).clone())
     }
 
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        let block = self.block.deref().clone();
+        let parameter_uuids = self.parameter_function_args.iter().map(|x|x.own_uuid);
+        let mut instructions: Vec<Instruction> = parameter_uuids.enumerate().map(|x|Instruction::ReceiveArgument(x.1, x.0 as u8)).collect();
+
+        let receive_args_end = instructions.len();
+
+        // Update the context
+        for i in 0..self.parameters.len() {
+            if let Some(name) = self.parameters[i].internal_name.clone() {
+                let uuid = self.parameter_function_args[i].own_uuid;
+                let type_uuid = self.parameter_function_args[i].type_uuid;
+
+
+                context.objects.insert(uuid, type_uuid);
+                context.name_map.insert(name.clone(), uuid);
+
+                println!("inserted object named {name} with uuid {uuid} as having the type: {type_uuid}")
+            }
+        }
+
+        instructions.append(&mut block.generate_instructions(context).0.to_vec());
+
+        instructions.insert(receive_args_end + 1, Instruction::FunctionStart); // Insert after label.
+        println!("zero: {:?}", instructions[0]);
+
+        instructions.push(
+            Instruction::FunctionEnd
+        );
+
+
+        (
+            instructions,
+            None
+        )
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        None
+    }
+
     fn perform_early_context_changes(&mut self, context: &mut Context) {
         let mut block = self.block.deref().clone();
         let asm_label = block.assign_label(context);
@@ -1095,43 +1136,6 @@ impl Node for FunctionDeclarationNode {
 
         block.perform_early_context_changes(context);
         self.block = Rc::new(block);
-    }
-
-    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
-        let block = self.block.deref().clone();
-        let parameter_uuids = self.parameter_function_args.iter().map(|x|x.own_uuid);
-        let mut instructions: Vec<Instruction> = parameter_uuids.enumerate().map(|x|Instruction::ReceiveArgument(x.1, x.0 as u8)).collect();
-
-        // Update the context
-        for i in 0..self.parameters.len() {
-            if let Some(name) = self.parameters[i].internal_name.clone() {
-                let uuid = self.parameter_function_args[i].own_uuid;
-                let type_uuid = self.parameter_function_args[i].type_uuid;
-
-
-                context.objects.insert(uuid, type_uuid);
-                context.name_map.insert(name.clone(), uuid);
-
-                println!("inserted object named {name} with uuid {uuid} as having the type: {type_uuid}")
-            }
-        }
-
-        instructions.append(&mut block.generate_instructions(context).0.to_vec());
-
-
-        instructions.push(
-            Instruction::FunctionEnd
-        );
-
-
-        (
-            instructions,
-            None
-        )
-    }
-
-    fn output_is_randomly_mutable(&self) -> Option<bool> {
-        None
     }
 
     #[cfg(test)]
