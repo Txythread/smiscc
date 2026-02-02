@@ -2,13 +2,24 @@
 
 
 ## Control Flow
-2. *switch* - Statement
+1. *switch* - Statement
 
 ## Unimplement crossterm
 I just need colors, fat and non-fat text. It's overkill.
 
 ## Functions
 1. Add Return Types
+
+## Comparisons
+1. ==
+2. <=
+3. <
+4. `>` >=
+5. !=
+
+## Optimizations
+1. Ignore identity
+2. Mul and div to bit shift
 
 ## Variables & Constants
 1. Type Specification
