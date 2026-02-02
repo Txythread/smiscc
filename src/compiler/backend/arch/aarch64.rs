@@ -1,7 +1,14 @@
-use std::rc::Rc;
-use crate::compiler::backend::arch::{Isa, Register};
-use crate::compiler::backend::assembly::AssemblyInstruction;
+// Contains general, non-eabi specific definitions for AArch64.
+// Some general definitions might be in the eabi specific files, too.
 
+
+use std::rc::Rc;
+use crate::compiler::backend::arch::Register;
+use crate::compiler::backend::arch::isa::Isa;
+use crate::compiler::backend::assembly::AssemblyInstruction;
+use crate::compiler::optimization::OptimizationFlags;
+
+/// The [Isa] implementation for Aarch64.
 #[derive(Clone, Eq, Hash, PartialEq)]
 pub enum Aarch64Asm {
     MoveReg(Register, Register),
@@ -50,6 +57,10 @@ impl Isa for Aarch64Asm {
             A::JumpEqual(a) => format!("\tbe\t{}\n", a),
             A::JumpNotEqual(a) => format!("\tbne\t{}\n", a),
         }
+    }
+
+    fn optimize(instructions: Vec<Rc<Self>>, flags: OptimizationFlags) -> Vec<Rc<Self>> {
+        Self::optimize_internal(instructions)
     }
 }
 

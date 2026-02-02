@@ -7,6 +7,7 @@ pub mod trimmer;
 pub mod tokenization;
 pub mod parser;
 mod backend;
+mod optimization;
 
 pub fn compile(code: String, args: ArgumentList) {
     compiler_coordinator::compile(code, args);

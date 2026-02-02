@@ -6,7 +6,7 @@ use crate::compiler::backend::arch::register::{Register, RegisterMap};
 
 pub fn generate() -> Architecture {
     Architecture::new(
-        "aarch64_macOS".to_string(),
+        "aarch64_macOS",
         RegisterMap::new(
             vec![
                 (Register::new("x0".to_string(), RegisterKind::GeneralPurpose, 8, RegisterSavingBehaviour::CallerSaved, vec![RegisterDataType::Address, RegisterDataType::Integer]), None),

@@ -1,29 +1,29 @@
 pub mod aarch64_mac_os;
 mod register;
 pub mod aarch64;
+mod aarch64_opt;
+pub mod isa;
 
+use std::any::Any;
 use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::rc::Rc;
 use derive_new::new;
 use uuid::Uuid;
 pub(crate) use crate::compiler::backend::arch::register::{Register, RegisterDataType, RegisterKind, RegisterMap, RegisterSavingBehaviour};
 use crate::compiler::backend::assembly::AssemblyInstruction;
-use crate::compiler::backend::flattener::InstructionMeta;
 use crate::compiler::parser::function_meta::FunctionStyle;
 
-pub trait Isa: Clone + Eq + Hash + From<AssemblyInstruction> {
-    fn to_string(&self) -> String;
-}
-
+/// An Architecture is an EABI specific structure that contains
+/// information about where variables will live during the runtime
+/// and is mainly responsible for register and stack management.
 #[derive(new, Debug, Clone, PartialEq)]
 pub struct Architecture {
-    pub name: String,
-    pub register_map: RegisterMap,
+    name: &'static str,
+    register_map: RegisterMap,
     pub leading_boilerplate: &'static str,
     pub trailing_boilerplate: &'static str,
-    pub address_alignment: usize,
+    address_alignment: usize,
 }
 
 impl Architecture {
@@ -419,4 +419,3 @@ impl Architecture {
         panic!("No register found")
     }
 }
-

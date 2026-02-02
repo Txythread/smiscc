@@ -1,11 +1,9 @@
 use std::fs;
-use std::hash::Hash;
-use std::io::{Error, ErrorKind, Write};
+use std::io::{ErrorKind, Write};
 use std::ops::Deref;
 use std::rc::Rc;
-use std::slice::Iter;
-use crate::compiler::backend::arch::{Architecture, Isa, Register};
-use crate::compiler::backend::arch::aarch64::Aarch64Asm;
+use crate::compiler::backend::arch::{Architecture, Register};
+use crate::compiler::backend::arch::isa::Isa;
 use crate::compiler::backend::flattener::{Instruction, InstructionMeta, JumpComparisonType};
 use crate::compiler::backend::flattener::InstructionMeta::Jump;
 use crate::compiler::parser::function_meta::FunctionStyle;
