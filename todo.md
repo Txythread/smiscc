@@ -1,10 +1,7 @@
 # TODO - List
 
-## Tokenization
-1. Tell `==` apart from `=`
 
 ## Control Flow
-1. *if* - Statement
 2. *switch* - Statement
 
 ## Unimplement crossterm

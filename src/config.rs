@@ -8,42 +8,6 @@ pub mod tokenization_options {
     use crate::util::math::Base;
     use strum_macros::{AsRefStr, EnumIter, EnumString};
     
-
-    /// ### Characters that split tokens but are not themselves supposed to appear in the result
-    ///
-    /// For example:
-    /// `hello world` => `["hello", "world"]` when " " is an ignored split character, but
-    /// `hello world` => ``["hello", " ", "world"]` when " " is an unignored split character.
-    ///
-    /// **Note**: When the character is in ignored split characters, no empty string will
-    /// appear even if the character is passed multiple times
-    /// (`hello        world` will still get processed into `["hello", "world"]`).
-    ///
-    /// This is used in the splitter.
-    pub const IGNORED_SPLIT_CHARACTERS: [&str; 2] = [" ", "\t"];
-
-
-    /// ### Characters that split tokens and are supposed to appear as a separate token
-    ///
-    /// For example:
-    /// `hello world` => `["hello", "world"]` when " " is an **ignored split character**, but
-    /// `hello world` => ``["hello", " ", "world"]` when " " is an **unignored split character**.
-    ///
-    /// **Note**: When the character occurs multiple times in a row, the character will be treated
-    /// as a new token every time.
-    /// appear even if the character is passed multiple times
-    /// (`hello+++world` will still get processed into `["hello", "+", "+", "+", "world"]`).
-    ///
-    /// This is used in the splitter.
-    pub const UNIGNORED_SPLIT_CHARACTERS: [&str; 23] = ["{", "}", "(", ")", "[", "]", "<", ">", "?", "!", ".", ",", "\"", "\'", "=", "+", "-", "*", "/", "#", "\n", ";", ":"];
-
-
-    /// ### Character that separetes stuff
-    /// 
-    /// The character that separates things like function arguments, array items, etc.
-    pub const SEPARATOR_CHARACTER: &str = ",";
-
-
     /// ### Logical Parentheses
     ///
     /// The characters that will be treated like parentheses in the tokenizer.
@@ -82,12 +46,6 @@ pub mod tokenization_options {
     #[allow(dead_code)]
     pub const TEMPLATE_PARENTHESES: (&str, &str) = ("<", ">");
 
-    /// ### String Markers
-    ///
-    /// The tokens below can start (0) or end (1) a string in the user's code.
-    ///
-    /// **Note:** Those can be the same.
-    pub const STRING_MARKERS: (char, char) = ('\"', '\"');
 
 
     /// ### Integer Bases

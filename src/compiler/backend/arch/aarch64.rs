@@ -59,7 +59,7 @@ impl Isa for Aarch64Asm {
         }
     }
 
-    fn optimize(instructions: Vec<Rc<Self>>, flags: OptimizationFlags) -> Vec<Rc<Self>> {
+    fn optimize(instructions: Vec<Rc<Self>>, _flags: OptimizationFlags) -> Vec<Rc<Self>> {
         Self::optimize_internal(instructions)
     }
 }

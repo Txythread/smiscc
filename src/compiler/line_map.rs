@@ -294,6 +294,7 @@ pub struct LmFile {
 }
 
 impl LmFile {
+    #[cfg(test)]
     pub fn new(source_file_name: String, line_number: u32, tokens_positions: Vec<TokenPosition>, indent: u16, trimmed_contents: String) -> Self {
         LmFile { source_file_name, line_number, tokens_positions, indent, trimmed_contents }
     }

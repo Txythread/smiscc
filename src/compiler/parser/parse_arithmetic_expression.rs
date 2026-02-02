@@ -1,6 +1,5 @@
 use std::ops::Deref;
 use std::rc::Rc;
-use clap::Parser;
 use crate::compiler::line_map::TokenPosition;
 use crate::compiler::parser::parse_token::parse_token;
 use crate::compiler::parser::parser_meta::ParserMetaState;
@@ -16,7 +15,7 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
         }
 
 
-    let original_cursor_pos = *meta_state.cursor;
+    let _original_cursor_pos = *meta_state.cursor;
 
 
     // Find logical parentheses and calculate stuff for them first
@@ -38,7 +37,7 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
     'outerloop: loop {
 
         let token = tokens[*meta_state.cursor].clone();
-        let loop_start_cursor_pos = *meta_state.cursor;
+        let _loop_start_cursor_pos = *meta_state.cursor;
 
 
         *meta_state.cursor += 1;
@@ -61,7 +60,7 @@ pub fn parse_arithmetic_expression(meta_state: &mut ParserMetaState, min_op_impo
 
 
         match token.clone() {
-            Token::ArithmeticParenthesisOpen(pos) => {
+            Token::ArithmeticParenthesisOpen(_pos) => {
                 // Detect function calls
                 if current_operation.is_none()
                     && let Some(last_node) = calculated_nodes.last()

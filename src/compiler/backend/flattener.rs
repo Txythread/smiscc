@@ -2,7 +2,6 @@ use std::rc::Rc;
 use derive_new::new;
 use uuid::Uuid;
 use crate::compiler::backend::context::Context;
-use crate::compiler::data_types::object::Object;
 use crate::compiler::parser::tree::node::Node;
 
 pub fn flatten(line: Rc<dyn Node>, context: &mut Context) -> Vec<Instruction> {
@@ -162,38 +161,4 @@ impl Instruction {
             _ => vec![]
         }
     }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-#[derive(Eq)]
-#[derive(Hash)]
-pub enum InstructionMeta {
-    MoveReg,
-    MoveImm,
-
-    AddReg,
-    AddImm,
-    SubReg,
-    SubImm,
-    MulReg,
-    DivReg,
-    ModReg,
-
-    Load,
-    Store,
-
-    StackLoad,
-    StackStore,
-
-    Exit,
-
-    Call,
-
-    Label,
-    
-    Jump,
-    JumpEqual,
-    JumpNotEqual,
-    
-    Compare,
 }

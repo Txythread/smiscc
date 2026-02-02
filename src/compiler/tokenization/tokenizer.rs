@@ -1,16 +1,12 @@
 use std::rc::Rc;
-use clap::builder::Str;
 use logos::Logos;
 use strum::IntoEnumIterator;
 use crate::compiler::data_types::integer::*;
 use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::line_map::LineMap;
 use crate::compiler::trimmer::trim;
-use crate::compiler::tokenization::token::{Token, Token::* };
+use crate::compiler::tokenization::token::Token;
 use crate::compiler::tokenization::token_prototype::TokenPrototype;
-use crate::config::tokenization_options::*;
-use crate::config::tokenization_options::Keyword;
-use crate::util::operator;
 
 /// ### Turn the split strings into tokens ("classifies" them)
 ///

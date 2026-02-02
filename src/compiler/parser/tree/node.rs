@@ -1,4 +1,3 @@
-use std::arch::asm;
 use std::fmt::Debug;
 use std::ops::Deref;
 use std::rc::Rc;
@@ -1248,7 +1247,7 @@ impl Node for IfNode {
         vec![]
     }
 
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
         None
     }
 
@@ -1264,7 +1263,7 @@ impl Node for IfNode {
         let then_branch_instructions = self.then_branch.generate_instructions(context).0;
         let else_branch_instructions = if let Some(else_b) = self.else_branch.clone() { else_b.generate_instructions(context).0 } else { vec![] };
 
-        let then_label_name = context.generate_label();
+        let _then_label_name = context.generate_label();
         let else_label_name = context.generate_label();
         let after_if_label_name = context.generate_label();
 

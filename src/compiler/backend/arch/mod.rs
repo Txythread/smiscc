@@ -4,10 +4,8 @@ pub mod aarch64;
 mod aarch64_opt;
 pub mod isa;
 
-use std::any::Any;
 use std::cmp::PartialEq;
 use std::collections::HashMap;
-use std::hash::Hash;
 use derive_new::new;
 use uuid::Uuid;
 pub(crate) use crate::compiler::backend::arch::register::{Register, RegisterDataType, RegisterKind, RegisterMap, RegisterSavingBehaviour};
@@ -324,6 +322,7 @@ impl Architecture {
     }
 
     /// Gets the default scratch register in use for this architecture
+    #[allow(dead_code)]
     pub fn get_scratch_register(&self) -> Register {
         let scratch = self.register_map.registers[self.register_map.scratch_register].0.clone();
 

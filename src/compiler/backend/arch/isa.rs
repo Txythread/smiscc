@@ -25,5 +25,5 @@ pub trait Isa: Clone + Eq + Hash + From<AssemblyInstruction> {
     /// add     x2, x0, x2
     /// ```
     /// in its own format.
-    fn optimize(instructions: Vec<Rc<Self>>, flags: OptimizationFlags) -> Vec<Rc<Self>> { instructions }
+    fn optimize(instructions: Vec<Rc<Self>>, _flags: OptimizationFlags) -> Vec<Rc<Self>> { instructions }
 }

@@ -65,6 +65,7 @@ pub enum Token {
 
 
 impl Token {
+    #[allow(dead_code)]
     pub fn get_position(&self) -> TokenPosition {
         match self {
             Token::UnspecifiedString(_, pos) => { pos.clone() }
