@@ -1,10 +1,13 @@
 use std::fs;
 use std::io::{ErrorKind, Write};
 use std::rc::Rc;
+use anyhow::anyhow;
 use crate::compiler::backend::arch::{Architecture, Register};
 use crate::compiler::backend::arch::isa::Isa;
 use crate::compiler::backend::flattener::{ComparisonType, Instruction, JumpComparisonType};
+use crate::compiler::optimization::{OptimizationFlags, OptimizationKind};
 use crate::compiler::parser::function_meta::FunctionStyle;
+use crate::util::operator::Operation;
 
 #[derive(Debug, Clone)]
 pub enum AssemblyInstruction {
@@ -56,6 +59,40 @@ pub enum AssemblyInstruction {
     ExtractCompare(Register, ComparisonType),
 }
 
+impl AssemblyInstruction {
+    /// Gets whether the operation is necessary for the code or can be ignored.
+    pub fn is_justified(&self, optimizations: &OptimizationFlags) -> bool {
+        let optimizations = &optimizations.optimizations;
+        use AssemblyInstruction as AI;
+        match self {
+            AI::AddImm(_, imm) | AI::SubImm(_, imm) => {
+                if optimizations.get(&OptimizationKind::RemoveIdentityOperations) == Some(&true) {
+                    if let Some(identity) = self.get_operator().unwrap().get_identity().ok() {
+                        if *imm == identity {
+                            return false;
+                        }
+                    }
+                }
+                
+                true
+            },
+            _ => true,
+        }
+    }
+    
+    fn get_operator(&self) -> Result<Operation, anyhow::Error> {
+        use AssemblyInstruction as AI;
+        match self {
+            AI::AddImm(_, _) | AI::AddReg(_, _) =>  Ok(Operation::Addition),
+            AI::SubImm(_, _) | AI::SubReg(_, _) => Ok(Operation::Subtraction),
+            AI::MulReg(_, _) => Ok(Operation::Multiplication),
+            AI::DivReg(_, _) => Ok(Operation::Division),
+
+            _ => Err(anyhow!("Assembly instruction {:?} has no operator", self))
+        }
+    }
+}
+
 
 pub fn generate_assembly<T: Isa>(code: Vec<AssemblyInstruction>, arch: Architecture, output_name: String) {
     let arch = Rc::new(arch);
@@ -96,7 +133,7 @@ pub fn generate_assembly<T: Isa>(code: Vec<AssemblyInstruction>, arch: Architect
     file.flush().expect("");
 }
 
-pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Architecture) -> Vec<AssemblyInstruction> {
+pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Architecture, opt_flags: OptimizationFlags) -> Vec<AssemblyInstruction> {
     let mut architecture = architecture;
     let mut instructions: Vec<AssemblyInstruction> = Vec::new();
 
@@ -271,6 +308,16 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
             }
         }
     }
+   
+    // This will always be close enough probably
+    let guessed_size = instructions.len() * 0.9 as usize;
+    let mut necessary_instructions: Vec<AssemblyInstruction> = Vec::with_capacity(guessed_size);
 
-    instructions
+    for instruction in instructions {
+        if instruction.is_justified(&opt_flags) {
+            necessary_instructions.push(instruction);
+        }
+    }
+ 
+    necessary_instructions
 }

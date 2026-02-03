@@ -12,9 +12,10 @@ use crate::compiler::line_map::LineMap;
 use std::rc::Rc;
 use crate::compiler::backend::arch::aarch64::Aarch64Asm;
 use crate::compiler::data_types::integer::build_integer_types;
+use crate::compiler::optimization::OptimizationFlags;
 use crate::compiler::parser::tree::node::{CodeBlockArray, Node};
 
-pub fn compile(code: String, args: ArgumentList) {
+pub fn compile(code: String, args: ArgumentList, opt_flags: OptimizationFlags) {
     let mut line_map: LineMap = LineMap::new();
 
     let tokens = tokenize_file(
@@ -46,7 +47,7 @@ pub fn compile(code: String, args: ArgumentList) {
 
     let flattened = flatten(parsed, &mut context);
     let arch = aarch64_mac_os::generate();
-    let assembly = assembly::generate_assembly_instructions(flattened, arch.clone());
+    let assembly = assembly::generate_assembly_instructions(flattened, arch.clone(), opt_flags);
 
     if context.line_map.error_count == 0 {
         assembly::generate_assembly::<Aarch64Asm>(assembly, arch, "test.s".to_string())

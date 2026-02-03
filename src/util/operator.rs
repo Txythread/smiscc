@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use strum_macros::{EnumString, EnumIter, AsRefStr};
 
 // This file contains methods & definitions for arithmetic operators.
@@ -53,9 +54,24 @@ impl Operation {
             Operation::Equals => 0,
         }
     }
+
+    /// Gets the identity if possible (impossible on non-commutative operations).
+    /// The identity is the element that
+    pub fn get_identity(&self) -> Result<i64, anyhow::Error> {
+        if !self.is_commutative() { return Err(anyhow!("Identity only exists for commutative operations (in this program rn)")) }
+        
+        match self {
+            Operation::Addition => Ok(0),
+            Operation::Multiplication => Ok(1),
+            Operation::Equals => { Ok(1) /* true */ }
+            
+            _ => Err(anyhow!("Identity not specified although the operation is commutative on operation {:?}", self))
+        }
+    }
     
     /// Gets whether the operation is commutative, meaning the operands can be
     /// used in any order (x + y == y + x). or not (x / y != y / x).
+    #[inline]
     pub fn is_commutative(&self) -> bool {
         use Operation as OP;
         matches!(self, OP::Addition | OP::Equals | OP::Multiplication)

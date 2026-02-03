@@ -54,9 +54,7 @@ fn main() {
     if let Some(ref file_name) = args.file {
         let file_contents = std::fs::read_to_string(file_name).unwrap();
         let optimizations = OptimizationFlags::new(&args);
-
-        println!("{optimizations:?}");
-        compile(file_contents, args);
+        compile(file_contents, args, optimizations);
     } else {
         println!("Nothing to do!");
     }

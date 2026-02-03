@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1.0.100"
 cc = "1.2.51"
 clap = { version = "4.5.47", features = ["derive"] }
 colorize = "0.1.0"
