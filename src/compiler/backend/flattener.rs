@@ -89,6 +89,9 @@ pub enum Instruction {
     JumpConditional(JumpCondition, Rc<String>),
     
     Jump(Rc<String>),
+
+    Compare(Uuid, Uuid),
+    ExtractCompare(Uuid, ComparisonType)
 }
 
 #[derive(new, Clone, Debug)]
@@ -107,6 +110,16 @@ impl JumpCondition {
             if let Some(b) = self.b { vec![b] } else { vec![] }
         }
     }
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub enum ComparisonType {
+    Equal,
+    NotEqual,
+    Greater,
+    GreaterOrEqual,
+    Less,
+    LessOrEqual,
 }
 
 #[derive(Clone, Debug)]
@@ -147,6 +160,8 @@ impl Instruction {
             Instruction::ReceiveArgument(_, _) => { vec![] }
             Instruction::JumpConditional(condition, _) => condition.get_objects(),
             Instruction::Jump(_) => vec![],
+            Instruction::Compare(a, b) => vec![*a, *b],
+            Instruction::ExtractCompare(a, _) => vec![*a],
         }
     }
 

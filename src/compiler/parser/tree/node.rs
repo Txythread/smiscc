@@ -5,7 +5,7 @@ use derive_new::*;
 use downcast_rs::{Downcast, impl_downcast};
 use uuid::Uuid;
 use crate::compiler::backend::context::Context;
-use crate::compiler::backend::flattener::{Instruction, JumpComparisonType, JumpCondition};
+use crate::compiler::backend::flattener::{ComparisonType, Instruction, JumpComparisonType, JumpCondition};
 use crate::compiler::data_types::datatypes_general::Buildable;
 use crate::compiler::data_types::integer::IntegerType;
 use crate::compiler::data_types::object::{ObjectType, Trait};
@@ -490,6 +490,10 @@ impl Node for ArithmeticNode {
                     Operation::Division => vec![Instruction::Div(x, b.1.unwrap())],
                     Operation::Modulo => vec![Instruction::Mod(x, b.1.unwrap())],
 
+                    Operation::Equals => vec![
+                        Instruction::Compare(x, b.1.unwrap()),
+                        Instruction::ExtractCompare(x, ComparisonType::Equal)
+                    ],
                     _ => todo!()
                 }
             ].concat(),
@@ -1279,7 +1283,7 @@ impl Node for IfNode {
                     JumpCondition::new(
                         condition_value,
                         Some(zero),
-                        JumpComparisonType::NotEqual
+                        JumpComparisonType::Equal, // If the boolean result of the condition has a value of 0, jump to the else branch
                     ),
                     else_label_name.clone()
                 )

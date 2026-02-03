@@ -83,7 +83,8 @@ pub fn compile(code: String, args: ArgumentList) {
         .arg("-e")
         .arg("_start")
         .arg("-arch")
-        .arg("arm64");
+        .arg("arm64")
+        .output().unwrap();
 
 
 

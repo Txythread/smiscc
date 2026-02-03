@@ -1,4 +1,11 @@
 extern "C" "_start" func start() {
 	let a = 5;
+	let c = 5;
 	let b = false;
+
+	if /*a == c*/ true {
+		exit 0;
+	}
+
+	exit 1;
 }

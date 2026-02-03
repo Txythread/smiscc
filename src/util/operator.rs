@@ -50,16 +50,14 @@ impl Operation {
             Operation::Multiplication => 2,
             Operation::Division => 2,
             Operation::Modulo => 2,
-            Operation::Equals => 3,
+            Operation::Equals => 0,
         }
     }
     
     /// Gets whether the operation is commutative, meaning the operands can be
     /// used in any order (x + y == y + x). or not (x / y != y / x).
     pub fn is_commutative(&self) -> bool {
-        match self {
-            Operation::Addition | Operation::Multiplication | Operation::Equals => true,
-            Operation::Subtraction | Operation::Division | Operation::Modulo => false,
-        }
+        use Operation as OP;
+        matches!(self, OP::Addition | OP::Equals | OP::Multiplication)
     }
 }

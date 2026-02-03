@@ -3,7 +3,7 @@ use std::io::{ErrorKind, Write};
 use std::rc::Rc;
 use crate::compiler::backend::arch::{Architecture, Register};
 use crate::compiler::backend::arch::isa::Isa;
-use crate::compiler::backend::flattener::{Instruction, JumpComparisonType};
+use crate::compiler::backend::flattener::{ComparisonType, Instruction, JumpComparisonType};
 use crate::compiler::parser::function_meta::FunctionStyle;
 
 #[derive(Debug, Clone)]
@@ -52,6 +52,8 @@ pub enum AssemblyInstruction {
     Jump(Rc<String>),
     JumpEqual(Rc<String>),
     JumpNotEqual(Rc<String>),
+    
+    ExtractCompare(Register, ComparisonType),
 }
 
 
@@ -248,6 +250,24 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
             Instruction::FunctionStart => {
                 println!("FunctionStart at {}", i);
                 function_start_idx = instructions.len();
+            }
+            Instruction::Compare(a, b) => {
+                let reg_a = architecture.get_object(a, vec![]);
+                let mut reg_a_instr = reg_a.1;
+                let reg_b = architecture.get_object(b, vec![a]);
+                let mut reg_b_instr = reg_b.1;
+                
+                instructions.append(&mut reg_a_instr);
+                instructions.append(&mut reg_b_instr);
+                instructions.push(AssemblyInstruction::Compare(reg_a.0, reg_b.0));
+            }
+            Instruction::ExtractCompare(out, kind) => {
+                let reg_out = architecture.get_object(out, vec![]);
+                let mut reg_out_instr = reg_out.1;
+                
+                instructions.append(&mut reg_out_instr);
+                
+                instructions.push(AssemblyInstruction::ExtractCompare(reg_out.0, kind));
             }
         }
     }

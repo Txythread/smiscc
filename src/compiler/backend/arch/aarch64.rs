@@ -6,6 +6,7 @@ use std::rc::Rc;
 use crate::compiler::backend::arch::Register;
 use crate::compiler::backend::arch::isa::Isa;
 use crate::compiler::backend::assembly::AssemblyInstruction;
+use crate::compiler::backend::flattener::ComparisonType;
 use crate::compiler::optimization::OptimizationFlags;
 
 /// The [Isa] implementation for Aarch64.
@@ -30,6 +31,7 @@ pub enum Aarch64Asm {
     Jump(Rc<String>),
     JumpEqual(Rc<String>),
     JumpNotEqual(Rc<String>),
+    CSet(Register, &'static str)
 }
 
 
@@ -54,8 +56,9 @@ impl Isa for Aarch64Asm {
             A::Label(a) => format!("\n{}:\n", a),
             A::Compare(a, b) => format!("\tcmp\t{}, {}\n", a.name, b.name),
             A::Jump(a) => format!("\tb\t{}\n", a),
-            A::JumpEqual(a) => format!("\tbe\t{}\n", a),
+            A::JumpEqual(a) => format!("\tbeq\t{}\n", a),
             A::JumpNotEqual(a) => format!("\tbne\t{}\n", a),
+            A::CSet(a, cmp) => format!("\tcset\t{}, {}\n", a.name, cmp)
         }
     }
 
@@ -89,6 +92,20 @@ impl From<AssemblyInstruction> for Aarch64Asm {
             AI::Jump(a) => AA::Jump(a),
             AI::JumpEqual(a) => AA::JumpEqual(a),
             AI::JumpNotEqual(a) => AA::JumpNotEqual(a),
+            AssemblyInstruction::ExtractCompare(a, b) => {
+                let mut comparison: &'static str;
+                use ComparisonType as CT;
+                match b {
+                    CT::Equal => comparison = "eq",
+                    CT::NotEqual => comparison = "ne",
+                    CT::Greater => comparison = "gt",
+                    CT::GreaterOrEqual => comparison = "ge",
+                    CT::Less => comparison = "lt",
+                    CT::LessOrEqual => comparison = "le",
+                }
+
+                AA::CSet(a, comparison)
+            }
         }
     }
 }
