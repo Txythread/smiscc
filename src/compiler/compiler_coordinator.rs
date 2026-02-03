@@ -15,7 +15,7 @@ use crate::compiler::data_types::integer::build_integer_types;
 use crate::compiler::optimization::OptimizationFlags;
 use crate::compiler::parser::tree::node::{CodeBlockArray, Node};
 
-pub fn compile(code: String, args: ArgumentList, opt_flags: OptimizationFlags) {
+pub fn compile(code: String, args: ArgumentList, opt_flags: Rc<OptimizationFlags>) {
     let mut line_map: LineMap = LineMap::new();
 
     let tokens = tokenize_file(
@@ -36,7 +36,7 @@ pub fn compile(code: String, args: ArgumentList, opt_flags: OptimizationFlags) {
     let mut object_types = Rc::new(ObjectType::generate_built_ins());
 
     let mut parsed = parse(vec![tokens.clone()], &mut line_map, &mut object_types).unwrap();
-    let mut context = Context::clear(line_map);
+    let mut context = Context::clear(line_map, opt_flags.clone());
     object_types.iter().for_each(|object_type| {
        context.datatypes.insert(object_type.type_uuid, object_type.clone());
     });

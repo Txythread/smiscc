@@ -38,7 +38,7 @@ pub struct ArgumentList{
     pub show_tokens: bool,                          // --show-tokens
 
     #[arg(long = "ol", default_value_t = 1)]
-    pub optimization_level: u8,                     // -o
+    pub optimization_level: u8,                     // -ol
 
     #[arg(long)]                                    // --optimizations
     pub optimizations: Vec<String>

@@ -133,7 +133,7 @@ pub fn generate_assembly<T: Isa>(code: Vec<AssemblyInstruction>, arch: Architect
     file.flush().expect("");
 }
 
-pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Architecture, opt_flags: OptimizationFlags) -> Vec<AssemblyInstruction> {
+pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Architecture, opt_flags: Rc<OptimizationFlags>) -> Vec<AssemblyInstruction> {
     let mut architecture = architecture;
     let mut instructions: Vec<AssemblyInstruction> = Vec::new();
 

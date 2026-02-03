@@ -6,10 +6,12 @@ use downcast_rs::{Downcast, impl_downcast};
 use uuid::Uuid;
 use crate::compiler::backend::context::Context;
 use crate::compiler::backend::flattener::{ComparisonType, Instruction, JumpComparisonType, JumpCondition};
+use crate::compiler::backend::flattener::Instruction::Move;
 use crate::compiler::data_types::datatypes_general::Buildable;
 use crate::compiler::data_types::integer::IntegerType;
 use crate::compiler::data_types::object::{ObjectType, Trait};
 use crate::compiler::line_map::{DisplayCodeInfo, DisplayCodeKind, NotificationInfo, TokenPosition};
+use crate::compiler::optimization::OptimizationKind;
 use crate::compiler::parser::function_meta::{FunctionArgument, FunctionMeta, FunctionStyle};
 use crate::compiler::parser::future::CodeFuture;
 use crate::compiler::parser::parse_datatype::ParameterDescriptor;
@@ -41,7 +43,7 @@ pub trait Node: Debug + Downcast {
 
     /// ### Unpacks Shells Recursively
     ///
-    /// If the node is a shell (a node that contains only one subnode and
+    /// If the node is a shell (a node that contains only one subnode) and
     /// no data that is not contained in its core as well, e.g. how
     /// [ValueNode] is to [ArithmeticNode] and
     /// [LiteralValueNode].
@@ -77,6 +79,16 @@ pub trait Node: Debug + Downcast {
     fn perform_early_context_changes(&mut self, _context: &mut Context) {
         if !self.get_sub_nodes().is_empty() {
             todo!("Missing implementation of perform_early_context_changes in type of: {:#?}. Please read for the documentation comment for this trait function and create an implementation.", self)
+        }
+    }
+
+    /// Gets the value in its assembly representation if applicable.
+    /// The `unpacked` parameter can safely be set to false, it internally helps mitigate loops.
+    fn get_raw_value(&self, unpacked: bool) -> Option<i64> {
+        if unpacked {
+            None
+        } else {
+            self.unpack().get_raw_value(true)
         }
     }
 
@@ -304,8 +316,10 @@ impl Node for BoolLiteralNode {
         Box::new(self.clone())
     }
 
-    fn generate_instructions(&self, _context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         let uuid = Uuid::new_v4();
+
+        context.known_values.insert(uuid, self.content as i64);
 
         (
             vec![
@@ -318,6 +332,10 @@ impl Node for BoolLiteralNode {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         Some(true)
+    }
+
+    fn get_raw_value(&self, _: bool) -> Option<i64> {
+        Some(self.content as i64)
     }
 
     #[cfg(test)]
@@ -373,8 +391,10 @@ impl Node for IntegerLiteralNode {
         Box::new(self.clone())
     }
 
-    fn generate_instructions(&self, _context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
         let uuid = Uuid::new_v4();
+
+        context.known_values.insert(uuid, self.content as i64);
 
         (
             vec![
@@ -387,6 +407,10 @@ impl Node for IntegerLiteralNode {
 
     fn output_is_randomly_mutable(&self) -> Option<bool> {
         Some(true)
+    }
+
+    fn get_raw_value(&self, _: bool) -> Option<i64> {
+        Some(self.content as i64)
     }
 
     #[cfg(test)]
@@ -449,6 +473,49 @@ impl Node for ArithmeticNode {
         let self_ = self.clone();
         let a = self_.argument_a.generate_instructions(context);
         let b = self_.argument_b.generate_instructions(context);
+
+        let a_raw = context.known_values.get(&a.1.unwrap());
+        let b_raw = context.known_values.get(&b.1.unwrap());
+
+        // Check for operations with identity values
+        let remove_identity_ops = context.opt_flags.optimizations.get(&OptimizationKind::RemoveIdentityOperations) == Some(&true);
+        let identity = self.operation.get_identity();
+        println!("trying to remove identity : {}", remove_identity_ops);
+        println!("identity: {identity:?}");
+        println!("identity: {a_raw:?}, b: {b_raw:?}");
+        println!("identity: {a_raw:?}, b: {b_raw:?}");
+
+        if let Ok(identity) = identity && (a_raw.is_some() || b_raw.is_some()) && remove_identity_ops {
+            if a_raw == Some(&identity) {
+                // Just return b (or a copy if needed)
+
+                return if self.argument_b.output_is_randomly_mutable() == Some(true) {
+                    (vec![], b.1)
+                } else {
+                    let uuid = Uuid::new_v4();
+
+                    (vec![
+                        Move(uuid, b.1.unwrap()),
+                    ], Some(uuid))
+                }
+            }
+
+            if b_raw == Some(&identity) {
+                // Just return 'a' (or a copy if needed)
+
+                return if self.argument_a.output_is_randomly_mutable() == Some(true) {
+                    (vec![], b.1)
+                } else {
+                    let uuid = Uuid::new_v4();
+
+                    (vec![
+                        Move(uuid, a.1.unwrap()),
+                    ], Some(uuid))
+                }
+            }
+        }
+
+        // TODO: If both are values and not the identity, they can be precalculated and the result can be stored in context.known_values, too.
 
         let mut x = a.1.unwrap();
 
@@ -687,7 +754,6 @@ impl Node for LetNode {
             let assignment_result = assigned_value.clone().generate_instructions(context).clone();
             println!("assigned value: {assigned_value:?} created: {assignment_result:?}");
 
-
             let mut assignment_instructions = assignment_result.0;
             instructions.append(&mut assignment_instructions);
 
@@ -696,6 +762,10 @@ impl Node for LetNode {
             } else {
                 result_uuid = Some(Uuid::new_v4());
                 instructions.push(Instruction::Move(result_uuid.unwrap(), assignment_result.1.unwrap()));
+            }
+
+            if let Some(raw_value) = assigned_value.get_raw_value(false) {
+                context.known_values.insert(result_uuid.unwrap(), raw_value);
             }
         }
 
@@ -707,7 +777,7 @@ impl Node for LetNode {
         let value = self.assigned_value.clone().unwrap();
         let datatypes = value.get_datatypes(context.datatypes.values().cloned().collect(), context.clone());
 
-        println!("value: {:#?}, datatpyes: {datatypes:#?}", value);
+        println!("value: {:#?}, datatypes: {datatypes:#?}", value);
 
         context.objects.insert(result_uuid.unwrap(), datatypes.unwrap()[0].type_uuid);
         context.name_map.insert(self.identifier.clone(), result_uuid.unwrap());

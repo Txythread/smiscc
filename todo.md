@@ -17,6 +17,10 @@ I just need colors, fat and non-fat text. It's overkill.
 4. `>` >=
 5. !=
 
+
+## General
+Allow for new values in if blocks and such.
+
 ## Optimizations
 1. Ignore identity
 2. Mul and div to bit shift

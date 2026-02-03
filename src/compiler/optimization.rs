@@ -3,7 +3,7 @@ use strum::IntoEnumIterator;
 use strum_macros::{AsRefStr, EnumIter};
 use crate::ArgumentList;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct OptimizationFlags {
     /// The optimization level specifies which optimizations should take
     /// place in a broad sense. 0 means (close to) none and 3 means all.

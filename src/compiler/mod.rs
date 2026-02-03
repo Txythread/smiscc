@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use crate::ArgumentList;
 use crate::compiler::optimization::OptimizationFlags;
 
@@ -11,5 +12,5 @@ mod backend;
 pub mod optimization;
 
 pub fn compile(code: String, args: ArgumentList, opt_flags: OptimizationFlags) {
-    compiler_coordinator::compile(code, args, opt_flags);
+    compiler_coordinator::compile(code, args, Rc::new(opt_flags));
 }

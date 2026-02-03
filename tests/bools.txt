@@ -1,5 +1,5 @@
 extern "C" "_start" func start() {
-	let a = 5;
+	let a = 5 * 1;
 	let c = 5;
 	let b = false;
 
