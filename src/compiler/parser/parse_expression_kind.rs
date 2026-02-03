@@ -3,7 +3,7 @@ use crate::compiler::line_map::TokenPosition;
 use crate::compiler::parser::parse::ExpressionKind;
 use crate::compiler::parser::parse_arg_array::parse_arg_array;
 use crate::compiler::parser::parse_arithmetic_expression::parse_arithmetic_expression;
-use crate::compiler::parser::parse_datatype::{parse_parameter_descriptor, ParameterDescriptor};
+use crate::compiler::parser::parse_datatype::{parse_datatype, parse_parameter_descriptor, ParameterDescriptor};
 use crate::compiler::parser::parse_line::parse_line;
 use crate::compiler::parser::parser_meta::ParserMetaState;
 use crate::compiler::parser::tree::node::*;
@@ -21,7 +21,7 @@ pub fn parse_expression_kind(meta_state: &mut ParserMetaState, kind: ExpressionK
                 arguments.push(result);
             } else if required {
                 // Throw an error. Something was required that wasn't given in the current statement.
-                todo!()
+                todo!("pointing to: {:?}", meta_state.tokens[*meta_state.cursor])
             }
         }
         ExpressionKind::Assignment => {
@@ -104,6 +104,40 @@ pub fn parse_expression_kind(meta_state: &mut ParserMetaState, kind: ExpressionK
         }
         ExpressionKind::Parameter => {
             todo!("Parameters can only be parsed in arrays now, should be easy to implement tho.")
+        },
+        ExpressionKind::ExpectedToken(mut expected_token) => {
+            let mut actual_token = meta_state.tokens[*meta_state.cursor].clone();
+            let pos = actual_token.get_position();
+
+            println!("starting expected token ({:?}), pointing to {:?}", expected_token, meta_state.tokens[*meta_state.cursor]);
+            let mut actual_token = meta_state.tokens[*meta_state.cursor].clone();
+            actual_token.reset_position();
+            expected_token.reset_position();
+
+            if matches!(actual_token.clone(), x if x == expected_token) {
+                arguments.push(Rc::new(TokenPayloadNode::new((0, pos), actual_token)));
+                *meta_state.cursor += 1;
+            } else {
+                println!("not matching");
+                if required {
+                    todo!("Required token, not provided")
+                }
+            }
+
+            println!("finished expected token ({:?}), pointing to {:?}", expected_token, meta_state.tokens[*meta_state.cursor]);
+        }
+        ExpressionKind::Datatype => {
+            println!("starting parsing datatype, pointing to {:?}", meta_state.tokens[*meta_state.cursor]);
+            let pos = meta_state.tokens[*meta_state.cursor].get_position();
+            if let Some(datatype) = parse_datatype(meta_state.tokens.clone(), meta_state.cursor, meta_state.datatypes.clone(), meta_state.line_map) {
+                arguments.push(Rc::new(UuidPayloadNode::new((0, pos), datatype)))
+            } else {
+                if required {
+                    todo!("Required datatype not provided")
+                }
+            }
+
+            println!("parsed datatype, pointing to: {:?}", meta_state.tokens[*meta_state.cursor]);
         }
     }
 

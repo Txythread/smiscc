@@ -122,10 +122,9 @@ impl Token {
     }
 }
 
-#[cfg(test)]
 impl Token {
     pub fn reset_position(&mut self) {
-        let new_pos = TokenPosition::test_value();
+        let new_pos = TokenPosition::new(0, 0);
         match self {
             Token::UnspecifiedString(_, a) => { *a = new_pos }
             Token::StringLiteral(_, a) => { *a = new_pos }

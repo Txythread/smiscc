@@ -177,7 +177,7 @@ pub fn generate_object<T: Buildable + ?Sized>(tokens: &mut [Token], object_types
 
 /// Contains relevant information for syntax checking an object
 #[derive(Clone, Debug, PartialEq)]
-pub struct ObjectType{
+pub struct ObjectType {
     /// The name of the object. For example "u32" or "ObjectType".
     pub name: String,
 
@@ -198,10 +198,14 @@ impl ObjectType {
         // Generate the datatypes
         let u32_ = IntegerType::Unsigned32BitInteger;
         let u32_type = u32_.build_type();
+
+        let i32 = IntegerType::Signed32BitInteger;
+        let i32_type = i32.build_type();
+
         let bool_ = Boolean::new();
         let bool_type = bool_.build_type();
         
-        vec![u32_type, bool_type]
+        vec![u32_type, i32_type, bool_type]
     }
 
     pub fn add_trait(&mut self, trait_: &str) {

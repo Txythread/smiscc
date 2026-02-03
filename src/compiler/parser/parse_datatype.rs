@@ -7,14 +7,12 @@ use crate::compiler::parser::function_meta::FunctionArgument;
 use crate::compiler::tokenization::token::Token;
 
 /// Gets a datatype from the list of types and returns its uuid.
-pub fn parse_datatype(tokens: Rc<Vec<Token>>, cursor: &mut usize, types: Rc<Vec<ObjectType>>, _: &mut LineMap) -> Uuid {
-    if let Token::Identifier(type_name, _) = tokens[*cursor].clone() {
-        *cursor += 1;
+pub fn parse_datatype(tokens: Rc<Vec<Token>>, cursor: &mut usize, types: Rc<Vec<ObjectType>>, _: &mut LineMap) -> Option<Uuid> {
+    let Token::Identifier(type_name, _) = tokens[*cursor].clone() else { return None; };
+    
+    *cursor += 1;
 
-        return types.iter().find(|&x|x.name==type_name).unwrap().type_uuid
-    }
-
-    todo!("Expected datatype")
+    Some(types.iter().find(|&x|x.name==type_name)?.type_uuid)
 }
 
 /// Generates a parameter with external and (if applicable) internal name
@@ -55,7 +53,7 @@ pub fn parse_parameter_descriptor(tokens: Rc<Vec<Token>>, cursor: &mut usize, ty
     *cursor += 1;
     match tokens[cursor_backup].clone() {
         Token::Colon(_) => {
-            datatype = Some(parse_datatype(tokens.clone(), cursor, types.clone(), line_map));
+            datatype = Some(parse_datatype(tokens.clone(), cursor, types.clone(), line_map).unwrap());
         }
 
         Token::Identifier(name_, _) => {
@@ -68,7 +66,7 @@ pub fn parse_parameter_descriptor(tokens: Rc<Vec<Token>>, cursor: &mut usize, ty
 
             *cursor += 1;
 
-            datatype = Some(parse_datatype(tokens.clone(), cursor, types.clone(), line_map));
+            datatype = Some(parse_datatype(tokens.clone(), cursor, types.clone(), line_map).unwrap());
         }
 
         _ => todo!("Not expected in parameter descriptor"),

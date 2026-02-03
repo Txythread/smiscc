@@ -11,18 +11,16 @@ I just need colors, fat and non-fat text. It's overkill.
 1. Add Return Types
 
 ## Comparisons
-1. ==
-2. <=
-3. <
-4. `>` >=
-5. !=
+1. <=
+2. <
+3. `>` >=
+4. !=
 
 
 ## General
 Allow for new values in if blocks and such.
 
 ## Optimizations
-1. Ignore identity
 2. Mul and div to bit shift
 
 ## Variables & Constants

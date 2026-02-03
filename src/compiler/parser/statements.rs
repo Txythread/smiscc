@@ -1,13 +1,15 @@
 use std::ops::Deref;
 use std::rc::Rc;
 use strum_macros::EnumIter;
+use uuid::Uuid;
 use crate::compiler::line_map::TokenPosition;
 use crate::compiler::parser::modifier::Modifier;
 use crate::config::tokenization_options::Keyword;
 use crate::compiler::parser::parse::ExpressionKind;
 use crate::compiler::parser::parse_datatype::ParameterDescriptor;
 use crate::compiler::parser::statement::Statement;
-use crate::compiler::parser::tree::node::{ArgumentsNode, CodeBlockNode, ExitNode, FunctionDeclarationNode, IdentifierNode, IfNode, LetNode, Node, StringLiteralNode};
+use crate::compiler::parser::tree::node::{ArgumentsNode, CodeBlockNode, ExitNode, FunctionDeclarationNode, IdentifierNode, IfNode, LetNode, Node, StringLiteralNode, TokenPayloadNode, UuidPayloadNode};
+use crate::compiler::tokenization::token::Token;
 
 #[derive(Clone, Debug, EnumIter)]
 pub enum Statements {
@@ -36,7 +38,15 @@ impl Statement for Statements {
                     (
                         ExpressionKind::Identifier(None),
                         true
-                    )
+                    ),
+                    (
+                        ExpressionKind::ExpectedToken(Token::Colon(TokenPosition::new(0, 0))),
+                        false
+                    ),
+                    (
+                        ExpressionKind::Datatype,
+                        false
+                    ),
                 ]
             }
             Statements::Var => {
@@ -44,7 +54,15 @@ impl Statement for Statements {
                     (
                         ExpressionKind::Identifier(None),
                         true
-                    )
+                    ),
+                    (
+                        ExpressionKind::ExpectedToken(Token::Colon(TokenPosition::new(0, 0))),
+                        false
+                    ),
+                    (
+                        ExpressionKind::Datatype,
+                        false
+                    ),
                 ]
             }
             Statements::Exit => {
@@ -82,7 +100,7 @@ impl Statement for Statements {
             Statements::Let => {
                 vec![
                     (
-                        ExpressionKind::Assignment,
+                        ExpressionKind::ExpectedToken(Token::Assignment(TokenPosition::new(0, 0))),
                         true
                     ),
 
@@ -203,12 +221,31 @@ impl Statement for Statements {
         let identifier_arg = arguments[0].clone();
         let identifier_node = identifier_arg.downcast_rc::<IdentifierNode>().unwrap();
         let identifier = identifier_node.identifier.clone();
+
+        let mut datatype: Option<Uuid> = None;
+
+        if let Ok(token_node) = arguments[1].clone().downcast_rc::<TokenPayloadNode>() {
+            match token_node.token {
+                Token::Colon(_) => {
+                    if let Ok(datatype_node) = arguments[2].clone().downcast_rc::<UuidPayloadNode>() {
+                        datatype = Some(datatype_node.uuid);
+                    } else {
+                        todo!("Expected type, couldn't be found tho")
+                    }
+                }
+
+                Token::Assignment(_) => {},
+                _ => todo!("(impl err) unexpected. expected  token containing : or =")
+            }
+        } else {
+            todo!("(impl err) unexpected. expected  token containing : or =")
+        }
         
-        let assigned_value = arguments[2].clone();
+        let assigned_value = arguments.last().unwrap().clone();
         
         let is_mutable = matches!(self, Statements::Var);
         
-        let node = LetNode::new(identifier, Some(assigned_value), is_mutable, (0, TokenPosition::new(0, 0)));
+        let node = LetNode::new(identifier, datatype, Some(assigned_value), is_mutable, (0, TokenPosition::new(0, 0)));
         
         Some(Rc::new(node))
     }

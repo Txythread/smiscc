@@ -76,6 +76,10 @@ pub enum ExpressionKind {
     Parameter,
 
     StringLiteral,
+    
+    ExpectedToken(Token),
+    
+    Datatype,
 }
 
 

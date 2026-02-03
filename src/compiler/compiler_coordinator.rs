@@ -41,6 +41,10 @@ pub fn compile(code: String, args: ArgumentList, opt_flags: Rc<OptimizationFlags
        context.datatypes.insert(object_type.type_uuid, object_type.clone());
     });
 
+    println!("Datatypes: {:?}", context.datatypes);
+
+
+
     let mut parsed_clone: CodeBlockArray = parsed.downcast_rc::<CodeBlockArray>().unwrap().deref().clone();
     parsed_clone.perform_early_context_changes(&mut context);
     parsed = Rc::new(parsed_clone);

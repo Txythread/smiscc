@@ -1,7 +1,7 @@
 extern "C" "_start" func start() {
-	let a = 5 * 1;
-	let c = 5;
-	let b = false;
+	let a: u32 = 5 * 1;
+	let c = 6u32;
+	let b: i32 = false;
 
 	if /*a == c*/ true {
 		exit 0;

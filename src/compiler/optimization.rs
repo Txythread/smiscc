@@ -5,10 +5,6 @@ use crate::ArgumentList;
 
 #[derive(Debug, Clone)]
 pub struct OptimizationFlags {
-    /// The optimization level specifies which optimizations should take
-    /// place in a broad sense. 0 means (close to) none and 3 means all.
-    opt_level: u8,
-
     /// The user can also specify which optimizations take place, overwriting
     /// the optimization level, which is why the level alone is not enough.
     /// This value always contains **all optimizations, no matter which were specified
@@ -49,7 +45,7 @@ impl OptimizationFlags {
         }
 
 
-        OptimizationFlags { opt_level, optimizations }
+        OptimizationFlags { optimizations }
     }
 
     pub fn new(args: &ArgumentList) -> Self {

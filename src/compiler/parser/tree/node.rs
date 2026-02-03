@@ -15,6 +15,7 @@ use crate::compiler::optimization::OptimizationKind;
 use crate::compiler::parser::function_meta::{FunctionArgument, FunctionMeta, FunctionStyle};
 use crate::compiler::parser::future::CodeFuture;
 use crate::compiler::parser::parse_datatype::ParameterDescriptor;
+use crate::compiler::tokenization::token::Token;
 use crate::util::operator::Operation;
 
 /// A trait requiring basic functionality for any node in an abstract
@@ -38,7 +39,7 @@ pub trait Node: Debug + Downcast {
     /// Gets the data type if possible. Multiple data types will lead
     /// to problems if it's not clear which datatype is expected.
     /// If there is no return type, None will be returned here.
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>>;
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: &Context) -> Option<Vec<ObjectType>>;
 
 
     /// ### Unpacks Shells Recursively
@@ -136,7 +137,7 @@ impl Node for ValueNode {
         self.get_sub_node().get_sub_nodes()
     }
 
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: &Context) -> Option<Vec<ObjectType>> {
         println!("getting thing on subnode: {:?}", self.get_sub_node());
         self.get_sub_node().get_datatypes(all_types, context)
     }
@@ -191,7 +192,7 @@ impl Node for IdentifierNode {
         vec![]
     }
     
-    fn get_datatypes(&self, _all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _all_types: Vec<ObjectType>, context: &Context) -> Option<Vec<ObjectType>> {
         if let Some(type_) = self.data_type.clone() {
             return Some(vec![type_.clone()]);
         }
@@ -257,7 +258,7 @@ impl Node for LiteralValueNode {
         self.get_sub_node().get_sub_nodes()
     }
 
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: &Context) -> Option<Vec<ObjectType>> {
         self.get_sub_node().get_datatypes(all_types, context)
     }
 
@@ -301,7 +302,7 @@ impl Node for BoolLiteralNode {
         Vec::new()
     }
 
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, _context: &Context) -> Option<Vec<ObjectType>> {
         for type_ in all_types.iter().clone() {
             // Integer?
             if type_.has_trait(Trait::BOOLEAN_COMPATIBLE) {
@@ -364,8 +365,8 @@ impl Node for IntegerLiteralNode {
         vec![]
     }
 
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
-
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, _context: &Context) -> Option<Vec<ObjectType>> {
+println!("kindxyz: {:?}", self.kind);
         if let Some(kind) = self.kind.clone() {
             for type_ in all_types.iter().clone() {
                 if type_.name == kind.get_name() {
@@ -379,7 +380,7 @@ impl Node for IntegerLiteralNode {
 
         for type_ in all_types.iter().clone() {
             // Integer?
-            if type_.has_trait(Trait::INTEGER) {
+            if type_.has_trait(Trait::INTEGER) && self.kind.is_none() {
                 compatible_types.push(type_.clone());
             }
         }
@@ -451,7 +452,7 @@ impl Node for ArithmeticNode {
         vec![self.argument_a.clone(), self.argument_b.clone()]
     }
 
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: &Context) -> Option<Vec<ObjectType>> {
         if self.operation.is_boolean() {
             // Find the boolean type in the types
             for type_ in all_types.iter().clone() {
@@ -462,7 +463,7 @@ impl Node for ArithmeticNode {
         }
 
         // It should just be the data type of the first and second argument, which should be equivalent
-        self.argument_a.get_datatypes(all_types, context)
+        self.argument_a.get_datatypes(all_types, &context)
     }
 
     fn unpack(&self) -> Box<dyn Node> {
@@ -618,7 +619,7 @@ impl Node for AssignmentNode {
         vec![]
     }
     
-    fn get_datatypes(&self, _types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _types: Vec<ObjectType>, _context: &Context) -> Option<Vec<ObjectType>> {
         None
     }
     
@@ -695,7 +696,7 @@ impl Node for AssignmentSymbolNode {
         vec![]
     }
 
-    fn get_datatypes(&self, _: Vec<ObjectType>, _: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _: Vec<ObjectType>, _: &Context) -> Option<Vec<ObjectType>> {
         None
     }
 
@@ -720,6 +721,8 @@ impl Node for AssignmentSymbolNode {
 #[derive(Clone, Debug, new)]
 pub struct LetNode {
     identifier: String,
+    /// Stores the datatype **if one has been specified explicitly**
+    datatype: Option<Uuid>,
     assigned_value: Option<Rc<dyn Node>>,
     is_mutable: bool,
     position: (usize, TokenPosition),
@@ -738,7 +741,7 @@ impl Node for LetNode {
         vec![]
     }
 
-    fn get_datatypes(&self, _: Vec<ObjectType>, _: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _: Vec<ObjectType>, _: &Context) -> Option<Vec<ObjectType>> {
         None
     }
 
@@ -752,7 +755,6 @@ impl Node for LetNode {
 
         if let Some(assigned_value) = self.assigned_value.clone() {
             let assignment_result = assigned_value.clone().generate_instructions(context).clone();
-            println!("assigned value: {assigned_value:?} created: {assignment_result:?}");
 
             let mut assignment_instructions = assignment_result.0;
             instructions.append(&mut assignment_instructions);
@@ -761,7 +763,7 @@ impl Node for LetNode {
                 result_uuid = assignment_result.1;
             } else {
                 result_uuid = Some(Uuid::new_v4());
-                instructions.push(Instruction::Move(result_uuid.unwrap(), assignment_result.1.unwrap()));
+                instructions.push(Move(result_uuid.unwrap(), assignment_result.1.unwrap()));
             }
 
             if let Some(raw_value) = assigned_value.get_raw_value(false) {
@@ -775,16 +777,39 @@ impl Node for LetNode {
         }
 
         let value = self.assigned_value.clone().unwrap();
-        let datatypes = value.get_datatypes(context.datatypes.values().cloned().collect(), context.clone());
+        // TODO: Call below is very expensive and will be O(n), but could be almost O(1) if the types wouldn't need to be copied so change the signature
+        let datatypes = value.get_datatypes(context.datatypes.values().cloned().collect(), &context.clone()).unwrap();
 
         println!("value: {:#?}, datatypes: {datatypes:#?}", value);
 
-        context.objects.insert(result_uuid.unwrap(), datatypes.unwrap()[0].type_uuid);
-        context.name_map.insert(self.identifier.clone(), result_uuid.unwrap());
+        let mut datatype: Option<ObjectType> = None;
 
-        if self.is_mutable {
-            context.mutable_objects.push(result_uuid.unwrap());
+        if let Some(expected) = self.datatype {
+            for type_ in datatypes {
+                if expected == type_.type_uuid {
+                    datatype = Some(type_);
+                }
+            }
+        } else {
+            if datatypes.len() == 1 {
+                datatype = Some(datatypes[0].clone());
+            } else {
+                todo!("(impl err) No concrete datatype assigned")
+            }
         }
+
+        if let Some(datatype) = datatype {
+            context.objects.insert(result_uuid.unwrap(), datatype.type_uuid);
+            context.name_map.insert(self.identifier.clone(), result_uuid.unwrap());
+
+            if self.is_mutable {
+                context.mutable_objects.push(result_uuid.unwrap());
+            }
+        } else {
+            todo!("(impl err) Datatype unmatched")
+        }
+
+
 
 
         (instructions, None)
@@ -844,7 +869,7 @@ impl Node for CodeBlockNode {
         self.code.clone()
     }
 
-    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _: &Context) -> Option<Vec<ObjectType>> {
         None
     }
 
@@ -916,7 +941,7 @@ impl Node for ExitNode {
         vec![]
     }
 
-    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _: &Context) -> Option<Vec<ObjectType>> {
         None
     }
 
@@ -965,8 +990,8 @@ impl Node for FunctionCallNode {
         vec![]
     }
 
-    fn get_datatypes(&self, _all_types: Vec<ObjectType>, context: Context) -> Option<Vec<ObjectType>> {
-        let function_metas = context.function_metas;
+    fn get_datatypes(&self, _all_types: Vec<ObjectType>, context: &Context) -> Option<Vec<ObjectType>> {
+        let function_metas = context.function_metas.clone();
 
         let function_meta = function_metas.iter().find(|&x|x.code_name.as_str()==self.name.as_str())?;
         let type_uuid = function_meta.return_type_uuid?;
@@ -1078,7 +1103,7 @@ impl Node for CodeBlockArray {
         vec![]
     }
     
-    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _context: &Context) -> Option<Vec<ObjectType>> {
         None
     }
 
@@ -1141,7 +1166,7 @@ impl Node for FunctionDeclarationNode {
         vec![self.block.clone()]
     }
     
-    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _context: &Context) -> Option<Vec<ObjectType>> {
         None
     }
 
@@ -1236,7 +1261,7 @@ impl<T: 'static + Debug + Clone> Node for ArgumentsNode<T> {
         vec![]
     }
 
-    fn get_datatypes(&self, _: Vec<ObjectType>, _: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _: Vec<ObjectType>, _: &Context) -> Option<Vec<ObjectType>> {
         None
     }
 
@@ -1278,7 +1303,7 @@ impl Node for StringLiteralNode {
         vec![]
     }
 
-    fn get_datatypes(&self, all_types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, _context: &Context) -> Option<Vec<ObjectType>> {
         Some(vec![all_types.iter().find(|&x| x.traits.contains(&Trait::new(Trait::BASIC_STRING.to_string())))?.clone()])
     }
 
@@ -1321,7 +1346,7 @@ impl Node for IfNode {
         vec![]
     }
 
-    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _context: Context) -> Option<Vec<ObjectType>> {
+    fn get_datatypes(&self, _all_types: Vec<ObjectType>, _context: &Context) -> Option<Vec<ObjectType>> {
         None
     }
 
@@ -1383,5 +1408,88 @@ impl Node for IfNode {
     #[cfg(test)]
     fn repeatedly_reset_position(&mut self) {
         self.position = (0, TokenPosition::test_value());
+    }
+}
+
+
+#[derive(Debug, new)]
+pub struct TokenPayloadNode {
+    pub position: (usize, TokenPosition),
+    pub token: Token,
+}
+
+impl Node for TokenPayloadNode {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        todo!()
+    }
+
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        todo!()
+    }
+
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: &Context) -> Option<Vec<ObjectType>> {
+        todo!()
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        todo!()
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        todo!()
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        todo!()
+    }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        todo!()
+    }
+}
+
+#[derive(Debug, new)]
+pub struct UuidPayloadNode {
+    pub position: (usize, TokenPosition),
+    pub uuid: Uuid,
+}
+
+impl Node for UuidPayloadNode {
+    fn get_position(&self) -> (usize, TokenPosition) {
+        self.position.clone()
+    }
+
+    fn get_future(&self, current: CodeFuture) -> CodeFuture {
+        todo!()
+    }
+
+    fn get_sub_nodes(&self) -> Vec<Rc<dyn Node>> {
+        todo!()
+    }
+
+    fn get_datatypes(&self, all_types: Vec<ObjectType>, context: &Context) -> Option<Vec<ObjectType>> {
+        todo!()
+    }
+
+    fn unpack(&self) -> Box<dyn Node> {
+        todo!()
+    }
+
+    fn generate_instructions(&self, context: &mut Context) -> (Vec<Instruction>, Option<Uuid>) {
+        todo!()
+    }
+
+    fn output_is_randomly_mutable(&self) -> Option<bool> {
+        todo!()
+    }
+
+    #[cfg(test)]
+    fn repeatedly_reset_position(&mut self) {
+        todo!()
     }
 }
