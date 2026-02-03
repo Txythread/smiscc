@@ -6,7 +6,7 @@ use crate::compiler::backend::context::Context;
 use crate::compiler::backend::flattener::flatten;
 use crate::compiler::tokenization::tokenizer::tokenize_file;
 use crate::compiler::parser::parse::parse;
-use crate::compiler::backend::arch::aarch64_mac_os;
+use crate::compiler::backend::arch::aarch64::aarch64_mac_os;
 use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::line_map::LineMap;
 use std::rc::Rc;

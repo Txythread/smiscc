@@ -1,7 +1,5 @@
-pub mod aarch64_mac_os;
 mod register;
 pub mod aarch64;
-mod aarch64_opt;
 pub mod isa;
 
 use std::cmp::PartialEq;

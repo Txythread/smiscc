@@ -1,6 +1,7 @@
 // Contains general, non-eabi specific definitions for AArch64.
 // Some general definitions might be in the eabi specific files, too.
-
+pub mod aarch64_mac_os;
+mod aarch64_opt;
 
 use std::rc::Rc;
 use crate::compiler::backend::arch::Register;

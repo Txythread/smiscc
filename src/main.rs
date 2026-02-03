@@ -1,7 +1,9 @@
 #![warn(unused_extern_crates)]
 
+use std::rc::Rc;
 use crate::compiler::compile;
 use clap::Parser;
+use crate::compiler::optimization::OptimizationFlags;
 use crate::help::print_help;
 
 mod compiler;
@@ -34,6 +36,12 @@ pub struct ArgumentList{
 
     #[clap(long)]
     pub show_tokens: bool,                          // --show-tokens
+
+    #[arg(long = "ol", default_value_t = 1)]
+    pub optimization_level: u8,                     // -o
+
+    #[arg(long)]                                    // --optimizations
+    pub optimizations: Vec<String>
 }
 
 fn main() {
@@ -45,9 +53,11 @@ fn main() {
 
     if let Some(ref file_name) = args.file {
         let file_contents = std::fs::read_to_string(file_name).unwrap();
+        let optimizations = OptimizationFlags::new(&args);
+
+        println!("{optimizations:?}");
         compile(file_contents, args);
     } else {
-        let file_contents = std::fs::read_to_string("test2.txt").unwrap();
-        compile(file_contents, args);
+        println!("Nothing to do!");
     }
 }
