@@ -1,9 +1,9 @@
 extern "C" "_start" func start() {
 	let a: u32 = 5 * 1;
 	let c = 6u32;
-	let b: i32 = false;
+	let b = false;
 
-	if /*a == c*/ true {
+	if a > c {
 		exit 0;
 	}
 

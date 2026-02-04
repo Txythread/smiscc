@@ -23,6 +23,11 @@ Allow for new values in if blocks and such.
 ## Optimizations
 2. Mul and div to bit shift
 
+
+## Compatability
+Implement *x86* & *risc-v*.
+Allow compilation (including linking and assembling) on other platforms.
+
 ## Variables & Constants
 1. Type Specification
 2. Arrays

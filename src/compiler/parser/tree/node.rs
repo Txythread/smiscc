@@ -562,6 +562,26 @@ impl Node for ArithmeticNode {
                         Instruction::Compare(x, b.1.unwrap()),
                         Instruction::ExtractCompare(x, ComparisonType::Equal)
                     ],
+                    Operation::NotEquals => vec![
+                        Instruction::Compare(x, b.1.unwrap()),
+                        Instruction::ExtractCompare(x, ComparisonType::NotEqual)
+                    ],
+                    Operation::GreaterThan => vec![
+                        Instruction::Compare(x, b.1.unwrap()),
+                        Instruction::ExtractCompare(x, ComparisonType::Greater)
+                    ],
+                    Operation::GreaterThanOrEqual => vec![
+                        Instruction::Compare(x, b.1.unwrap()),
+                        Instruction::ExtractCompare(x, ComparisonType::GreaterOrEqual)
+                    ],
+                    Operation::LessThan => vec![
+                        Instruction::Compare(x, b.1.unwrap()),
+                        Instruction::ExtractCompare(x, ComparisonType::Less)
+                    ],
+                    Operation::LessThanOrEqual => vec![
+                        Instruction::Compare(x, b.1.unwrap()),
+                        Instruction::ExtractCompare(x, ComparisonType::LessOrEqual)
+                    ],
                     _ => todo!()
                 }
             ].concat(),
@@ -783,6 +803,7 @@ impl Node for LetNode {
         println!("value: {:#?}, datatypes: {datatypes:#?}", value);
 
         let mut datatype: Option<ObjectType> = None;
+        println!("datatpyes: {:?}", datatypes);
 
         if let Some(expected) = self.datatype {
             for type_ in datatypes {

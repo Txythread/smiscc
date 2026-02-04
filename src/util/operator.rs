@@ -32,6 +32,21 @@ pub enum Operation {
     /// Equal (==) in comparisons only
     #[strum(to_string = "==")]
     Equals,
+
+    #[strum(to_string = "!=")]
+    NotEquals,
+
+    #[strum(to_string = "<")]
+    LessThan,
+
+    #[strum(to_string = "<=")]
+    LessThanOrEqual,
+
+    #[strum(to_string = ">")]
+    GreaterThan,
+
+    #[strum(to_string = ">=")]
+    GreaterThanOrEqual,
 }
 
 
@@ -52,19 +67,25 @@ impl Operation {
             Operation::Division => 2,
             Operation::Modulo => 2,
             Operation::Equals => 0,
+            Operation::NotEquals => 0,
+            Operation::LessThan => 0,
+            Operation::LessThanOrEqual => 0,
+            Operation::GreaterThan => 0,
+            Operation::GreaterThanOrEqual => 0,
         }
     }
 
     /// Gets the identity if possible (impossible on non-commutative operations).
-    /// The identity is the element that
+    /// The identity is the element that can be applied to a number over an operator
+    /// that will not change the number.
+    #[inline]
     pub fn get_identity(&self) -> Result<i64, anyhow::Error> {
         if !self.is_commutative() { return Err(anyhow!("Identity only exists for commutative operations (in this program rn)")) }
         
         match self {
             Operation::Addition => Ok(0),
             Operation::Multiplication => Ok(1),
-            Operation::Equals => { Ok(1) /* true */ }
-            
+
             _ => Err(anyhow!("Identity not specified although the operation is commutative on operation {:?}", self))
         }
     }
@@ -74,6 +95,6 @@ impl Operation {
     #[inline]
     pub fn is_commutative(&self) -> bool {
         use Operation as OP;
-        matches!(self, OP::Addition | OP::Equals | OP::Multiplication)
+        matches!(self, OP::Addition | OP::Equals | OP::Multiplication | OP::NotEquals)
     }
 }
