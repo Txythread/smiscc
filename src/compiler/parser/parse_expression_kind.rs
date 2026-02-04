@@ -109,7 +109,6 @@ pub fn parse_expression_kind(meta_state: &mut ParserMetaState, kind: ExpressionK
             let mut actual_token = meta_state.tokens[*meta_state.cursor].clone();
             let pos = actual_token.get_position();
 
-            println!("starting expected token ({:?}), pointing to {:?}", expected_token, meta_state.tokens[*meta_state.cursor]);
             let mut actual_token = meta_state.tokens[*meta_state.cursor].clone();
             actual_token.reset_position();
             expected_token.reset_position();
@@ -118,16 +117,13 @@ pub fn parse_expression_kind(meta_state: &mut ParserMetaState, kind: ExpressionK
                 arguments.push(Rc::new(TokenPayloadNode::new((0, pos), actual_token)));
                 *meta_state.cursor += 1;
             } else {
-                println!("not matching");
                 if required {
                     todo!("Required token, not provided")
                 }
             }
 
-            println!("finished expected token ({:?}), pointing to {:?}", expected_token, meta_state.tokens[*meta_state.cursor]);
         }
         ExpressionKind::Datatype => {
-            println!("starting parsing datatype, pointing to {:?}", meta_state.tokens[*meta_state.cursor]);
             let pos = meta_state.tokens[*meta_state.cursor].get_position();
             if let Some(datatype) = parse_datatype(meta_state.tokens.clone(), meta_state.cursor, meta_state.datatypes.clone(), meta_state.line_map) {
                 arguments.push(Rc::new(UuidPayloadNode::new((0, pos), datatype)))
@@ -136,8 +132,6 @@ pub fn parse_expression_kind(meta_state: &mut ParserMetaState, kind: ExpressionK
                     todo!("Required datatype not provided")
                 }
             }
-
-            println!("parsed datatype, pointing to: {:?}", meta_state.tokens[*meta_state.cursor]);
         }
     }
 

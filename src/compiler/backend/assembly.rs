@@ -148,7 +148,6 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
     for instruction in code.clone() {
         i += 1;
         let _instructions_length = instructions.len();
-        println!("instruction: {:?}", instruction);
         match instruction {
             Instruction::Move(obj_a, obj_b) => {
                 let mut reg_a = architecture.get_object(obj_a, vec![obj_b]);
@@ -287,7 +286,6 @@ pub fn generate_assembly_instructions(code: Vec<Instruction>, architecture: Arch
                 instructions.push(AssemblyInstruction::Jump(label))
             }
             Instruction::FunctionStart => {
-                println!("FunctionStart at {}", i);
                 function_start_idx = instructions.len();
             }
             Instruction::Compare(a, b) => {

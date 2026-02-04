@@ -178,7 +178,6 @@ impl DisplayCodeInfo {
 
     /// Write the information to the screen given a line map (which contains the code).
     pub fn print(&mut self, line_map: LineMap){
-        println!("Printing error starting at: {} with a length of: {}", self.start_token, self.end_token);
         let line = line_map.files[self.line_number_in_map as usize].clone();
         
         let line_number_string = format!("{} |", line.line_number);

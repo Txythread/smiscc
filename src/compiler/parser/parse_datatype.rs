@@ -72,8 +72,6 @@ pub fn parse_parameter_descriptor(tokens: Rc<Vec<Token>>, cursor: &mut usize, ty
         _ => todo!("Not expected in parameter descriptor"),
     }
 
-    println!("Produced parameter descriptor; pointing to {:?}", tokens[*cursor]);
-
     ParameterDescriptor::new(name, internal_name, datatype.unwrap())
 
 }

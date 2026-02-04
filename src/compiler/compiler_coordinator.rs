@@ -1,5 +1,6 @@
 use std::ops::Deref;
 use std::process::Command;
+use log::{info, log, Level, LevelFilter};
 use crate::ArgumentList;
 use crate::compiler::backend::assembly;
 use crate::compiler::context::Context;
@@ -10,13 +11,22 @@ use crate::compiler::backend::arch::aarch64::aarch64_mac_os;
 use crate::compiler::data_types::object::ObjectType;
 use crate::compiler::line_map::LineMap;
 use std::rc::Rc;
+use oslog::OsLogger;
 use crate::compiler::backend::arch::aarch64::Aarch64Asm;
 use crate::compiler::data_types::integer::build_integer_types;
 use crate::compiler::optimization::OptimizationFlags;
 use crate::compiler::parser::default::load_default_functions;
 use crate::compiler::parser::tree::node::{CodeBlockArray, Node};
+use crate::util::instruments::InstrumentsLog;
 
 pub fn compile(code: String, args: ArgumentList, opt_flags: Rc<OptimizationFlags>) {
+
+    let mut inst = InstrumentsLog::new("com.txythread.smiscc", "general-smiscc");
+    inst.mark("Starting Compilation");
+
+    info!("Starting Compilation");
+
+
     let mut line_map: LineMap = LineMap::new();
 
     let tokens = tokenize_file(
@@ -56,13 +66,22 @@ pub fn compile(code: String, args: ArgumentList, opt_flags: Rc<OptimizationFlags
         assembly::generate_assembly::<Aarch64Asm>(assembly, arch, "test.s".to_string())
     }
 
+    info!("Compilation finished");
+
     cc::Build::new()
+        .cargo_output(false)
+        .cargo_warnings(false)
+        .cargo_metadata(false)
         .file("test.s")
         .out_dir("./build/")
         .target("aarch64-apple-darwin")
         .opt_level(0)
         .host("aarch64-apple-darwin")
+        .opt_level(3)
         .compile("test");
+
+
+    info!("Assembling finished");
 
     let xc_command = Command::new("xcrun")
         .args(["-sdk", "macosx", "--show-sdk-path"])
@@ -92,6 +111,7 @@ pub fn compile(code: String, args: ArgumentList, opt_flags: Rc<OptimizationFlags
 
 
 
+    info!("Linking finished");
 
     context.line_map.display_finish();
 }

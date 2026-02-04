@@ -191,8 +191,6 @@ mod tests {
             parsed1 = int_3;
         }
 
-        println!("-------------------------------------");
-
         {
             let mut cursor = 0;
             let statements = Rc::new(Statements::iter().collect::<Vec<_>>());

@@ -3,6 +3,8 @@
 use std::rc::Rc;
 use crate::compiler::compile;
 use clap::Parser;
+use log::LevelFilter;
+use oslog::OsLogger;
 use crate::compiler::optimization::OptimizationFlags;
 use crate::help::print_help;
 
@@ -33,6 +35,10 @@ pub struct ArgumentList{
 }
 
 fn main() {
+    let logger = OsLogger::new("com.txythread.smiscc");
+    log::set_boxed_logger(Box::new(logger)).unwrap();
+    log::set_max_level(LevelFilter::Info);
+    
     let args = ArgumentList::parse();
 
     if args.help {

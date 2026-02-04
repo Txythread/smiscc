@@ -165,7 +165,6 @@ mod tests {
         ";
 
         let mut tokens = TokenPrototype::lexer(test_text);
-        println!("{:?}", tokens);
 
         assert_eq!(tokens.next().unwrap().unwrap(), TokenPrototype::StringLiteral);
         assert_eq!(tokens.slice(), "\"was geht\"");

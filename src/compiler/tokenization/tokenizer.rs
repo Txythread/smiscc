@@ -50,8 +50,6 @@ pub fn tokenize_file(contents: String, file_number: usize, integer_types: Rc<Vec
                 todo!("Couldn't pass token '{:?}' at: {:?}", tokens.slice(), tokens.span())
             }
 
-            println!("current: {:?}, prot: {:?}", tokens.slice(), token_prototype);
-
             let token = token_prototype.unwrap().into_token(
                 tokens.span(),
                 tokens.slice(),

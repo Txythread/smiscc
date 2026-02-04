@@ -138,7 +138,6 @@ impl Node for ValueNode {
     }
 
     fn get_datatypes(&self, all_types: Vec<ObjectType>, context: &Context) -> Option<Vec<ObjectType>> {
-        println!("getting thing on subnode: {:?}", self.get_sub_node());
         self.get_sub_node().get_datatypes(all_types, context)
     }
 
@@ -198,9 +197,6 @@ impl Node for IdentifierNode {
         }
 
         let object_uuid = context.name_map.get(&self.identifier);
-
-        println!("uuid: {object_uuid:?}");
-
 
         let type_uuid = context.objects.get(object_uuid?);
         let type_ = context.datatypes.get(type_uuid?);
@@ -366,7 +362,6 @@ impl Node for IntegerLiteralNode {
     }
 
     fn get_datatypes(&self, all_types: Vec<ObjectType>, _context: &Context) -> Option<Vec<ObjectType>> {
-println!("kindxyz: {:?}", self.kind);
         if let Some(kind) = self.kind.clone() {
             for type_ in all_types.iter().clone() {
                 if type_.name == kind.get_name() {
@@ -481,10 +476,6 @@ impl Node for ArithmeticNode {
         // Check for operations with identity values
         let remove_identity_ops = context.opt_flags.optimizations.get(&OptimizationKind::RemoveIdentityOperations) == Some(&true);
         let identity = self.operation.get_identity();
-        println!("trying to remove identity : {}", remove_identity_ops);
-        println!("identity: {identity:?}");
-        println!("identity: {a_raw:?}, b: {b_raw:?}");
-        println!("identity: {a_raw:?}, b: {b_raw:?}");
 
         if let Ok(identity) = identity && (a_raw.is_some() || b_raw.is_some()) && remove_identity_ops {
             if a_raw == Some(&identity) {
@@ -800,10 +791,7 @@ impl Node for LetNode {
         // TODO: Call below is very expensive and will be O(n), but could be almost O(1) if the types wouldn't need to be copied so change the signature
         let datatypes = value.get_datatypes(context.datatypes.values().cloned().collect(), &context.clone()).unwrap();
 
-        println!("value: {:#?}, datatypes: {datatypes:#?}", value);
-
         let mut datatype: Option<ObjectType> = None;
-        println!("datatpyes: {:?}", datatypes);
 
         if let Some(expected) = self.datatype {
             for type_ in datatypes {
@@ -1211,15 +1199,12 @@ impl Node for FunctionDeclarationNode {
 
                 context.objects.insert(uuid, type_uuid);
                 context.name_map.insert(name.clone(), uuid);
-
-                println!("inserted object named {name} with uuid {uuid} as having the type: {type_uuid}")
             }
         }
 
         instructions.append(&mut block.generate_instructions(context).0.to_vec());
 
         instructions.insert(receive_args_end + 1, Instruction::FunctionStart); // Insert after label.
-        println!("zero: {:?}", instructions[0]);
 
         instructions.push(
             Instruction::FunctionEnd
