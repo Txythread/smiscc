@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use strum::IntoEnumIterator;
 use strum_macros::{AsRefStr, EnumIter};
 use crate::ArgumentList;
+use crate::config::tokenization_options::DEFAULT_OPTIMIZATION_LEVEL;
 
 #[derive(Debug, Clone)]
 pub struct OptimizationFlags {
@@ -49,7 +50,8 @@ impl OptimizationFlags {
     }
 
     pub fn new(args: &ArgumentList) -> Self {
-        Self::new_opt(args.optimization_level, &args.optimizations)
+        let optimizations = args.optimizations.clone().unwrap_or(Vec::new());
+        Self::new_opt(args.optimization_level.unwrap_or(Some(DEFAULT_OPTIMIZATION_LEVEL)).unwrap_or(DEFAULT_OPTIMIZATION_LEVEL), &optimizations)
     }
 }
 

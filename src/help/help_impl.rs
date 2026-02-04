@@ -13,7 +13,18 @@ pub fn print_help(arguments: ArgumentList) {
         std::process::exit(0);
     }
 
+    if arguments.optimizations.is_some() {
+        print_help_file("optimizations".to_string());
+        std::process::exit(0);
+    }
+
+    if arguments.optimization_level.is_some() {
+        print_help_file("ol".to_string());
+        std::process::exit(0);
+    }
+
     println!("{}", termimad::inline(HELP_STRING));
+    std::process::exit(0);
 }
 
 

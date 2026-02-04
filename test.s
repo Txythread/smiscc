@@ -5,16 +5,19 @@ _stray:
 
 _start:
 	sub	sp, sp, #0
-	mov	x0, #6
-	mov	x1, x2
-	cmp	x1, x0
-	cset	x1, gt
-	mov	x3, x1
-	mov	x1, x2
-	cmp	x1, x0
-	cset	x1, gt
+	mov	x0, #5
+	mov	x1, #1
+	mul	x0, x0, x1
+	mov	x2, #6
+	mov	x3, x0
+	cmp	x3, x2
+	cset	x3, gt
+	mov	x4, x3
+	mov	x3, x0
+	cmp	x3, x2
+	cset	x3, gt
 	mov	x0, #0
-	cmp	x1, x0
+	cmp	x3, x0
 	beq	LB2
 
 LB0:
@@ -31,3 +34,4 @@ LB3:
 	mov	x16, #1
 	mov	x0, x0
 	svc	#0x80
+	add	sp, sp, #0

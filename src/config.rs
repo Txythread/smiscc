@@ -24,6 +24,13 @@ pub mod tokenization_options {
     /// In most languages, this correlates with "{" and "}".
     #[allow(dead_code)]
     pub const CODE_BLOCK_PARENTHESES: (&str, &str) = ("{", "}");
+    
+    
+    /// ### Default Optimization Level
+    /// 
+    /// The optimization level when none was set explicitly. Take a look at 
+    /// `OPTIMIZATIONS.md` for more.
+    pub const DEFAULT_OPTIMIZATION_LEVEL: u8 = 1;
 
     /// ### Array Parentheses
     ///
