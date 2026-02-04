@@ -10,6 +10,7 @@ pub mod tokenization;
 pub mod parser;
 mod backend;
 pub mod optimization;
+pub mod context;
 
 pub fn compile(code: String, args: ArgumentList, opt_flags: OptimizationFlags) {
     compiler_coordinator::compile(code, args, Rc::new(opt_flags));

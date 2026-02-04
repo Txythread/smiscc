@@ -123,6 +123,8 @@ pub fn generate_assembly<T: Isa>(code: Vec<AssemblyInstruction>, arch: Architect
     for instruction in code {
         arch_instructions.push(instruction.into());
     }
+    
+    //T::optimize(arch_instructions, opt_flags);
 
     for instruction in arch_instructions {
         file.write_all(instruction.to_string().as_bytes()).expect("");

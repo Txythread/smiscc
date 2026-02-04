@@ -2,7 +2,7 @@ use std::ops::Deref;
 use std::process::Command;
 use crate::ArgumentList;
 use crate::compiler::backend::assembly;
-use crate::compiler::backend::context::Context;
+use crate::compiler::context::Context;
 use crate::compiler::backend::flattener::flatten;
 use crate::compiler::tokenization::tokenizer::tokenize_file;
 use crate::compiler::parser::parse::parse;
@@ -13,6 +13,7 @@ use std::rc::Rc;
 use crate::compiler::backend::arch::aarch64::Aarch64Asm;
 use crate::compiler::data_types::integer::build_integer_types;
 use crate::compiler::optimization::OptimizationFlags;
+use crate::compiler::parser::default::load_default_functions;
 use crate::compiler::parser::tree::node::{CodeBlockArray, Node};
 
 pub fn compile(code: String, args: ArgumentList, opt_flags: Rc<OptimizationFlags>) {
@@ -41,9 +42,7 @@ pub fn compile(code: String, args: ArgumentList, opt_flags: Rc<OptimizationFlags
        context.datatypes.insert(object_type.type_uuid, object_type.clone());
     });
 
-    println!("Datatypes: {:?}", context.datatypes);
-
-
+    load_default_functions(&mut context);
 
     let mut parsed_clone: CodeBlockArray = parsed.downcast_rc::<CodeBlockArray>().unwrap().deref().clone();
     parsed_clone.perform_early_context_changes(&mut context);

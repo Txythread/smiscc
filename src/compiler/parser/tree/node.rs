@@ -4,7 +4,7 @@ use std::rc::Rc;
 use derive_new::*;
 use downcast_rs::{Downcast, impl_downcast};
 use uuid::Uuid;
-use crate::compiler::backend::context::Context;
+use crate::compiler::context::Context;
 use crate::compiler::backend::flattener::{ComparisonType, Instruction, JumpComparisonType, JumpCondition};
 use crate::compiler::backend::flattener::Instruction::Move;
 use crate::compiler::data_types::datatypes_general::Buildable;

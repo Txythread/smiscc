@@ -1,0 +1,12 @@
+{
+  "code_name": "println",
+  "assembly_name": "_println",
+  "assembly_style": "C",
+  "return_type_name": "",
+  "arguments": [
+    {
+      "name": "_",
+      "type_name": "i32"
+    }
+  ]
+}

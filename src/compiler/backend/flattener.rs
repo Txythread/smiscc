@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use derive_new::new;
 use uuid::Uuid;
-use crate::compiler::backend::context::Context;
+use crate::compiler::context::Context;
 use crate::compiler::parser::tree::node::Node;
 
 pub fn flatten(line: Rc<dyn Node>, context: &mut Context) -> Vec<Instruction> {

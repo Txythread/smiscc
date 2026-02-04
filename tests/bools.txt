@@ -3,6 +3,8 @@ extern "C" "_start" func start() {
 	let c = 6u32;
 	let b: bool = a > c;
 
+	println(0);
+
 	if a > c {
 		exit 0;
 	}
