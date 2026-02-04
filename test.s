@@ -6,12 +6,15 @@ _stray:
 _start:
 	sub	sp, sp, #0
 	mov	x0, #6
-	mov	x1, #0
-	mov	x2, x3
-	cmp	x2, x0
-	cset	x2, gt
+	mov	x1, x2
+	cmp	x1, x0
+	cset	x1, gt
+	mov	x3, x1
+	mov	x1, x2
+	cmp	x1, x0
+	cset	x1, gt
 	mov	x0, #0
-	cmp	x2, x0
+	cmp	x1, x0
 	beq	LB2
 
 LB0:
